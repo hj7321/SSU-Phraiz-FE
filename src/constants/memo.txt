@@ -1,0 +1,10 @@
+constants 폴더는 API 주소, 에러 메시지, 라우팅 경로, 셀렉트 옵션 값 등
+자주 재사용되지만 변경되지 않는 상수 값들을 모아두는 공간입니다.
+
+<constant 파일 생성 규칙>
+- 기능별로 파일을 분리하여 생성합니다.
+  예: AI 문장 변환 모드 -> paraphraseMode.ts
+      AI 문장 요약 모드 -> summationMode.ts
+- 상수 이름은 모두 대문자(UPPER_SNAKE_CASE)로 작성합니다.
+  예: const PARAPHRASE_MODE = ...
+      const SUMMATION_MODE = ...

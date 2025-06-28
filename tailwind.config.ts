@@ -11,6 +11,14 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        main: "#CDC1FF",
+        sub: "#A294F9",
+      },
+      fontFamily: {
+        ghanachoco: ['"ghanachoco"', "sans-serif"],
+        "nanum-light": ['"NanumSquareAcl"', "sans-serif"],
+        "nanum-bold": ['"NanumSquareAcb"', "sans-serif"],
+        "nanum-extrabold": ['"NanumSquareAceb"', "sans-serif"],
       },
     },
   },

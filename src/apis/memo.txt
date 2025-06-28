@@ -1,0 +1,9 @@
+- api 폴더는 axios 등을 사용해 백엔드 API와 통신하는 함수들을 모아두는 공간입니다.
+- api.ts 파일에는 axios 커스텀 인스턴스가 정의되어 있으며, 모든 요청은 이 인스턴스를 통해 수행합니다.
+
+<api 파일 생성 규칙>
+- 파일명은 (기능명).api.ts 형식으로 생성합니다.
+  예: 회원가입 기능이면 -> signup.api.ts
+- 함수는 모두 export const로 선언합니다.
+  예: 문장 변환을 요청하는 함수면 -> export const sendSentenceForConvert = async () => { ... }
+- REST API 호출 시(post, get 등)에는, axios.post가 아닌, api.ts에서 정의한 커스텀 인스턴스를 사용하여 api.post, api.get 등의 형태로 호출합니다.

@@ -1,0 +1,7 @@
+stores 폴더는 Zustand 등 전역 상태 관리 라이브러리에서 사용하는 공통 상태(store)를 정의하는 공간입니다.
+
+<store 파일 생성 규칙>
+- 파일명은 (스토어명).store.ts 형식으로 생성합니다.
+  예: 인증/인가 관련 전역 상태 관리 스토어면 -> auth.store.ts
+- 스토어 함수명은 use(스토어명)Store 형식으로 생성합니다.
+  예: 인증/인가 관련 전역 상태 관리 스토어면 -> export const useAuthStore = create() ...

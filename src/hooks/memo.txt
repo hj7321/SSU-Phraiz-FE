@@ -1,0 +1,5 @@
+hooks 폴더는 프로젝트에서 사용하는 Custom Hook들을 저장하는 공간입니다.
+
+<hook 파일 생성 규칙>
+- 파일명과 커스텀 훅 이름은 동일하게 작성하여 통일성을 유지합니다.
+  예: 커스텀 훅 이름을 'useParaphraseMode'로 한다면 -> 파일명도 'useParaphraseMode.ts'
