@@ -1,5 +1,6 @@
 import NavBar from "@/components/layout/NavBar";
 import SideBar from "@/components/layout/SideBar";
+import { SidebarProvider } from "@/components/ui/sidebar/sidebar";
 
 export default function NavBarLayout({
   children,
@@ -7,10 +8,12 @@ export default function NavBarLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen">
       <NavBar />
-      <main className="flex-1">{children}</main>
-      <SideBar />
+      <SidebarProvider defaultOpen={false}>
+        <main className="flex-1 flex">{children}</main>
+        <SideBar />
+      </SidebarProvider>
     </div>
   );
 }
