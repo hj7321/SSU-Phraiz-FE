@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import QueryProvider from "./_provider";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/landing/Footer";
 import Script from "next/script";
 
 export const metadata: Metadata = {
