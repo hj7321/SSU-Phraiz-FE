@@ -16,7 +16,7 @@ const PricingPlan = () => {
             </h1>
             <div className="">
               {plan.features.map((feature) => (
-                <p>{feature}</p>
+                <p key={feature}>{feature}</p>
               ))}
             </div>
             <button className="rounded-full bg-[#7752fe] text-white py-[6px] text-[15px]">
