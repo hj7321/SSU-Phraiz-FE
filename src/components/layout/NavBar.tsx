@@ -14,7 +14,7 @@ const NavBar = () => {
   );
 
   return (
-    <aside className="bg-main border-r border-r-sub min-h-screen h-full py-[20px] px-[10px] flex flex-col gap-[30px]">
+    <aside className="bg-main min-h-screen h-full py-[20px] px-[10px] flex flex-col gap-[30px] w-[110px] flex-shrink-0">
       {SERVICE_LINK.map((link, index) => {
         const currentPage = pathname === link.href;
         const highlight = hoverStates[index] || currentPage;
@@ -28,7 +28,7 @@ const NavBar = () => {
             onMouseLeave={() => handleMouseLeave(index)}
           >
             <Image
-              src={link.src}
+              src={link.icon}
               alt={link.alt}
               width={90}
               height={60}
