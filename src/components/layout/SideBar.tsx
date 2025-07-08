@@ -1,31 +1,37 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { TabKey } from "../ui/sidebar/sidebar.tabs";
+import SideBarInner from "../ui/sidebar/SideBarInner";
+
+const HEADER_H = 72; // px
 
 const SideBar = () => {
-  return (
-    <aside className="bg-[#FBF9FE] py-[20px] pl-[13px] pr-[8px] flex flex-col gap-[20px]">
-      <Image
-        src="/icons/usage-history.svg"
-        alt="사용 기록"
-        width={18}
-        height={18}
-        className="hover:cursor-pointer"
-      />
-      <Image
-        src="/icons/history-search.svg"
-        alt="기록 검색"
-        width={18}
-        height={18}
-        className="hover:cursor-pointer"
-      />
-      <Image
-        src="/icons/new-chat.svg"
-        alt="새 채팅"
-        width={18}
-        height={18}
-        className="hover:cursor-pointer"
-      />
-    </aside>
-  );
+  const [activeTab, setActiveTab] = useState<TabKey | null>(null);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const syncOffset = () => {
+      if (ticking) return;
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        const offset = Math.max(HEADER_H - window.scrollY, 0);
+        document.documentElement.style.setProperty(
+          "--header-offset",
+          `${offset}px`
+        );
+        ticking = false;
+      });
+    };
+
+    syncOffset(); // 첫 렌더에서 한 번
+    window.addEventListener("scroll", syncOffset, { passive: true });
+    return () => window.removeEventListener("scroll", syncOffset);
+  }, []);
+
+  return <SideBarInner activeTab={activeTab} setActiveTab={setActiveTab} />;
 };
 
 export default SideBar;
