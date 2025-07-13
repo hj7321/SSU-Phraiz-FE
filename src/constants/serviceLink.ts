@@ -1,4 +1,4 @@
-export type Feature = {
+export type ServiceFeature = {
   title: string;
   description: string;
 };
@@ -11,7 +11,8 @@ export type ServiceLink = {
   alt: string;
   label: string;
   title: string;
-  features: Feature[];
+  ctaText: string;
+  features: ServiceFeature[];
 };
 
 export const SERVICE_LINK: ServiceLink[] = [
@@ -23,11 +24,12 @@ export const SERVICE_LINK: ServiceLink[] = [
     alt: "ai문장변환",
     label: "AI 문장 변환",
     title: "AI 문장 변환 (Paraphrasing)",
+    ctaText: "AI 문장 변환 기능 이용하러 가기",
     features: [
       {
         title: "정확함을 넘어,<br>글맛까지 살립니다",
         description:
-          "Phraiz의 문장 변환은 맞춤법 교정은 기본,<br>5가지 전문 모드와 ‘사용자 지정’ 모드로<br>글의 톤·스타일까지 단숨에 바꿔줘요.",
+          "Phraiz의 문장 변환은 맞춤법 교정은 기본,<br>5가지 전문 모드와 '사용자 지정' 모드로<br>글의 톤·스타일까지 단숨에 바꿔줘요.",
       },
       {
         title: "PDF부터 HWP까지,<br>파일 통째로 리라이팅",
@@ -49,6 +51,7 @@ export const SERVICE_LINK: ServiceLink[] = [
     alt: "ai요약",
     label: "AI 요약",
     title: "AI 요약 (Summarization)",
+    ctaText: "AI 요약 기능 이용하러 가기",
     features: [
       {
         title: "문단별·핵심포인트·<br>한줄 요약까지 원클릭",
@@ -75,6 +78,7 @@ export const SERVICE_LINK: ServiceLink[] = [
     alt: "인용생성",
     label: "인용 생성",
     title: "인용 생성 (Citation & Format Converter)",
+    ctaText: "인용 생성 기능 이용하러 가기",
     features: [
       {
         title: "URL만 넣으면<br>APA·MLA·BibTeX 즉석 생성",
