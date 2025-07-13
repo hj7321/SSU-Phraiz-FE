@@ -32,6 +32,7 @@ const NavBar = () => {
               alt={link.alt}
               width={90}
               height={60}
+              priority
               className={clsx(
                 highlight
                   ? "[filter:drop-shadow(4px_4px_4px_rgba(0,0,0,0.5))]"
