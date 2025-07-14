@@ -41,10 +41,12 @@
 html {
   /* 세로 스크롤바 공간을 항상 확보해 두기 */
   scrollbar-gutter: stable;
+  /* height: 100%; */
 }
 
 body {
   font-family: "NanumSquareAcr";
+  /* height: 100%; */
 }
 
 :root {
