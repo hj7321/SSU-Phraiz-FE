@@ -5,6 +5,7 @@ import useFadeInOnScroll from "@/hooks/useFadeInOnScroll";
 import clsx from "clsx";
 import Image from "next/image";
 import { useRef } from "react";
+import FeatureCard from "./FeatureCard";
 
 interface LandingSectionProps {
   data: ServiceLink;
@@ -13,7 +14,6 @@ interface LandingSectionProps {
 
 const LandingSection = ({ data, idx }: LandingSectionProps) => {
   const sectionRef = useRef<HTMLDivElement>(null);
-
   useFadeInOnScroll(sectionRef);
 
   return (
@@ -33,37 +33,25 @@ const LandingSection = ({ data, idx }: LandingSectionProps) => {
         {data.title}
       </h1>
 
-      <Image
-        data-fade
-        src={data.image}
-        alt={data.alt}
-        width={360}
-        height={240}
-        priority
-      />
+      <div className="relative w-[300px] h-[200px] md:w-[360px] md:h-[240px]">
+        <Image
+          data-fade
+          src={data.image}
+          alt={data.alt}
+          width={360}
+          height={240}
+          priority
+        />
+      </div>
 
-      <div className="flex gap-[40px] mt-[-10px]">
+      <div className="flex flex-wrap justify-center md:gap-[40px] gap-[20px] mt-[-10px]">
         {data.features.map((feature) => (
-          <div
-            data-fade
+          <FeatureCard
             key={feature.title}
-            className="mt-[16px] text-center border border-[#a294f9] w-[350px] h-[240px] rounded-[16px] flex flex-col gap-[10px] justify-center bg-gradient-to-r from-white to-main/30"
-          >
-            <h3
-              data-fade
-              className="font-nanum-extrabold md:text-[23px] text-[19px]"
-              dangerouslySetInnerHTML={{
-                __html: `${feature.title}`,
-              }}
-            ></h3>
-            <p
-              data-fade
-              className="md:text-[16px] text-[14px]"
-              dangerouslySetInnerHTML={{
-                __html: `${feature.description}`,
-              }}
-            ></p>
-          </div>
+            feature={feature}
+            href={data.href}
+            ctaText={data.ctaText}
+          />
         ))}
       </div>
     </section>

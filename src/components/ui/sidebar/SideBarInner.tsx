@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -9,24 +11,31 @@ import {
 import clsx from "clsx";
 import { TABS, TabKey } from "./sidebar.tabs";
 import SidebarPanel from "./SidebarPanel";
+import { useSearchDialogStore } from "@/stores/searchDialog.store";
 
 interface SideBarInnerProps {
   activeTab: TabKey | null;
-  setActiveTab: (k: TabKey) => void;
+  setActiveTab: (k: TabKey | null) => void;
 }
 
 const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
   const { open, setOpen } = useSidebar();
+  const openDialog = useSearchDialogStore((s) => s.openDialog);
 
   const handleSelect = (k: TabKey) => {
-    if (!open && k === "usage-history") setOpen(true); // 닫혀 있으면 열기
-
     switch (k) {
-      case "usage-history":
-        /* 패널 이미 usage-history 트리를 보여주고 있으므로 액션 없음 */
+      case "usage-history": {
+        if (open) {
+          setOpen(false);
+          setActiveTab(null); // 아이콘 활성화 해제
+          return;
+        }
+        // 열려 있지 않으면 열어 주기
+        setOpen(true);
         break;
+      }
       case "history-search":
-        //openSearchModal(); // [TODO] 로직 구현: 검색 모달 열기
+        openDialog();
         break;
       case "new-chat":
         //resetTextarea(); // [TODO] 로직 구현: 중앙 textarea 리셋

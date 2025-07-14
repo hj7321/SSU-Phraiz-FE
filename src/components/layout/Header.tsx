@@ -1,7 +1,14 @@
+"use client";
+
+import { useAuthStore } from "@/stores/auth.store";
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
 const Header = () => {
+  const isLogin = useAuthStore((s) => s.isLogin);
+  const logout = useAuthStore((s) => s.logout);
+
   return (
     <header className="z-50 flex px-[30px] py-[10px] justify-between items-center bg-main">
       <Link
@@ -10,18 +17,35 @@ const Header = () => {
       >
         Phraiz
       </Link>
-      <div className="flex gap-[10px] text-black text-[14px]">
-        <Link href="/login" className="hover:font-nanum-extrabold">
-          <div className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px]">
-            로그인
-          </div>
-        </Link>
-        <Link href="/sign-up" className="hover:font-nanum-extrabold">
-          <div className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px]">
-            회원가입
-          </div>
-        </Link>
-      </div>
+      {isLogin ? (
+        <div className="flex gap-[15px]">
+          <Link href="/my" className="flex items-center gap-[4px]">
+            <Image src="/icons/avatar.svg" alt="" width={18} height={18} />
+            <p className="text-white text-[18px] font-nanum-bold hover:font-nanum-extrabold">
+              000 님
+            </p>
+          </Link>
+          <button
+            onClick={logout}
+            className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px] hover:font-nanum-extrabold text-[14px]"
+          >
+            로그아웃
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-[10px] text-black text-[14px]">
+          <Link href="/login" className="hover:font-nanum-extrabold">
+            <div className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px]">
+              로그인
+            </div>
+          </Link>
+          <Link href="/sign-up" className="hover:font-nanum-extrabold">
+            <div className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px]">
+              회원가입
+            </div>
+          </Link>
+        </div>
+      )}
     </header>
   );
 };

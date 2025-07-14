@@ -38,8 +38,15 @@
   font-style: normal;
 }
 
+html {
+  /* 세로 스크롤바 공간을 항상 확보해 두기 */
+  scrollbar-gutter: stable;
+  /* height: 100%; */
+}
+
 body {
   font-family: "NanumSquareAcr";
+  /* height: 100%; */
 }
 
 :root {
@@ -74,14 +81,14 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: #fbf9fe;
-    --sidebar-foreground: red;
-    --sidebar-primary: orange;
-    --sidebar-primary-foreground: yellow;
-    --sidebar-accent: green;
-    --sidebar-accent-foreground: blue;
-    --sidebar-border: violet;
-    --sidebar-ring: pink;
+    --sidebar-background: #fbf9fe; /* 사이드바 바탕색 */
+    --sidebar-foreground: red; /* 기본 텍스트/아이콘 색 */
+    --sidebar-primary: green; /* 강조 요소 배경색 (예: 선택된 탭) */
+    --sidebar-primary-foreground: yellow; /* 강조 배경 위 텍스트 색 */
+    --sidebar-accent: #dad0fb; /* 보조 강조 색 (hover 등) */
+    --sidebar-accent-foreground: #7752fe; /* 보조 강조 위 텍스트 색 */
+    --sidebar-border: #7752fe; /* 테두리 색 */
+    --sidebar-ring: black; /* 포커스/클릭 링 효과 색 */
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -125,5 +132,12 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 4px 4px 6px rgba(255, 255, 255, 0.35),
+      4px 4px 16px rgb(100, 108, 252);
   }
 }
