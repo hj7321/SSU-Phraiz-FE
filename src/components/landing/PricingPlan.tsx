@@ -11,7 +11,6 @@ const PricingPlan = () => {
   const isLogin = useAuthStore((s) => s.isLogin);
   const planTier = useAuthStore((s) => s.planTier);
   const pathname = usePathname();
-  console.log(pathname);
 
   return (
     <section
@@ -23,7 +22,7 @@ const PricingPlan = () => {
       )}
     >
       <h1 className="text-[34px] font-nanum-extrabold [filter:drop-shadow(4px_4px_4px_rgba(0,0,0,0.3))]">
-        Pricing Plan
+        {pathname === "/" ? "Pricing Plan" : "플랜 업그레이드"}
       </h1>
       <div className="flex flex-wrap justify-center gap-[20px]">
         {PRICING_PLAN.map((plan) => (
