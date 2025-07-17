@@ -16,6 +16,22 @@ const LandingSection = ({ data, idx }: LandingSectionProps) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   useFadeInOnScroll(sectionRef);
 
+  // // Nature 2024년 논문
+  // console.log(toAPA("10.1038/s41586-024-07225-0"));
+  // // IEEE 1995년 논문 (URL 형태도 OK)
+  // console.log(toAPA("https://doi.org/10.1109/5.771073"));
+
+  // const [apa, setApa] = useState(null);
+
+  // useEffect(() => {
+  //   (async () => {
+  //     const result = await toAPA();
+  //     setApa(result);
+  //   })();
+  // }, []);
+
+  // console.log(apa);
+
   return (
     <section
       ref={sectionRef}
@@ -36,7 +52,7 @@ const LandingSection = ({ data, idx }: LandingSectionProps) => {
       <div className="relative w-[300px] h-[200px] md:w-[360px] md:h-[240px]">
         <Image
           data-fade
-          src={data.image}
+          src={data.icon}
           alt={data.alt}
           width={360}
           height={240}
