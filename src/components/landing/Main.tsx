@@ -1,99 +1,143 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Image, { StaticImageData } from "next/image";
+
+import Icon1 from "/public/icons/icon1.svg";
+import Icon2 from "/public/icons/icon2.svg";
+import Icon3 from "/public/icons/icon3.svg";
+import Icon4 from "/public/icons/icon4.svg";
+import Icon5 from "/public/icons/icon5.svg";
+import Icon6 from "/public/icons/icon6.svg";
+import Icon7 from "/public/icons/icon7.svg";
 
 const Main = () => {
   const containerRef = useRef<HTMLElement | null>(null);
-  const line1Ref = useRef<HTMLHeadingElement | null>(null);
-  const line2Ref = useRef<HTMLHeadingElement | null>(null);
+  const h1Ref = useRef<HTMLHeadingElement | null>(null);
+  const h2Ref = useRef<HTMLHeadingElement | null>(null);
+  const iconRefs = useRef<HTMLDivElement[]>([]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     if (!containerRef.current) return;
 
-    // gsap.context → React에서 스코프 관리 + clean-up
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline();
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top center",
+        },
+      });
+      tl.from([h1Ref.current, h2Ref.current], {
+        x: (i) => (i === 0 ? "-110vw" : "110vw"),
+        opacity: 0,
+        duration: 3.5,
+        ease: "power3.out",
+        stagger: 0.7,
+      });
 
-      // line1: 왼쪽 ➜ 중앙
-      tl.fromTo(
-        line1Ref.current,
-        { x: "-100vw", opacity: 0 },
-        { x: 0, opacity: 1, duration: 3, ease: "power3.out" }
+      tl.from(
+        iconRefs.current,
+        {
+          y: "80vh",
+          opacity: 0,
+          duration: 2,
+          ease: "power3.out",
+          stagger: 0.12,
+        },
+        "<3"
       );
 
-      // line2: 오른쪽 ➜ 중앙 (0.1s 겹치기)
-      tl.fromTo(
-        line2Ref.current,
-        { x: "100vw", opacity: 0 },
-        { x: 0, opacity: 1, duration: 3, ease: "power3.out" },
-        "<1" // ← 이전 스텝 1초 뒤에 시작
-      );
+      iconRefs.current.forEach((icon) => {
+        const dx = gsap.utils.random(25, 45);
+        gsap.to(icon, {
+          x: dx,
+          duration: gsap.utils.random(3, 5),
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+          delay: 10,
+          force3D: true,
+        });
+      });
     }, containerRef);
 
     // clean-up (메모리 누수 방지)
     return () => ctx.revert();
   }, []);
 
+  /* ───────── 아이콘 JSX 헬퍼 ───────── */
+  const makeIcon = (src: StaticImageData, idx: number, className: string) => (
+    <div
+      key={idx}
+      ref={(el) => {
+        if (el) iconRefs.current[idx] = el;
+      }}
+      className={`absolute ${className} pointer-events-none select-none`}
+      style={{ willChange: "transform" }}
+    >
+      <Image src={src} alt="" priority width={160} height={160} />
+    </div>
+  );
+
   return (
     <section
       ref={containerRef}
-      className="h-screen flex flex-col items-center justify-center gap-[50px] bg-gradient-to-b from-main to-main/20"
+      className="relative h-screen overflow-hidden flex flex-col items-center justify-center gap-[50px] bg-gradient-to-b from-main to-main/20"
     >
-      <div className="font-nanum-extrabold text-white text-[64px] mt-[-30px]">
-        <h1 ref={line1Ref} className="ml-[-80px]">
+      <div className="font-nanum-extrabold text-white lg:text-[72px] md:text-[62px] sm:text-[54px] text-[46px] mt-[-50px] text-glow z-[9999]">
+        <h1 ref={h1Ref} className="ml-[-80px]">
           누구나 전문가처럼 쓰는 시대,
         </h1>
-        <h1 ref={line2Ref} className="text-right mr-[-80px] mt-[-10px]">
+        <h1 ref={h2Ref} className="text-right mr-[-80px] mt-[-5px]">
           Phraiz로.
         </h1>
       </div>
       <Link
         href="/ai-paraphrase"
-        className="rounded-full bg-[#7752fe] text-white py-[14px] px-[40px] hover:font-nanum-bold"
+        className="relative overflow-hidden group rounded-full bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] text-white py-[14px] px-[40px] hover:font-nanum-bold [filter:drop-shadow(0px_0px_8px_rgba(119,82,254,1))]"
       >
-        바로 시작하기
-      </Link>
-      {/* <h1 className="text-[30px] tracking-[5px]">
-        Phraiz로 더 정확하고 빠르게 인용하고 리라이팅하세요
-      </h1>
-      <div className="flex flex-wrap justify-center gap-[50px]">
-        {SERVICE_LINK.map((link, index) => (
-          <Link
-            key={link.label}
-            href={link.href}
-            className={clsx(
-              "rounded-[10px] px-[90px] py-[40px] [box-shadow:8px_8px_16px_rgba(0,0,0,0.25)] flex flex-col items-center",
-              hoverStates[index] ? "bg-[#D0A2F7]" : "bg-[#E5D4FF]"
-            )}
-            onMouseEnter={() => handleMouseEnter(index)}
-            onMouseLeave={() => handleMouseLeave(index)}
+        {/* ─── 텍스트 래퍼 ─── */}
+        <span className="relative block h-full overflow-hidden">
+          {/* ① 처음 보이는 글씨 */}
+          <span
+            className="
+        block text-white font-nanum-bold
+        transition-transform duration-300
+        group-hover:-translate-y-full     /* 위로 완전히 나감 */
+      "
           >
-            <Image
-              src={link.icon}
-              alt={link.alt}
-              width={150}
-              height={100}
-              className={clsx(
-                hoverStates[index]
-                  ? "[filter:drop-shadow(4px_4px_4px_rgba(0,0,0,0.5))]"
-                  : "[filter:drop-shadow(4px_4px_4px_rgba(0,0,0,0.25))]"
-              )}
-            />
-            <p
-              className={clsx(
-                "text-[24px] mt-[-5px] [text-shadow:2px_2px_4px_rgba(0,0,0,0.25)]",
-                hoverStates[index] && "font-nanum-bold"
-              )}
-            >
-              {link.label}
-            </p>
-          </Link>
-        ))}
-      </div> */}
+            바로 시작하기
+          </span>
+
+          {/* ② 아래에서 올라올 글씨 */}
+          <span
+            className="
+        absolute inset-0 flex items-center justify-center
+        text-white font-nanum-bold
+        transition-transform duration-300
+        translate-y-full                 /* 처음엔 버튼 아래 */
+        group-hover:translate-y-0        /* 중앙으로 올라옴 */
+      "
+          >
+            바로 시작하기
+          </span>
+        </span>
+      </Link>
+
+      {/* ─────── 아이콘들 ─────── */}
+      {[
+        makeIcon(Icon1, 0, "top-[20%]  left-[6%]  w-[130px]"),
+        makeIcon(Icon2, 1, "bottom-[14%] left-[10%] w-[130px]"),
+        makeIcon(Icon3, 2, "top-[30%] right-[10%] w-[150px]"),
+        makeIcon(Icon4, 3, "top-[45%] left-[28%] w-[130px]"),
+        makeIcon(Icon5, 4, "top-[5%] left-[32%] w-[130px]"),
+        makeIcon(Icon6, 5, "top-[0%] right-[30%] w-[150px]"),
+        makeIcon(Icon7, 6, "top-[60%] right-[20%] w-[130px]"),
+      ]}
     </section>
   );
 };
