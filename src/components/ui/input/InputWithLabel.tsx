@@ -15,7 +15,7 @@ const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelProps>(
           ref={ref}
           id={id}
           className={cn(
-            "peer pt-[30px] pb-[24px] pl-[16px] placeholder:text-[14px] placeholder:text-[#dcdcdc] text-[15.5px]",
+            "peer pt-[26px] pb-[24px] pl-[16px] placeholder:text-[14px] placeholder:text-[#dcdcdc] text-[15.5px]",
             className
           )}
           {...inputProps}
