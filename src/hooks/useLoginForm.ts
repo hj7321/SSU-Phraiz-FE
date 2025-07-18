@@ -58,15 +58,16 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
 
   // 3-2. 소셜 로그인 핸들러
   const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
-    const redirectUrl = encodeURIComponent(
-      `https://ssu-phraiz-fe.vercel.app/login/oauth`
-    );
+    // window.location.origin을 사용하여 현재 프론트엔드의 도메인을 가져옴
+    const origin = window.location.origin;
+    const redirectUrl = encodeURIComponent(`${origin}/login/oauth`);
+    // const redirectUrl = encodeURIComponent(
+    //   `https://ssu-phraiz-fe.vercel.app/login/oauth`
+    // );
 
     // 백엔드의 소셜 로그인 인증 시작 URL
     const socialLoginUrl = `${BASE_URL}/oauth2/authorization/${provider}?redirectUrl=${redirectUrl}`;
 
-    // 사용자를 해당 URL로 리다이렉션
-    // Next.js 환경에서는 window.location.origin을 사용하여 현재 도메인을 가져오는 것이 안전함
     window.location.href = socialLoginUrl;
   };
 
