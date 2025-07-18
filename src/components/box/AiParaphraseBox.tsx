@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
 import { useSidebar } from "../ui/sidebar/sidebar";
 import { Copy } from "lucide-react";
+import { requestParaphrase, ParaphraseApiMode } from "@/apis/paraphrase.api";
 
 const HEADER_H = 72;
 
@@ -101,36 +102,37 @@ const AiParaphraseBox = () => {
   // AI 패러프레이징 기능에 필요한 모든 상태와 로직
   const [inputText, setInputText] = useState("");
   const [outputText, setOutputText] = useState("");
-  const [activeMode, setActiveMode] = useState<ParaphraseMode>("표준");
+  const [activeMode, setActiveMode] = useState<ParaphraseMode>("표준"); // UI에 표시되는 한글 모드
   const [customStyle, setCustomStyle] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // handleApiCall 함수를 이렇게 수정합니다.
   const handleApiCall = async () => {
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
 
-    const payload: { text: string; mode: string; customStyle?: string } = {
-      text: inputText,
-      mode: activeMode
+    // UI의 한글 모드 이름을 API가 요구하는 영문 이름으로 변환합니다.
+    const modeMap: Record<ParaphraseMode, ParaphraseApiMode> = {
+      표준: "standard",
+      학술적: "academic",
+      창의적: "creative",
+      유창성: "fluency",
+      실험적: "experimental",
+      "사용자 지정": "custom"
     };
-    if (activeMode === "사용자 지정") {
-      payload.customStyle = customStyle;
-    }
+    const apiMode = modeMap[activeMode];
+
+    // API에 보낼 데이터를 구성합니다.
+    const requestData = {
+      text: inputText,
+      userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined
+    };
 
     try {
-      // API 경로를 /api/paraphrase 로 설정(임시)
-      const response = await fetch("/api/paraphrase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) {
-        throw new Error("API 호출에 실패했습니다.");
-      }
-      const data = await response.json();
-      // 백엔드에서 받은 결과 키가 'result'라고 가정
-      setOutputText(data.result);
+      // 이제 API 파일을 통해 훨씬 깔끔하게 요청을 보냅니다.
+      const response = await requestParaphrase(apiMode, requestData);
+      setOutputText(response.result); // '.result' 키로 결과값을 사용합니다.
     } catch (error) {
       console.error("API 요청 오류:", error);
       setOutputText("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
@@ -138,7 +140,6 @@ const AiParaphraseBox = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
       {/* 헤더 */}

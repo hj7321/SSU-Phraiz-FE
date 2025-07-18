@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
 import { useSidebar } from "../ui/sidebar/sidebar";
 import { Copy } from "lucide-react";
+import { requestSummarize, SummarizeApiMode } from "@/apis/summarize.api";
 
 const HEADER_H = 72; // px
 
@@ -109,27 +110,31 @@ const AiSummarizeBox = () => {
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
-
-    const payload: { text: string; mode: string; targetAudience?: string } = {
-      text: inputText,
-      mode: activeMode
+    // UI의 한글 모드 이름을 API가 요구하는 영문 이름으로 변환합니다.
+    const modeMap: Record<SummarizeMode, SummarizeApiMode> = {
+      "한줄 요약": "one-line",
+      "전체 요약": "full",
+      "문단별 요약": "by-paragraph",
+      "핵심 요약": "key-points",
+      "질문 기반 요약": "question-based",
+      "타겟 요약": "targeted"
     };
-    if (activeMode === "타겟 요약") {
-      payload.targetAudience = targetAudience;
-    }
+    const apiMode = modeMap[activeMode];
+
+    // API에 보낼 데이터를 구성합니다.
+    const requestData = {
+      text: inputText,
+      question: activeMode === "질문 기반 요약" ? "질문 입력 (여기서 UI에서 받은 질문값으로 대체 필요)" : undefined, // TODO: UI에서 질문 입력 받는 부분 추가 필요
+      target: activeMode === "타겟 요약" ? targetAudience : undefined
+    };
 
     try {
-      const response = await fetch("/api/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error("API 호출 실패");
-      const data = await response.json();
-      setOutputText(data.result);
+      // API 파일을 통해 요청을 보냅니다.
+      const response = await requestSummarize(apiMode, requestData);
+      setOutputText(response.result); // '.result' 키로 결과값을 사용합니다.
     } catch (error) {
-      console.error(error);
-      setOutputText("오류가 발생했습니다.");
+      console.error("API 요청 오류:", error);
+      setOutputText("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
