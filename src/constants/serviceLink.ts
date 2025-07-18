@@ -7,7 +7,6 @@ export type ServiceLink = {
   id: string; // map을 돌릴 때 key로 사용
   href: string;
   icon: string;
-  image: string;
   alt: string;
   label: string;
   title: string;
@@ -19,9 +18,8 @@ export const SERVICE_LINK: ServiceLink[] = [
   {
     id: "paraphrase",
     href: "/ai-paraphrase",
-    icon: "/icons/ai문장변환.svg",
-    image: "/images/AI_문장_변환.png",
-    alt: "ai문장변환",
+    icon: "/icons/AI_문장_변환.svg",
+    alt: "AI 문장 변환",
     label: "AI 문장 변환",
     title: "AI 문장 변환 (Paraphrasing)",
     ctaText: "AI 문장 변환 기능 이용하러 가기",
@@ -46,9 +44,8 @@ export const SERVICE_LINK: ServiceLink[] = [
   {
     id: "summarize",
     href: "/ai-summarize",
-    icon: "/icons/ai요약.svg",
-    image: "/images/AI_요약.png",
-    alt: "ai요약",
+    icon: "/icons/AI_요약.svg",
+    alt: "AI 요약",
     label: "AI 요약",
     title: "AI 요약 (Summarization)",
     ctaText: "AI 요약 기능 이용하러 가기",
@@ -73,9 +70,8 @@ export const SERVICE_LINK: ServiceLink[] = [
   {
     id: "citation",
     href: "/create-citation",
-    icon: "/icons/인용생성.svg",
-    image: "/images/인용_생성.png",
-    alt: "인용생성",
+    icon: "/icons/인용_생성.svg",
+    alt: "인용 생성",
     label: "인용 생성",
     title: "인용 생성 (Citation & Format Converter)",
     ctaText: "인용 생성 기능 이용하러 가기",

@@ -8,6 +8,7 @@ import React from "react";
 const Header = () => {
   const isLogin = useAuthStore((s) => s.isLogin);
   const logout = useAuthStore((s) => s.logout);
+  const userName = useAuthStore((s) => s.userName);
 
   return (
     <header className="z-50 flex px-[30px] py-[10px] justify-between items-center bg-main">
@@ -21,8 +22,8 @@ const Header = () => {
         <div className="flex gap-[15px]">
           <Link href="/my" className="flex items-center gap-[4px]">
             <Image src="/icons/avatar.svg" alt="" width={18} height={18} />
-            <p className="text-white text-[18px] font-nanum-bold hover:font-nanum-extrabold">
-              000 님
+            <p className="text-white text-[18px] font-nanum-bold">
+              {userName!} 님
             </p>
           </Link>
           <button

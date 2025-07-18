@@ -36,7 +36,7 @@ const Main = () => {
         opacity: 0,
         duration: 3.5,
         ease: "power3.out",
-        stagger: 0.7,
+        stagger: 0.3,
       });
 
       tl.from(
@@ -88,7 +88,7 @@ const Main = () => {
       ref={containerRef}
       className="relative h-screen overflow-hidden flex flex-col items-center justify-center gap-[50px] bg-gradient-to-b from-main to-main/20"
     >
-      <div className="font-nanum-extrabold text-white lg:text-[72px] md:text-[62px] sm:text-[54px] text-[46px] mt-[-50px] text-glow z-[9999]">
+      <div className="font-nanum-extrabold text-white text-[40px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9999]">
         <h1 ref={h1Ref} className="ml-[-80px]">
           누구나 전문가처럼 쓰는 시대,
         </h1>
@@ -130,13 +130,41 @@ const Main = () => {
 
       {/* ─────── 아이콘들 ─────── */}
       {[
-        makeIcon(Icon1, 0, "top-[20%]  left-[6%]  w-[130px]"),
-        makeIcon(Icon2, 1, "bottom-[14%] left-[10%] w-[130px]"),
-        makeIcon(Icon3, 2, "top-[30%] right-[10%] w-[150px]"),
-        makeIcon(Icon4, 3, "top-[45%] left-[28%] w-[130px]"),
-        makeIcon(Icon5, 4, "top-[5%] left-[32%] w-[130px]"),
-        makeIcon(Icon6, 5, "top-[0%] right-[30%] w-[150px]"),
-        makeIcon(Icon7, 6, "top-[60%] right-[20%] w-[130px]"),
+        makeIcon(
+          Icon1,
+          0,
+          "top-[20%]  left-[6%] w-[100px] md:w-[110px] lg:w-[130px]"
+        ),
+        makeIcon(
+          Icon2,
+          1,
+          "bottom-[14%] left-[10%] w-[100px] md:w-[110px] lg:w-[130px]"
+        ),
+        makeIcon(
+          Icon3,
+          2,
+          "top-[30%] right-[10%] w-[120px] md:w-[130px] lg:w-[150px]"
+        ),
+        makeIcon(
+          Icon4,
+          3,
+          "top-[45%] left-[28%] w-[100px] md:w-[110px] lg:w-[130px]"
+        ),
+        makeIcon(
+          Icon5,
+          4,
+          "top-[5%] left-[32%] w-[100px] md:w-[110px] lg:w-[130px]"
+        ),
+        makeIcon(
+          Icon6,
+          5,
+          "top-[0%] right-[30%] w-[120px] md:w-[130px] lg:w-[150px]"
+        ),
+        makeIcon(
+          Icon7,
+          6,
+          "top-[60%] right-[20%] w-[100px] md:w-[110px] lg:w-[130px]"
+        ),
       ]}
     </section>
   );

@@ -9,7 +9,6 @@ export const PRICING_PLAN: PricingPlan[] = [
     name: "Free",
     price: 0,
     features: [
-      "별도 로그인 없이 바로 사용 가능",
       "기본 기능 모두 제공",
       "광고 포함, <b class='font-nanum-extrabold bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] bg-clip-text text-transparent'>기능별 1일 3회까지 무제한</b>",
       "초과 시 500자 제한",
