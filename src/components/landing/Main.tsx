@@ -36,7 +36,7 @@ const Main = () => {
         opacity: 0,
         duration: 3.5,
         ease: "power3.out",
-        stagger: 0.7,
+        stagger: 0.3,
       });
 
       tl.from(

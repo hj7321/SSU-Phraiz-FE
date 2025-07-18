@@ -5,17 +5,21 @@ import { cn } from "@/lib/utils";
 
 interface InputWithLabelProps extends React.ComponentProps<typeof Input> {
   label: string;
+  width?: number;
 }
 
 const InputWithLabel = React.forwardRef<HTMLInputElement, InputWithLabelProps>(
-  ({ id, label, className, ...inputProps }, ref) => {
+  ({ id, label, width, className, ...inputProps }, ref) => {
     return (
-      <div className="relative w-[250px]">
+      <div
+        className={cn("relative", !width && "w-[250px]", className)}
+        style={width ? { width } : undefined}
+      >
         <Input
           ref={ref}
           id={id}
           className={cn(
-            "peer pt-[30px] pb-[24px] pl-[16px] placeholder:text-[14px] placeholder:text-[#dcdcdc] text-[15.5px]",
+            "peer pt-[26px] pb-[24px] pl-[16px] placeholder:text-[14px] placeholder:text-[#dcdcdc] text-[15.5px]",
             className
           )}
           {...inputProps}
