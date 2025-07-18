@@ -44,12 +44,12 @@ const LandingSection = ({ data, idx }: LandingSectionProps) => {
     >
       <h1
         data-fade
-        className="md:text-[46px] text-[36px] font-nanum-extrabold [filter:drop-shadow(4px_4px_10px_rgba(0,0,0,0.2))] bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] bg-clip-text text-transparent mb-[-10px]"
+        className="text-[30px] sm:text-[36px] md:text-[46px] lg:text-[50px]  font-nanum-extrabold [filter:drop-shadow(4px_4px_10px_rgba(0,0,0,0.2))] bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] bg-clip-text text-transparent mb-[-10px]"
       >
         {data.title}
       </h1>
 
-      <div className="relative w-[300px] h-[200px] md:w-[360px] md:h-[240px]">
+      <div className="relative w-[240px] h-[160px] sm:w-[270px] sm:h-[180px] md:w-[300px] md:h-[200px] lg:w-[360px] lg:h-[240px]">
         <Image
           data-fade
           src={data.icon}
@@ -60,7 +60,7 @@ const LandingSection = ({ data, idx }: LandingSectionProps) => {
         />
       </div>
 
-      <div className="flex flex-wrap justify-center md:gap-[40px] gap-[20px] mt-[-10px]">
+      <div className="flex flex-wrap justify-center gap-[10px] sm:gap-[20px] md:gap-[26px] lg:gap-[40px] mt-[-10px]">
         {data.features.map((feature) => (
           <FeatureCard
             key={feature.title}
