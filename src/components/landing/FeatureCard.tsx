@@ -16,7 +16,7 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
     <Link
       href={href}
       className={clsx(
-        "relative w-[290px] h-[180px] md:w-[350px] md:h-[240px] rounded-[16px] border border-[#a294f9] bg-gradient-to-r from-white to-main/30 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer group"
+        "relative w-[270px] h-[160px] sm:w-[290px] sm:h-[180px] md:w-[350px] md:h-[240px] rounded-[16px] border border-[#a294f9] bg-gradient-to-r from-white to-main/30 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer group"
       )}
     >
       <div
@@ -54,14 +54,14 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
       >
         <h3
           data-fade
-          className="font-nanum-extrabold md:text-[23px] text-[19px]"
+          className="font-nanum-extrabold text-[17px] sm:text-[19px] md:text-[21px] lg:text-[23px]"
           dangerouslySetInnerHTML={{
             __html: `${feature.title}`,
           }}
         ></h3>
         <p
           data-fade
-          className="md:text-[16px] text-[13px] group-hover:opacity-50"
+          className="text-[12px] sm:text-[13px] md:text-[15px] lg:text-[16px] group-hover:opacity-50"
           dangerouslySetInnerHTML={{
             __html: `${feature.description}`,
           }}
