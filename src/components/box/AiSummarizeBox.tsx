@@ -10,45 +10,18 @@ import Image from "next/image";
 const HEADER_H = 72; // px
 
 // 모드 선택 버튼 타입 정의
-type SummarizeMode =
-  | "한줄 요약"
-  | "전체 요약"
-  | "문단별 요약"
-  | "핵심 요약"
-  | "질문 기반 요약"
-  | "타겟 요약";
+type SummarizeMode = "한줄 요약" | "전체 요약" | "문단별 요약" | "핵심 요약" | "질문 기반 요약" | "타겟 요약";
 
 // 모드 선택 버튼 UI 컴포넌트
-const ModeSelector = ({
-  activeMode,
-  setActiveMode,
-  targetAudience,
-  setTargetAudience,
-}: {
-  activeMode: SummarizeMode;
-  setActiveMode: (mode: SummarizeMode) => void;
-  targetAudience: string;
-  setTargetAudience: (style: string) => void;
-}) => {
-  const modes: SummarizeMode[] = [
-    "한줄 요약",
-    "전체 요약",
-    "문단별 요약",
-    "핵심 요약",
-    "질문 기반 요약",
-  ];
+const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudience }: { activeMode: SummarizeMode; setActiveMode: (mode: SummarizeMode) => void; targetAudience: string; setTargetAudience: (style: string) => void }) => {
+  const modes: SummarizeMode[] = ["한줄 요약", "전체 요약", "문단별 요약", "핵심 요약", "질문 기반 요약"];
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const customButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node) &&
-        customButtonRef.current &&
-        !customButtonRef.current.contains(event.target as Node)
-      ) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
         setIsPopoverOpen(false);
       }
     }
@@ -66,65 +39,28 @@ const ModeSelector = ({
     setIsPopoverOpen((prev) => !prev);
   };
 
-  const baseButtonClass =
-    "h-11 rounded-full text-medium font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
-  const inactiveClass =
-    "bg-purple-100 border border-purple-600/30 hover:bg-purple-200/60";
-  const activeClass =
-    "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
+  const baseButtonClass = "h-11 rounded-full text-medium font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
+  const inactiveClass = "bg-purple-100 border border-purple-600/30 hover:bg-purple-200/60";
+  const activeClass = "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
 
   return (
     <div className="flex w-full gap-3">
       {modes.map((mode) => (
-        <button
-          key={mode}
-          onClick={() => handleModeClick(mode)}
-          className={clsx(
-            "flex-1",
-            baseButtonClass,
-            activeMode === mode ? activeClass : inactiveClass
-          )}
-        >
+        <button key={mode} onClick={() => handleModeClick(mode)} className={clsx("flex-1", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
           {mode}
         </button>
       ))}
       <div className="relative flex-1">
-        <button
-          ref={customButtonRef}
-          onClick={handleCustomClick}
-          className={clsx(
-            "w-full",
-            baseButtonClass,
-            "relative gap-2",
-            activeMode === "타겟 요약" ? activeClass : inactiveClass
-          )}
-        >
+        <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
           타겟 요약
-          <Image
-            src="/icons/프리미엄2.svg"
-            alt=""
-            width={45}
-            height={45}
-            className="absolute top-[-20px] right-[-6px]"
-          />
+          <Image src="/icons/프리미엄2.svg" alt="" width={45} height={45} className="absolute top-[-20px] right-[-6px]" />
         </button>
         {isPopoverOpen && (
-          <div
-            ref={popoverRef}
-            className="absolute top-full mt-4 w-80 z-50 p-0.5"
-            style={{ left: "50%", transform: "translateX(-50%)" }}
-          >
+          <div ref={popoverRef} className="absolute top-full mt-4 w-80 z-50 p-0.5" style={{ left: "50%", transform: "translateX(-50%)" }}>
             <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
               <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
-              <p className="text-sm text-gray-600 mb-2">
-                요약 내용을 전달할 대상을 입력하세요. (20자 이내)
-              </p>
-              <textarea
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
-                maxLength={20}
-                className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400"
-              />
+              <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
+              <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
             </div>
           </div>
         )}
@@ -142,10 +78,7 @@ const AiSummarizeBox = () => {
       ticking = true;
       requestAnimationFrame(() => {
         const offset = Math.max(HEADER_H - window.scrollY, 0);
-        document.documentElement.style.setProperty(
-          "--header-offset",
-          `${offset}px`
-        );
+        document.documentElement.style.setProperty("--header-offset", `${offset}px`);
         ticking = false;
       });
     };
@@ -173,18 +106,15 @@ const AiSummarizeBox = () => {
       "문단별 요약": "by-paragraph",
       "핵심 요약": "key-points",
       "질문 기반 요약": "question-based",
-      "타겟 요약": "targeted",
+      "타겟 요약": "targeted"
     };
     const apiMode = modeMap[activeMode];
 
     // API에 보낼 데이터를 구성합니다.
     const requestData = {
       text: inputText,
-      question:
-        activeMode === "질문 기반 요약"
-          ? "질문 입력 (여기서 UI에서 받은 질문값으로 대체 필요)"
-          : undefined, // TODO: UI에서 질문 입력 받는 부분 추가 필요
-      target: activeMode === "타겟 요약" ? targetAudience : undefined,
+      question: activeMode === "질문 기반 요약" ? "질문 입력 (여기서 UI에서 받은 질문값으로 대체 필요)" : undefined, // TODO: UI에서 질문 입력 받는 부분 추가 필요
+      target: activeMode === "타겟 요약" ? targetAudience : undefined
     };
 
     try {
@@ -205,51 +135,24 @@ const AiSummarizeBox = () => {
         <h1 className="text-2xl font-bold text-gray-800">AI 요약</h1>
       </header>
       <div className="px-4">
-        <ModeSelector
-          activeMode={activeMode}
-          setActiveMode={setActiveMode}
-          targetAudience={targetAudience}
-          setTargetAudience={setTargetAudience}
-        />
+        <ModeSelector activeMode={activeMode} setActiveMode={setActiveMode} targetAudience={targetAudience} setTargetAudience={setTargetAudience} />
       </div>
-      <div
-        className={clsx(
-          "flex flex-1 rounded-lg shadow-lg overflow-hidden border bg-white",
-          open ? "w-[calc(100vw_-_457px)]" : "w-[calc(100vw_-_243px)]"
-        )}
-      >
+      <div className={clsx("flex flex-1 rounded-lg shadow-lg overflow-hidden border bg-white", open ? "w-[calc(100vw_-_457px)]" : "w-[calc(100vw_-_243px)]")}>
         <div className="w-1/2 border-r p-4 flex flex-col">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="내용을 입력하세요."
-            className="flex-1 w-full resize-none outline-none text-base"
-            disabled={isLoading}
-          ></textarea>
+          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="내용을 입력하세요." className="flex-1 w-full resize-none outline-none text-base" disabled={isLoading}></textarea>
           <div className="flex justify-between items-center mt-4">
             <button className="text-sm text-gray-600 flex items-center gap-1 hover:text-purple-600">
               <span>⤴</span> 파일 업로드하기
             </button>
-            <button
-              onClick={handleApiCall}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 font-semibold"
-              disabled={isLoading || !inputText.trim()}
-            >
+            <button onClick={handleApiCall} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 font-semibold" disabled={isLoading || !inputText.trim()}>
               {isLoading ? "요약 중..." : "요약하기"}
             </button>
           </div>
         </div>
         <div className="w-1/2 p-4 relative bg-gray-50">
-          <div className="w-full h-full whitespace-pre-wrap text-gray-800">
-            {isLoading
-              ? "요약 생성 중..."
-              : outputText || "여기에 요약 결과가 표시됩니다."}
-          </div>
+          <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10">{isLoading ? "요약 생성 중..." : outputText || "여기에 요약 결과가 표시됩니다."}</div>
           {outputText && (
-            <button
-              onClick={() => navigator.clipboard.writeText(outputText)}
-              className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full"
-            >
+            <button onClick={() => navigator.clipboard.writeText(outputText)} className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full">
               <Copy className="h-4 w-4" />
             </button>
           )}
