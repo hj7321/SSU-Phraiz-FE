@@ -21,3 +21,32 @@ export const selfLogin = async ({ id, pw }: LoginType) => {
     throw error;
   }
 };
+
+interface OAuthTokenResponseData {
+  accessToken: string;
+  memberId: number;
+  id: string;
+  email: string;
+  role: string;
+}
+
+// 소셜 로그인 토큰 발급
+export const requestOAuthToken = async (
+  code: string
+): Promise<OAuthTokenResponseData> => {
+  const path = "/oauth/token";
+
+  try {
+    const response = await api.post<OAuthTokenResponseData>(path, {
+      code: code,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("[requestOAuthToken] Axios 에러: ", error);
+    } else {
+      console.error("[requestOAuthToken] 일반 에러: ", error);
+    }
+    throw error;
+  }
+};
