@@ -1,64 +1,14 @@
 "use client";
 
-import { BASE_URL } from "@/apis/api";
-import { selfLogin } from "@/apis/login.api";
 import InputWithLabel from "@/components/ui/input/InputWithLabel";
-import { useAuthStore } from "@/stores/auth.store";
-import { useMutation } from "@tanstack/react-query";
+import useLoginForm from "@/hooks/useLoginForm";
+
 import clsx from "clsx";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 export default function LoginPage() {
-  const router = useRouter();
-
-  const [id, setId] = useState<string>("");
-  const [pw, setPw] = useState<string>("");
-
-  const login = useAuthStore((s) => s.login);
-
-  // 로그인 뮤테이션
-  const { mutate: loginMutate, isPending: isLoggingIn } = useMutation({
-    mutationKey: ["selfLogin"],
-    mutationFn: selfLogin,
-    onSuccess: (response) => {
-      login(response.data.id);
-      console.log("✅ 로그인 완료", response);
-      alert("로그인이 성공적으로 완료되었습니다!");
-      router.push("/"); // 로그인 성공 시 홈페이지로 이동
-    },
-    onError: (err) => {
-      console.error("❌ 로그인 실패", err);
-      alert(`로그인에 실패했습니다: ${err}`);
-    },
-  });
-
-  // 로그인 폼 제출 핸들러
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // 모든 필드 입력 확인
-    if (!id || !pw) {
-      alert("모든 필드를 입력해주세요.");
-      return;
-    }
-
-    loginMutate({ id, pw });
-  };
-
-  // 소셜 로그인 핸들러
-  const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
-    const redirectUrl = encodeURIComponent(
-      `https://ssu-phraiz-fe.vercel.app/login/oauth`
-    );
-
-    // 백엔드의 소셜 로그인 인증 시작 URL
-    const socialLoginUrl = `${BASE_URL}/oauth2/authorization/${provider}?redirectUrl=${redirectUrl}`;
-
-    // 사용자를 해당 URL로 리다이렉션
-    //  Next.js 환경에서는 window.location.origin을 사용하여 현재 도메인을 가져오는 것이 안전함
-    window.location.href = socialLoginUrl;
-  };
+  const { id, setId, pw, setPw, handleLogin, handleSocialLogin, isLoggingIn } =
+    useLoginForm();
 
   return (
     <section className="bg-gradient-to-b from-main to-main/20 h-[100vh] w-full flex flex-col gap-[20px] justify-center items-center">
