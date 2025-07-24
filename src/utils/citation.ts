@@ -1,4 +1,3 @@
-import Cite from "citation-js";
 import "@citation-js/plugin-doi";
 import "@citation-js/plugin-bibtex";
 
@@ -9,6 +8,12 @@ import "@citation-js/plugin-bibtex";
 //     template: "apa",
 //   });
 // }
+
+export async function toAPA(doi: string) {
+  const r = await fetch(`/api/citation?doi=${doi}`);
+  if (!r.ok) throw new Error((await r.json()).error);
+  return (await r.json()).apa as string;
+}
 
 // const zoteroItem = {
 //   itemType: "journalArticle",
@@ -23,26 +28,26 @@ import "@citation-js/plugin-bibtex";
 //   language: "ko",
 // };
 
-const cslItem = {
-  type: "article-journal",
-  title: "도파민 터지는 세상에서 나는 왜 우울한가",
-  author: [{ family: "장", given: "래혁" }],
-  "container-title": "브레인",
-  issued: { "date-parts": [[2024, 1]] },
-  volume: "103",
-  page: "8-10",
-  ISSN: "1975-5627",
-  URL: "https://www-dbpia-…",
-  language: "ko",
-};
+// const cslItem = {
+//   type: "article-journal",
+//   title: "도파민 터지는 세상에서 나는 왜 우울한가",
+//   author: [{ family: "장", given: "래혁" }],
+//   "container-title": "브레인",
+//   issued: { "date-parts": [[2024, 1]] },
+//   volume: "103",
+//   page: "8-10",
+//   ISSN: "1975-5627",
+//   URL: "https://www-dbpia-…",
+//   language: "ko",
+// };
 
-export async function toAPA() {
-  const cite = new Cite(cslItem); // plugin-zotero 덕분에 그대로 OK
-  console.log(
-    cite.format("bibliography", {
-      template: "apa",
-      lang: "ko-KR",
-      format: "text",
-    })
-  );
-}
+// export async function toAPA() {
+//   const cite = new Cite(cslItem); // plugin-zotero 덕분에 그대로 OK
+//   console.log(
+//     cite.format("bibliography", {
+//       template: "apa",
+//       lang: "ko-KR",
+//       format: "text",
+//     })
+//   );
+// }
