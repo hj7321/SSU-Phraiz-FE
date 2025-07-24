@@ -225,7 +225,7 @@ const Sidebar = React.forwardRef<
     return (
       <div
         ref={ref}
-        className="group peer hidden md:block"
+        className="group peer hidden sm:block"
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -245,7 +245,7 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             /* ───────────── 공통 ───────────── */
-            "fixed inset-y-0 z-10 hidden md:flex",
+            "fixed inset-y-0 z-10 hidden sm:flex",
 
             /* 헤더가 보일 땐 72px 아래, 사라지면 0px */
             "top-[var(--header-offset)]",
