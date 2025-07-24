@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Input } from "../ui/input/input";
 import SelectScrollable from "../ui/select/SelectScrollable";
 import { useAuthStore } from "@/stores/auth.store";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const ChangeExistedCitationBox = () => {
   const [citationValue, setCitationValue] = useState<string>("");
