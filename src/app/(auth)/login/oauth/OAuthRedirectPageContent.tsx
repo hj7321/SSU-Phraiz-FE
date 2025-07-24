@@ -15,7 +15,7 @@ const OAuthRedirectPageContent = () => {
     mutationFn: requestOAuthToken,
     onSuccess: (response) => {
       login(response.accessToken, response.id);
-      alert("소셜 로그인이 성공적으로 완료되었습니다!");
+      alert(`${response.id}님, 안녕하세요!`);
       router.push("/");
     },
     onError: (err) => {
