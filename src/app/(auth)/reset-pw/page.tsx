@@ -1,3 +1,70 @@
+"use client";
+
+import InputWithLabel from "@/components/ui/input/InputWithLabel";
+import useSignupForm from "@/hooks/useSignupForm";
+import clsx from "clsx";
+import Link from "next/link";
+
 export default function ResetPwPage() {
-  return <div>비밀번호 재설정 페이지</div>;
+  const { email, setEmail, isEmailInvalid, emailErrorMessage } =
+    useSignupForm();
+
+  const handleSendResetPwLink = (e: React.FormEvent) => {
+    e.preventDefault();
+  };
+
+  return (
+    <section className="bg-gradient-to-b from-main to-main/20 h-[100vh] w-full flex flex-col gap-[20px] justify-center items-center">
+      <form
+        onSubmit={handleSendResetPwLink}
+        className="flex flex-col gap-[35px] bg-white px-[50px] py-[60px] rounded-[12px] [filter:drop-shadow(0px_0px_10px_rgba(0,0,0,0.4))] mt-[-100px] items-center"
+      >
+        <div className="flex flex-col items-center gap-[8px]">
+          <h1 className="font-nanum-extrabold text-[22px]">
+            비밀번호 재설정하기
+          </h1>
+          <div className="text-[13px] flex flex-col items-center">
+            <p>회원가입 시 등록한 이메일을 입력해 주세요.</p>
+            <p>해당 이메일로 비밀번호 재설정 링크를 전송해 드립니다.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-[10px]">
+          <InputWithLabel
+            id="email"
+            name="email"
+            type="email"
+            label="이메일"
+            placeholder="phraiz@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            isInvalid={isEmailInvalid}
+          />
+          {emailErrorMessage && (
+            <small className="text-[11.5px] mt-[-4.5px] text-red-500">
+              {emailErrorMessage}
+            </small>
+          )}
+          <button
+            type="submit"
+            className={clsx(
+              "text-[14px] w-[255px]  text-white py-[10px] rounded-[4px]",
+              isEmailInvalid || !email
+                ? "bg-main/40"
+                : "bg-main/70 hover:bg-main"
+            )}
+            disabled={isEmailInvalid || !email}
+          >
+            비밀번호 재설정 링크 전송
+          </button>
+        </div>
+        <Link
+          href="/login"
+          className="text-[12px] mt-[-15px] text-[#595959] hover:text-black"
+        >
+          로그인 페이지로 이동
+        </Link>
+      </form>
+    </section>
+  );
 }

@@ -16,11 +16,16 @@ const LandingSection = ({ data, idx }: LandingSectionProps) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   useFadeInOnScroll(sectionRef);
 
-  // // Nature 2024년 논문
-  // console.log(toAPA("10.1038/s41586-024-07225-0"));
-  // // IEEE 1995년 논문 (URL 형태도 OK)
-  // console.log(toAPA("https://doi.org/10.1109/5.771073"));
-
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       console.log(await toAPA("10.1038/s41586-024-07225-0"));
+  //       console.log(await toAPA("https://doi.org/10.1109/5.771073"));
+  //     } catch (e) {
+  //       console.error("APA 변환 실패:", e);
+  //     }
+  //   })();
+  // }, []);
   // const [apa, setApa] = useState(null);
 
   // useEffect(() => {

@@ -34,12 +34,12 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
     onSuccess: (response) => {
       login(response.data.accessToken, response.data.id);
       console.log("✅ 로그인 완료", response);
-      alert("로그인이 성공적으로 완료되었습니다!");
+      alert(`${response.data.id}님, 안녕하세요!`);
       router.push("/"); // 로그인 성공 시 홈페이지로 이동
     },
     onError: (err) => {
-      console.error("❌ 로그인 실패", err);
-      alert(`로그인에 실패했습니다: ${err}`);
+      console.error("❌ 로그인 실패: ", err.message);
+      alert(err.message);
     },
   });
 
@@ -49,7 +49,7 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
     e.preventDefault();
     // 모든 필드 입력 확인
     if (!id || !pw) {
-      alert("모든 필드를 입력해주세요.");
+      alert("아이디와 비밀번호를 모두 입력해주세요.");
       return;
     }
 
