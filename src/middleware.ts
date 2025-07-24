@@ -24,5 +24,5 @@ export async function middleware(request: NextRequest) {
 
 // AUTH_PATHS에 정의된 경로에 대해서만 미들웨어를 적용함
 export const config = {
-  matcher: AUTH_PATHS,
+  matcher: ["/login", "/signup"],
 };
