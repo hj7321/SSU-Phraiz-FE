@@ -26,7 +26,13 @@ export const useAuthStore = create<AuthState>()(
           userName: name,
           planTier: "Free",
         }),
-      logout: () => set({ isLogin: false, planTier: null }),
+      logout: () =>
+        set({
+          isLogin: false,
+          accessToken: null,
+          userName: null,
+          planTier: null,
+        }),
       userName: null,
       setUserName: (name) => set({ userName: name }),
       planTier: "Free",
@@ -34,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );

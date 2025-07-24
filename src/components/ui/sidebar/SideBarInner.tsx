@@ -56,8 +56,8 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
                 asChild
                 data-active={activeTab === key}
                 onClick={() => handleSelect(key)}
-                className="w-full flex items-center gap-[5px] py-[18px] rounded-none px-3 transition hover:bg-muted/70
-   data-[active=true]:bg-muted data-[active=true]:font-medium"
+                className="w-full flex items-center gap-[5px] py-[18px] rounded-none px-3 transition hover:bg-sidebar-accent/80
+   data-[active=true]:bg-bg-sidebar-accent data-[active=true]:font-medium"
               >
                 <button>
                   <Icon className="size-5 shrink-0" />

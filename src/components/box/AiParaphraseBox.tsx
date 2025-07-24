@@ -6,6 +6,8 @@ import { useSidebar } from "../ui/sidebar/sidebar";
 import { Copy } from "lucide-react";
 import { requestParaphrase, ParaphraseApiMode } from "@/apis/paraphrase.api";
 import Image from "next/image";
+import { useAuthStore } from "@/stores/auth.store";
+import { useRouter } from "next/navigation";
 
 const HEADER_H = 72;
 
@@ -162,8 +164,17 @@ const AiParaphraseBox = () => {
   const [customStyle, setCustomStyle] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const isLogin = useAuthStore((s) => s.isLogin);
+  const router = useRouter();
+
   // handleApiCall 함수를 이렇게 수정합니다.
   const handleApiCall = async () => {
+    if (!isLogin) {
+      alert("로그인 후에 이용해주세요.");
+      router.push("/login");
+      return;
+    }
+
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
@@ -199,10 +210,10 @@ const AiParaphraseBox = () => {
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
       {/* 헤더 */}
-      <header className="flex justify-between items-center px-4">
+      <header className="flex justify-between items-center px-[3px]">
         <h1 className="text-2xl font-bold text-gray-800">AI 문장 변환</h1>
       </header>
-      <div className="px-4">
+      <div className="px-[3px]">
         <ModeSelector
           activeMode={activeMode}
           setActiveMode={setActiveMode}
@@ -237,7 +248,7 @@ const AiParaphraseBox = () => {
           </div>
         </div>
         <div className="w-1/2 p-4 relative bg-gray-50">
-          <div className="w-full h-full whitespace-pre-wrap text-gray-800">
+          <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10">
             {isLoading
               ? "결과 생성 중..."
               : outputText || "여기에 변환 결과가 표시됩니다."}

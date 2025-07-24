@@ -6,6 +6,8 @@ import { useSidebar } from "../ui/sidebar/sidebar";
 import { Copy } from "lucide-react";
 import { requestSummarize, SummarizeApiMode } from "@/apis/summarize.api";
 import Image from "next/image";
+import { useAuthStore } from "@/stores/auth.store";
+import { useRouter } from "next/navigation";
 
 const HEADER_H = 72; // px
 
@@ -162,7 +164,16 @@ const AiSummarizeBox = () => {
   const [targetAudience, setTargetAudience] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const isLogin = useAuthStore((s) => s.isLogin);
+  const router = useRouter();
+
   const handleApiCall = async () => {
+    if (!isLogin) {
+      alert("로그인 후에 이용해주세요.");
+      router.push("/login");
+      return;
+    }
+
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
@@ -201,10 +212,10 @@ const AiSummarizeBox = () => {
 
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
-      <header className="flex justify-between items-center px-4">
+      <header className="flex justify-between items-center px-[3px]">
         <h1 className="text-2xl font-bold text-gray-800">AI 요약</h1>
       </header>
-      <div className="px-4">
+      <div className="px-[3px]">
         <ModeSelector
           activeMode={activeMode}
           setActiveMode={setActiveMode}
@@ -227,8 +238,9 @@ const AiSummarizeBox = () => {
             disabled={isLoading}
           ></textarea>
           <div className="flex justify-between items-center mt-4">
-            <button className="text-sm text-gray-600 flex items-center gap-1 hover:text-purple-600">
-              <span>⤴</span> 파일 업로드하기
+            <button className="flex items-center gap-[6px]">
+              <Image src="/icons/upload.svg" alt="" width={22} height={22} />
+              <p className="hover:font-nanum-bold">파일 업로드하기</p>
             </button>
             <button
               onClick={handleApiCall}
@@ -240,7 +252,7 @@ const AiSummarizeBox = () => {
           </div>
         </div>
         <div className="w-1/2 p-4 relative bg-gray-50">
-          <div className="w-full h-full whitespace-pre-wrap text-gray-800">
+          <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10">
             {isLoading
               ? "요약 생성 중..."
               : outputText || "여기에 요약 결과가 표시됩니다."}
