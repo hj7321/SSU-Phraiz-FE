@@ -10,7 +10,10 @@ export const logout = async () => {
     return response;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[logout] Axios 에러: ", error);
+      if (error.response?.data.code) {
+        console.error("[logout] Axios 에러: ", error.response.data.message);
+        throw new Error(error.response.data.message);
+      } else console.error("[logout] Axios 에러: ", error);
     } else {
       console.error("[logout] 일반 에러: ", error);
     }

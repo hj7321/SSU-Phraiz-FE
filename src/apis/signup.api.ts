@@ -11,7 +11,10 @@ export const sendEmail = async (email: string) => {
     return response;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[sendEmail] Axios 에러: ", error);
+      if (error.response?.data.code) {
+        console.error("[sendEmail] Axios 에러: ", error.response.data.message);
+        throw new Error(error.response.data.message);
+      } else console.error("[sendEmail] Axios 에러: ", error);
     } else {
       console.error("[sendEmail] 일반 에러: ", error);
     }
@@ -34,9 +37,38 @@ export const checkEmailNumber = async ({
     return response;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[checkEmailNumber] Axios 에러: ", error);
+      if (error.response?.data.code) {
+        console.error(
+          "[checkEmailNumber] Axios 에러: ",
+          error.response.data.message
+        );
+        throw new Error(error.response.data.message);
+      } else console.error("[checkEmailNumber] Axios 에러: ", error);
     } else {
       console.error("[checkEmailNumber] 일반 에러: ", error);
+    }
+    throw error;
+  }
+};
+
+// 아이디 중복 확인
+export const checkIdDuplicated = async (id: string) => {
+  const path = "/members/checkId";
+
+  try {
+    const response = await api.post(path, { id: id });
+    return response;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.data.code) {
+        console.error(
+          "[checkIdDuplicated] Axios 에러: ",
+          error.response.data.message
+        );
+        throw new Error(error.response.data.message);
+      } else console.error("[checkIdDuplicated] Axios 에러: ", error);
+    } else {
+      console.error("[checkIdDuplicated] 일반 에러: ", error);
     }
     throw error;
   }
@@ -55,7 +87,10 @@ export const signup = async ({ id, pw, email }: SignupType) => {
     return response;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[signup] Axios 에러: ", error);
+      if (error.response?.data.code) {
+        console.error("[signup] Axios 에러: ", error.response.data.message);
+        throw new Error(error.response.data.message);
+      } else console.error("[signup] Axios 에러: ", error);
     } else {
       console.error("[signup] 일반 에러: ", error);
     }

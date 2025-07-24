@@ -38,15 +38,12 @@
   font-style: normal;
 }
 
-html {
-  /* 세로 스크롤바 공간을 항상 확보해 두기 */
-  scrollbar-gutter: stable;
-  /* height: 100%; */
-}
-
 body {
   font-family: "NanumSquareAcr";
-  /* height: 100%; */
+}
+
+html {
+  scrollbar-gutter: stable; /* ← 스크롤바 생겨도 레이아웃 안 흔들림 */
 }
 
 :root {

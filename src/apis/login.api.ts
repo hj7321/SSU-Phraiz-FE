@@ -14,7 +14,10 @@ export const selfLogin = async ({ id, pw }: LoginType) => {
     return response;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[selfLogin] Axios 에러: ", error);
+      if (error.response?.data.code) {
+        console.error("[selfLogin] Axios 에러: ", error.response.data.message);
+        throw new Error(error.response.data.message);
+      } else console.error("[selfLogin] Axios 에러: ", error);
     } else {
       console.error("[selfLogin] 일반 에러: ", error);
     }
@@ -43,7 +46,13 @@ export const requestOAuthToken = async (
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("[requestOAuthToken] Axios 에러: ", error);
+      if (error.response?.data.code) {
+        console.error(
+          "[requestOAuthToken] Axios 에러: ",
+          error.response.data.message
+        );
+        throw new Error(error.response.data.message);
+      } else console.error("[requestOAuthToken] Axios 에러: ", error);
     } else {
       console.error("[requestOAuthToken] 일반 에러: ", error);
     }
