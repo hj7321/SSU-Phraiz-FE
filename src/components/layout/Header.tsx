@@ -1,14 +1,29 @@
 "use client";
 
+import { logout } from "@/apis/logout.api";
 import { useAuthStore } from "@/stores/auth.store";
+import { useMutation } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
 const Header = () => {
   const isLogin = useAuthStore((s) => s.isLogin);
-  const logout = useAuthStore((s) => s.logout);
+  const authLogout = useAuthStore((s) => s.logout);
   const userName = useAuthStore((s) => s.userName);
+
+  const { mutate: logoutMutate } = useMutation({
+    mutationKey: ["logout"],
+    mutationFn: logout,
+    onSuccess: (response) => {
+      console.log("✅ 로그아웃 성공", response);
+      authLogout();
+    },
+    onError: (err) => {
+      console.error("❌ 로그아웃 실패: ", err.message);
+      alert(err.message);
+    },
+  });
 
   return (
     <header className="z-50 flex px-[30px] py-[10px] justify-between items-center bg-main">
@@ -27,7 +42,7 @@ const Header = () => {
             </p>
           </Link>
           <button
-            onClick={logout}
+            onClick={() => logoutMutate()}
             className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px] hover:font-nanum-extrabold text-[14px]"
           >
             로그아웃
