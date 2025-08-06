@@ -10,6 +10,7 @@ export type ServiceLink = {
   alt: string;
   label: string;
   title: string;
+  preTitle?: string;
   ctaText: string;
   features: ServiceFeature[];
 };
@@ -74,6 +75,7 @@ export const SERVICE_LINK: ServiceLink[] = [
     alt: "인용 생성",
     label: "인용 생성",
     title: "인용 생성 (Citation & Format Converter)",
+    preTitle: "인용 생성<br />(Citation & Format Converter)",
     ctaText: "인용 생성 기능 이용하러 가기",
     features: [
       {

@@ -88,17 +88,20 @@ const Main = () => {
       ref={containerRef}
       className="relative h-screen overflow-hidden flex flex-col items-center justify-center gap-[50px] bg-gradient-to-b from-main to-main/20"
     >
-      <div className="font-nanum-extrabold text-white text-[40px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9999]">
-        <h1 ref={h1Ref} className="ml-[-80px]">
+      <div className="font-nanum-extrabold text-white text-[30px] xs:text-[36px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9000]">
+        <h1 ref={h1Ref} className="ml-[0px] xs:ml-[-80px]">
           누구나 전문가처럼 쓰는 시대,
         </h1>
-        <h1 ref={h2Ref} className="text-right mr-[-80px] mt-[-5px]">
+        <h1
+          ref={h2Ref}
+          className="text-right mr-[0px] xs:mr-[-80px] mt-[0px] xs:mt-[-5px]"
+        >
           Phraiz로.
         </h1>
       </div>
       <Link
         href="/ai-paraphrase"
-        className="relative overflow-hidden group rounded-full bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] text-white py-[14px] px-[40px] hover:font-nanum-bold [filter:drop-shadow(0px_0px_8px_rgba(119,82,254,1))]"
+        className="relative overflow-hidden group rounded-full bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] text-white py-[12px] px-[30px] sm:py-[14px] sm:px-[40px] hover:font-nanum-bold [filter:drop-shadow(0px_0px_8px_rgba(119,82,254,1))] text-[14px] sm:text-[16px]"
       >
         {/* ─── 텍스트 래퍼 ─── */}
         <span className="relative block h-full overflow-hidden">
@@ -133,37 +136,37 @@ const Main = () => {
         makeIcon(
           Icon1,
           0,
-          "top-[20%]  left-[6%] w-[100px] md:w-[110px] lg:w-[130px]"
+          "top-[24%] md:top-[22%] lg:top-[20%] left-[6%] w-[60px] xs:w-[70px] sm:w-[80px] md:w-[100px] lg:w-[130px]"
         ),
         makeIcon(
           Icon2,
           1,
-          "bottom-[14%] left-[10%] w-[100px] md:w-[110px] lg:w-[130px]"
+          "bottom-[20%] lg:bottom-[14%] left-[10%] w-[60px] xs:w-[70px] sm:w-[80px] md:w-[100px] lg:w-[130px]"
         ),
         makeIcon(
           Icon3,
           2,
-          "top-[30%] right-[10%] w-[120px] md:w-[130px] lg:w-[150px]"
+          "top-[27%] md:top-[25%] lg:top-[30%] right-[10%] w-[80px] xs:w-[90px] sm:w-[100px] md:w-[120px] lg:w-[150px]"
         ),
         makeIcon(
           Icon4,
           3,
-          "top-[45%] left-[28%] w-[100px] md:w-[110px] lg:w-[130px]"
+          "top-[43%] lg:top-[45%] left-[5%] md:left-[20%] lg:left-[28%] w-[60px] xs:w-[70px] sm:w-[80px] md:w-[100px] lg:w-[130px]"
         ),
         makeIcon(
           Icon5,
           4,
-          "top-[5%] left-[32%] w-[100px] md:w-[110px] lg:w-[130px]"
+          "top-[15%] sm:top-[10%] lg:top-[5%] left-[32%] w-[60px] xs:w-[70px] sm:w-[80px] md:w-[100px] lg:w-[130px]"
         ),
         makeIcon(
           Icon6,
           5,
-          "top-[0%] right-[30%] w-[120px] md:w-[130px] lg:w-[150px]"
+          "top-[3%] lg:top-[0%] right-[30%] w-[80px] xs:w-[90px] sm:w-[100px] md:w-[120px] lg:w-[150px]"
         ),
         makeIcon(
           Icon7,
           6,
-          "top-[60%] right-[20%] w-[100px] md:w-[110px] lg:w-[130px]"
+          "top-[60%] right-[20%] w-[60px] xs:w-[70px] sm:w-[80px] md:w-[100px] lg:w-[130px]"
         ),
       ]}
     </section>

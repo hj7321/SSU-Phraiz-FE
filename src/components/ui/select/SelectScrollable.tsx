@@ -32,7 +32,8 @@ export const SelectScrollable = ({
       <SelectTrigger
         className={cn(
           // shadcn Input과 유사한 스타일 적용
-          "flex h-9 rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors",
+          "flex w-full md:w-2/3 lg:w-1/2 h-[26px] sm:h-[30px] md:h-[36px] rounded-md border border-input bg-transparent px-3 py-1 shadow-sm transition-colors",
+          "text-[12px] sm:text-[14px] md:text-[16px]",
           "placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring",
           "disabled:cursor-not-allowed disabled:opacity-50",
           "justify-between items-center" // 아이콘과 값 사이 정렬을 위해 추가
@@ -75,7 +76,7 @@ export const SelectScrollable = ({
                     <strong className="font-nanum-bold">{form.name}</strong>{" "}
                     {form.fullName && `(${form.fullName})`}
                   </p>
-                  <span className="ml-2 whitespace-nowrap rounded-md bg-accent px-2 py-0.5 text-xs text-muted-foreground">
+                  <span className="ml-2 whitespace-nowrap rounded-md bg-accent px-2 py-0.5 text-[9px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-muted-foreground">
                     {form.description}
                   </span>
                 </div>

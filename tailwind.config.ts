@@ -9,6 +9,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "430px", // 사용자 정의
+        sm: "640px", // 기본값과 동일
+        md: "768px", // 기본값과 동일
+        lg: "1024px", // 기본값과 동일
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
