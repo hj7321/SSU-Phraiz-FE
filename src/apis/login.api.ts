@@ -1,17 +1,20 @@
-import { LoginType } from "@/types/auth.type";
+import { LoginResponseData, LoginType } from "@/types/auth.type";
 import { api } from "./api";
 import axios from "axios";
 
 // 자체 로그인
-export const selfLogin = async ({ id, pw }: LoginType) => {
+export const selfLogin = async ({
+  id,
+  pw,
+}: LoginType): Promise<LoginResponseData> => {
   const path = "/members/login";
 
   try {
-    const response = await api.post(path, {
+    const response = await api.post<LoginResponseData>(path, {
       id: id,
       pwd: pw,
     });
-    return response;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {
@@ -25,22 +28,14 @@ export const selfLogin = async ({ id, pw }: LoginType) => {
   }
 };
 
-interface OAuthTokenResponseData {
-  accessToken: string;
-  memberId: number;
-  id: string;
-  email: string;
-  role: string;
-}
-
 // 소셜 로그인 토큰 발급
 export const requestOAuthToken = async (
   code: string
-): Promise<OAuthTokenResponseData> => {
+): Promise<LoginResponseData> => {
   const path = "/oauth/token";
 
   try {
-    const response = await api.post<OAuthTokenResponseData>(path, {
+    const response = await api.post<LoginResponseData>(path, {
       code: code,
     });
     return response.data;

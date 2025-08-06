@@ -49,7 +49,7 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
       {/* 기본 내용 (hover 시 희미해짐) */}
       <div
         data-fade
-        className="z-10 flex flex-col items-center justify-center text-center gap-[10px] px-6 w-full h-full
+        className="z-10 flex flex-col items-center justify-center text-center gap-[10px] px-[16px] sm:px-[24px] w-full h-full
         "
       >
         <h3
@@ -61,7 +61,7 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
         ></h3>
         <p
           data-fade
-          className="text-[12px] sm:text-[13px] md:text-[15px] lg:text-[16px] group-hover:opacity-50"
+          className="text-[13px] md:text-[15px] lg:text-[16px] group-hover:opacity-50"
           dangerouslySetInnerHTML={{
             __html: `${feature.description}`,
           }}

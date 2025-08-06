@@ -3,6 +3,8 @@ import "./globals.css";
 import QueryProvider from "./_provider";
 import Header from "@/components/layout/Header";
 import Script from "next/script";
+import MobileHeader from "@/components/layout/MobileHeader";
+import MobileNavBar from "@/components/layout/MobileNavBar";
 
 export const metadata: Metadata = {
   title: "Phraiz",
@@ -46,8 +48,14 @@ export default function RootLayout({
           }}
         />
         <QueryProvider>
-          <Header />
-          <main className="min-h-screen">{children}</main>
+          <div className="block relative lg:hidden">
+            <MobileHeader />
+            <MobileNavBar />
+          </div>
+          <div className="hidden lg:block">
+            <Header />
+          </div>
+          <main className="min-h-screen w-full">{children}</main>
         </QueryProvider>
       </body>
     </html>
