@@ -1,15 +1,16 @@
 import axios from "axios";
 import { api } from "./api";
+import { SuccessResponseData } from "@/types/common.type";
 
 // 아이디 찾기(이메일로 아이디 전송)
-export const findId = async (email: string) => {
+export const findId = async (email: string): Promise<SuccessResponseData> => {
   const path = "/members/findId";
 
   try {
-    const response = await api.post(path, {
+    const response = await api.post<SuccessResponseData>(path, {
       email: email,
     });
-    return response;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {
