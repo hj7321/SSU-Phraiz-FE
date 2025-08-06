@@ -10,9 +10,11 @@ export default function NavBarLayout({
 }>) {
   return (
     <div className="flex h-screen">
-      <NavBar />
+      <div className="hidden lg:block">
+        <NavBar />
+      </div>
       <SidebarProvider defaultOpen={false}>
-        <main className="flex-1 flex">{children}</main>
+        <main className="w-full flex">{children}</main>
         <SideBar />
         <SearchDialog />
       </SidebarProvider>
