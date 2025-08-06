@@ -31,10 +31,10 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
   const { mutate: loginMutate, isPending: isLoggingIn } = useMutation({
     mutationKey: ["selfLogin", id],
     mutationFn: selfLogin,
-    onSuccess: (response) => {
-      login(response.data.accessToken, response.data.id);
-      console.log("✅ 로그인 완료", response);
-      alert(`${response.data.id}님, 안녕하세요!`);
+    onSuccess: (data) => {
+      login(data.accessToken, data.id);
+      console.log("✅ 로그인 완료", data);
+      alert(`${data.id}님, 안녕하세요!`);
       router.push("/"); // 로그인 성공 시 홈페이지로 이동
     },
     onError: (err) => {
@@ -48,7 +48,7 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // 모든 필드 입력 확인
-    if (!id || !pw) {
+    if (!id || !id.trim() || !pw || !pw.trim()) {
       alert("아이디와 비밀번호를 모두 입력해주세요.");
       return;
     }
