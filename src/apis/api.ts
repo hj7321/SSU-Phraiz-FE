@@ -22,6 +22,8 @@ api.interceptors.request.use(
       "/emails",
       "/checkId",
       "/findId",
+      "/findPwd",
+      "/resetPwd",
       "/oauth",
       "/oauth2",
       "/members/reissue",
