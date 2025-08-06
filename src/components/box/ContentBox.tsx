@@ -2,15 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
-import { useSidebar } from "../ui/sidebar/sidebar";
 import CreateNewCitationBox from "./CreateNewCitationBox";
 import ChangeExistedCitationBox from "./ChangeExistedCitationBox";
 
 const HEADER_H = 72; // px
 
 const ContentBox = () => {
-  const { open } = useSidebar();
-
   const [isCreatingNewCitation, setIsCreatingNewCitation] =
     useState<boolean>(true);
 
@@ -41,15 +38,20 @@ const ContentBox = () => {
   }, []);
 
   return (
-    <section className="flex flex-col h-full p-4 space-y-4">
+    <section className="flex flex-col w-full h-full p-4 gap-[6px] md:gap-[10px]">
       <header className="flex justify-between items-center px-[3px]">
-        <h1 className="text-2xl font-bold text-gray-800">인용 생성</h1>
+        <h1 className="text-[18px] xs:text-[20px] md:text-2xl font-bold text-gray-800">
+          인용 생성
+        </h1>
       </header>
-      <div className="flex gap-[15px]">
+      <div className="flex gap-[10px] md:gap-[15px] text-[12px] md:text-[16px]">
         <button
           onClick={() => setIsCreatingNewCitation(true)}
           className={clsx(
-            "rounded-full p-[10px] px-[20px] text-white bg-gradient-to-b from-[#4613ff] to-[#a37eff] [filter:drop-shadow(0px_0px_2px_rgba(70,19,255,1))] hover:shadow-[0_0_0_1px_#ab8ff2] hover:[filter:drop-shadow(0px_0px_4px_rgba(70,19,255,1))] transition-shadow duration-300"
+            "rounded-full py-[6px] px-[12px] md:py-[10px] md:px-[20px] text-white transition-all duration-300",
+            isCreatingNewCitation
+              ? "bg-gradient-to-b from-[#4613ff] to-[#a37eff] [filter:drop-shadow(0px_0px_2px_rgba(70,19,255,1))] hover:shadow-[0_0_0_1px_#ab8ff2]"
+              : "bg-[#a37eff]/40 hover:shadow-[0_0_0_1px_rgba(163,126,255,0.5)]"
           )}
         >
           새 인용문 생성
@@ -57,7 +59,10 @@ const ContentBox = () => {
         <button
           onClick={() => setIsCreatingNewCitation(false)}
           className={clsx(
-            "rounded-full p-[10px] px-[20px] text-white bg-gradient-to-b from-[#4613ff] to-[#a37eff] [filter:drop-shadow(0px_0px_2px_rgba(70,19,255,1))] hover:shadow-[0_0_0_1px_#ab8ff2] hover:[filter:drop-shadow(0px_0px_4px_rgba(70,19,255,1))] transition-shadow duration-300"
+            "rounded-full py-[6px] px-[12px] md:py-[10px] md:px-[20px] text-white  transition-all duration-300",
+            isCreatingNewCitation
+              ? "bg-[#a37eff]/40 hover:shadow-[0_0_0_1px_rgba(163,126,255,0.5)]"
+              : "bg-gradient-to-b from-[#4613ff] to-[#a37eff] [filter:drop-shadow(0px_0px_2px_rgba(70,19,255,1))]"
           )}
         >
           기존 인용문 변환
@@ -65,8 +70,8 @@ const ContentBox = () => {
       </div>
       <div
         className={clsx(
-          "flex flex-1 rounded-md shadow-md overflow-y-auto border my-[10px]",
-          open ? "w-[calc(100vw_-_437px)]" : "w-[calc(100vw_-_223px)]"
+          "flex flex-col rounded-md shadow-md overflow-y-auto border my-[10px] h-full w-full"
+          // open ? "lg:w-[calc(100vw_-_437px)]" : "lg:w-[calc(100vw_-_223px)]",
         )}
       >
         {/* 왼쪽 영역 */}
@@ -77,7 +82,7 @@ const ContentBox = () => {
         )}
 
         {/* 오른쪽 영역 */}
-        <div className="w-1/2 p-[16px]">{/* 여기에 결과 등 출력 */}</div>
+        <div className="w-full p-[16px] border-t">결과가 출력됩니다.</div>
       </div>
     </section>
   );

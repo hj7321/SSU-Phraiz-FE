@@ -1,13 +1,14 @@
 import axios from "axios";
 import { api } from "./api";
+import { SuccessResponseData } from "@/types/common.type";
 
 // 로그아웃
-export const logout = async () => {
+export const logout = async (): Promise<SuccessResponseData> => {
   const path = "/members/logout";
 
   try {
-    const response = await api.post(path);
-    return response;
+    const response = await api.post<SuccessResponseData>(path);
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {

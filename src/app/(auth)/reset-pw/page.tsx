@@ -1,7 +1,9 @@
 "use client";
 
+import { sendResetPwLink } from "@/apis/findpw.api";
 import InputWithLabel from "@/components/ui/input/InputWithLabel";
 import useSignupForm from "@/hooks/useSignupForm";
+import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
 import Link from "next/link";
 
@@ -9,8 +11,26 @@ export default function ResetPwPage() {
   const { email, setEmail, isEmailInvalid, emailErrorMessage } =
     useSignupForm();
 
+  const {
+    mutate: sendResetPwLinkMutate,
+    isPending: isSendingResetPwLink,
+    isSuccess: isLinkSendSuccessful,
+  } = useMutation({
+    mutationKey: ["sendResetPwLink"],
+    mutationFn: sendResetPwLink,
+    onSuccess: (data) => {
+      console.log("✅ 비밀번호 재설정 링크 전송 성공", data);
+      alert("입력하신 이메일로 비밀번호 재설정 링크가 전송되었습니다.");
+    },
+    onError: (err) => {
+      console.error("❌ 비밀번호 재설정 링크 전송 실패: ", err.message);
+      alert(err.message);
+    },
+  });
+
   const handleSendResetPwLink = (e: React.FormEvent) => {
     e.preventDefault();
+    sendResetPwLinkMutate(email);
   };
 
   return (
@@ -49,13 +69,21 @@ export default function ResetPwPage() {
             type="submit"
             className={clsx(
               "text-[14px] w-[255px]  text-white py-[10px] rounded-[4px]",
-              isEmailInvalid || !email
+              isSendingResetPwLink ||
+                isEmailInvalid ||
+                !email ||
+                isLinkSendSuccessful
                 ? "bg-main/40"
                 : "bg-main/70 hover:bg-main"
             )}
-            disabled={isEmailInvalid || !email}
+            disabled={
+              isSendingResetPwLink ||
+              isEmailInvalid ||
+              !email ||
+              isLinkSendSuccessful
+            }
           >
-            비밀번호 재설정 링크 전송
+            {isSendingResetPwLink ? "전송 중..." : "비밀번호 재설정 링크 전송"}
           </button>
         </div>
         <Link

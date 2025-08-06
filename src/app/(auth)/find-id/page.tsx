@@ -18,8 +18,8 @@ export default function FindIdPage() {
   } = useMutation({
     mutationKey: ["findId"],
     mutationFn: findId,
-    onSuccess: (response) => {
-      console.log("✅ 아이디 전송 성공", response);
+    onSuccess: (data) => {
+      console.log("✅ 아이디 전송 성공", data);
       alert("입력하신 이메일로 아이디가 전송되었습니다.");
     },
     onError: (err) => {

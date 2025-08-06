@@ -1,14 +1,24 @@
 import axios from "axios";
 import { api } from "./api";
-import { CheckEmailNumberType, SignupType } from "@/types/auth.type";
+import {
+  CheckEmailNumberType,
+  CheckIdResponseData,
+  SignupResponseData,
+  SignupType,
+} from "@/types/auth.type";
+import { SuccessResponseData } from "@/types/common.type";
 
 // 이메일로 인증번호 전송
-export const sendEmail = async (email: string) => {
+export const sendEmail = async (
+  email: string
+): Promise<SuccessResponseData> => {
   const path = "/members/emails/mailSend";
 
   try {
-    const response = await api.post(path, { email: email });
-    return response;
+    const response = await api.post<SuccessResponseData>(path, {
+      email: email,
+    });
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {
@@ -26,15 +36,15 @@ export const sendEmail = async (email: string) => {
 export const checkEmailNumber = async ({
   email,
   emailNum,
-}: CheckEmailNumberType) => {
+}: CheckEmailNumberType): Promise<SuccessResponseData> => {
   const path = "/members/emails/mailAuthCheck";
 
   try {
-    const response = await api.post(path, {
+    const response = await api.post<SuccessResponseData>(path, {
       email: email,
       authNum: emailNum,
     });
-    return response;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {
@@ -52,12 +62,14 @@ export const checkEmailNumber = async ({
 };
 
 // 아이디 중복 확인
-export const checkIdDuplicated = async (id: string) => {
+export const checkIdDuplicated = async (
+  id: string
+): Promise<CheckIdResponseData> => {
   const path = "/members/checkId";
 
   try {
-    const response = await api.post(path, { id: id });
-    return response;
+    const response = await api.post<CheckIdResponseData>(path, { id: id });
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {
@@ -75,16 +87,20 @@ export const checkIdDuplicated = async (id: string) => {
 };
 
 // 회원가입
-export const signup = async ({ id, pw, email }: SignupType) => {
+export const signup = async ({
+  id,
+  pw,
+  email,
+}: SignupType): Promise<SignupResponseData> => {
   const path = "/members/signUp";
 
   try {
-    const response = await api.post(path, {
+    const response = await api.post<SignupResponseData>(path, {
       id: id,
       pwd: pw,
       email: email,
     });
-    return response;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.data.code) {
