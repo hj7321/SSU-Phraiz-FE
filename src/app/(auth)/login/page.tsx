@@ -70,7 +70,7 @@ export default function LoginPage() {
           <button
             type="submit"
             className={clsx(
-              "text-[14px] w-[255px]  text-white py-[10px] rounded-[4px] ",
+              "text-[14px] w-[255px] text-white py-[10px] rounded-[4px] ",
               isLoggingIn ? "bg-main/40" : "bg-main/70 hover:bg-main"
             )}
             disabled={isLoggingIn}
