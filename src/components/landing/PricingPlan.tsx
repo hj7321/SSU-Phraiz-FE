@@ -15,7 +15,7 @@ const PricingPlan = () => {
   return (
     <section
       className={clsx(
-        "h-[1500px] xs:h-[1600px] sm:h-[1000px] lg:h-[calc(100vh+30px)] w-full flex flex-col gap-[20px] justify-center items-center",
+        "h-[1700px] xs:h-[1600px] sm:h-[1000px] lg:h-[calc(100vh+30px)] w-full flex flex-col gap-[20px] justify-center items-center",
         pathname === "/"
           ? "bg-gradient-to-b from-main/60 to-main/20"
           : "pb-[120px] bg-gradient-to-b from-main to-main/20"
