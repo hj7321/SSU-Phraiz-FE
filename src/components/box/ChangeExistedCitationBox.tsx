@@ -8,8 +8,8 @@ import { useRouter } from "next/navigation";
 import { generateCitation } from "@/utils/citation";
 import clsx from "clsx";
 import { useCitationStore } from "@/stores/citation.store";
-import { useMutation } from "@tanstack/react-query";
-import { sendCitation } from "@/apis/citation.api";
+// import { useMutation } from "@tanstack/react-query";
+// import { sendCitation } from "@/apis/citation.api";
 
 const ChangeExistedCitationBox = () => {
   const [citationValue, setCitationValue] = useState<string>("");
@@ -17,23 +17,24 @@ const ChangeExistedCitationBox = () => {
     undefined
   );
   const [citationResult, setCitationResult] = useState<string>("");
+  console.log(citationResult);
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const setCitation = useCitationStore((s) => s.setCitation);
   const router = useRouter();
 
   // 인용문 전송 뮤테이션
-  const { mutate: sendCitationMutate } = useMutation({
-    mutationKey: ["sendCitation", citationResult],
-    mutationFn: sendCitation,
-    onSuccess: (data) => {
-      console.log("✅ 인용문 전달 성공", data);
-    },
-    onError: (err) => {
-      console.error("❌ 인용문 전달 실패: ", err.message);
-      alert(err.message);
-    },
-  });
+  // const { mutate: sendCitationMutate } = useMutation({
+  //   mutationKey: ["sendCitation", citationResult],
+  //   mutationFn: sendCitation,
+  //   onSuccess: (data) => {
+  //     console.log("✅ 인용문 전달 성공", data);
+  //   },
+  //   onError: (err) => {
+  //     console.error("❌ 인용문 전달 실패: ", err.message);
+  //     alert(err.message);
+  //   },
+  // });
 
   // 인용문 변환 핸들러
   const handleChangeCitation = () => {
