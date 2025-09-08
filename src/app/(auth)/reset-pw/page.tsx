@@ -18,8 +18,8 @@ export default function ResetPwPage() {
   } = useMutation({
     mutationKey: ["sendResetPwLink"],
     mutationFn: sendResetPwLink,
-    onSuccess: (data) => {
-      console.log("✅ 비밀번호 재설정 링크 전송 성공", data);
+    onSuccess: () => {
+      console.log("✅ 비밀번호 재설정 링크 전송 성공");
       alert("입력하신 이메일로 비밀번호 재설정 링크가 전송되었습니다.");
     },
     onError: (err) => {

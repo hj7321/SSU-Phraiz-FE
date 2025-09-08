@@ -24,13 +24,20 @@ const PricingPlan = () => {
       <h1 className="text-[26px] sm:text-[28px] md:text-[30px] lg:text-[34px] font-nanum-extrabold [filter:drop-shadow(4px_4px_4px_rgba(0,0,0,0.3))]">
         {pathname === "/" ? "Pricing Plan" : "플랜 업그레이드"}
       </h1>
-      <div className="flex flex-wrap justify-center gap-[20px]">
+      <div className="relative flex flex-wrap justify-center gap-[20px]">
         {PRICING_PLAN.map((plan) => (
           <div
             key={plan.name}
             className="flex flex-col gap-[10px] md:gap-[20px] rounded-[16px] bg-white h-[340px] w-[240px] sm:h-[350px] sm:w-[270px] md:h-[420px] md:w-[300px] p-[20px] [filter:drop-shadow(0px_0px_10px_rgba(0,0,0,0.3))] hover:cursor-pointer hover:[filter:drop-shadow(0px_0px_14px_rgba(0,0,0,0.6))] transition-transform duration-300 ease-in-out transform hover:scale-105"
           >
             <div>
+              <Image
+                src={plan.icon}
+                alt=""
+                width={70}
+                height={70}
+                className="absolute right-[5px] top-[5px]"
+              />
               <h1 className="font-nanum-extrabold text-[22px] sm:text-[24px] md:text-[26px] lg:text-[30px]">
                 {plan.name}
               </h1>
