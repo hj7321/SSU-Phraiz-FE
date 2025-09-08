@@ -14,16 +14,30 @@ const HEADER_H = 72; // px
 type SummarizeMode = "한줄 요약" | "전체 요약" | "문단별 요약" | "핵심 요약" | "질문 기반 요약" | "타겟 요약";
 
 // 모드 선택 버튼 UI 컴포넌트
-const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudience }: { activeMode: SummarizeMode; setActiveMode: (mode: SummarizeMode) => void; targetAudience: string; setTargetAudience: (style: string) => void }) => {
+const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudience, questionText, setQuestionText }: { activeMode: SummarizeMode; setActiveMode: (mode: SummarizeMode) => void; targetAudience: string; setTargetAudience: (style: string) => void; questionText: string; setQuestionText: (text: string) => void }) => {
   const modes: SummarizeMode[] = ["한줄 요약", "전체 요약", "문단별 요약", "핵심 요약", "질문 기반 요약"];
+
+  // 타겟 요약 팝업 상태
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const customButtonRef = useRef<HTMLButtonElement>(null);
 
+  // 질문 기반 요약 팝업 상태
+  const [isQuestionPopoverOpen, setIsQuestionPopoverOpen] = useState(false);
+  const questionPopoverRef = useRef<HTMLDivElement>(null);
+  const questionButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 외부 클릭 감지 (두 팝업 모두 처리)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // 타겟 요약 팝업 닫기
       if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
         setIsPopoverOpen(false);
+      }
+
+      // 질문 팝업 닫기
+      if (questionPopoverRef.current && !questionPopoverRef.current.contains(event.target as Node) && questionButtonRef.current && !questionButtonRef.current.contains(event.target as Node)) {
+        setIsQuestionPopoverOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -31,13 +45,23 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   }, []);
 
   const handleModeClick = (mode: SummarizeMode) => {
-    setActiveMode(mode);
-    setIsPopoverOpen(false);
+    if (mode === "질문 기반 요약") {
+      // 질문 기반 요약 클릭 시 팝업 토글
+      setActiveMode(mode);
+      setIsQuestionPopoverOpen((prev) => !prev);
+      setIsPopoverOpen(false); // 다른 팝업은 닫기
+    } else {
+      // 일반 모드 클릭
+      setActiveMode(mode);
+      setIsPopoverOpen(false);
+      setIsQuestionPopoverOpen(false);
+    }
   };
 
   const handleCustomClick = () => {
     setActiveMode("타겟 요약");
     setIsPopoverOpen((prev) => !prev);
+    setIsQuestionPopoverOpen(false); // 다른 팝업은 닫기
   };
 
   const baseButtonClass = "h-9 md:h-11 text-[11px] md:text-sm whitespace-nowrap rounded-full font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
@@ -45,19 +69,34 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   const activeClass = "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
 
   return (
-    <div className="flex w-full gap-3 md:gap-3">
+    <div className="flex w-full gap-2 md:gap-3 relative">
       {modes.map((mode) => (
-        <button key={mode} onClick={() => handleModeClick(mode)} className={clsx("flex-1", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
-          {mode}
-        </button>
+        <div key={mode} className="relative flex-1">
+          <button ref={mode === "질문 기반 요약" ? questionButtonRef : undefined} onClick={() => handleModeClick(mode)} className={clsx("w-full", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
+            {mode}
+          </button>
+
+          {/* 질문 기반 요약 팝업 */}
+          {mode === "질문 기반 요약" && isQuestionPopoverOpen && (
+            <div ref={questionPopoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+              <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
+                <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
+                <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+              </div>
+            </div>
+          )}
+        </div>
       ))}
+
+      {/* 타겟 요약 버튼, 팝업 */}
       <div className="relative flex-1">
         <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
           타겟 요약
-          <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+          <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
         </button>
         {isPopoverOpen && (
-          <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-50 p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+          <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
             <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
               <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
               <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
@@ -93,6 +132,7 @@ const AiSummarizeBox = () => {
   const [outputText, setOutputText] = useState("");
   const [activeMode, setActiveMode] = useState<SummarizeMode>("한줄 요약");
   const [targetAudience, setTargetAudience] = useState("");
+  const [questionText, setQuestionText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const isLogin = useAuthStore((s) => s.isLogin);
@@ -122,7 +162,7 @@ const AiSummarizeBox = () => {
     // API에 보낼 데이터를 구성합니다.
     const requestData = {
       text: inputText,
-      question: activeMode === "질문 기반 요약" ? "질문 입력 (여기서 UI에서 받은 질문값으로 대체 필요)" : undefined, // TODO: UI에서 질문 입력 받는 부분 추가 필요
+      question: activeMode === "질문 기반 요약" ? questionText : undefined,
       target: activeMode === "타겟 요약" ? targetAudience : undefined
     };
 
@@ -144,7 +184,7 @@ const AiSummarizeBox = () => {
         <h1 className="text-lg md:text-2xl font-bold text-gray-800">AI 요약</h1>
       </header>
       <div className="px-[3px]">
-        <ModeSelector activeMode={activeMode} setActiveMode={setActiveMode} targetAudience={targetAudience} setTargetAudience={setTargetAudience} />
+        <ModeSelector activeMode={activeMode} setActiveMode={setActiveMode} targetAudience={targetAudience} setTargetAudience={setTargetAudience} questionText={questionText} setQuestionText={setQuestionText} />
       </div>
       <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
         <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
