@@ -1,5 +1,6 @@
 export type PricingPlan = {
   name: string;
+  icon: string;
   monthPrice?: string;
   yearPrice?: string;
   monthTokenLimit: string;
@@ -9,6 +10,7 @@ export type PricingPlan = {
 export const PRICING_PLAN: PricingPlan[] = [
   {
     name: "Free",
+    icon: "/icons/grade_free.png",
     monthTokenLimit: "100,000",
     features: {
       "AI 문장 변환": "표준·학술적·창의적·유창성·실험적<br />모드",
@@ -18,6 +20,7 @@ export const PRICING_PLAN: PricingPlan[] = [
   },
   {
     name: "Basic",
+    icon: "/icons/grade_basic.png",
     monthPrice: "4,900",
     yearPrice: "49,000",
     monthTokenLimit: "2,900,000",
@@ -32,6 +35,7 @@ export const PRICING_PLAN: PricingPlan[] = [
   },
   {
     name: "Standard",
+    icon: "/icons/grade_standard.png",
     monthPrice: "9,900",
     yearPrice: "99,000",
     monthTokenLimit: "6,800,000",
@@ -46,6 +50,7 @@ export const PRICING_PLAN: PricingPlan[] = [
   },
   {
     name: "Pro",
+    icon: "/icons/grade_pro.png",
     monthPrice: "12,900",
     yearPrice: "119,000",
     monthTokenLimit: "무제한",

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import CreateNewCitationBox from "./CreateNewCitationBox";
 import ChangeExistedCitationBox from "./ChangeExistedCitationBox";
+import { useCitationStore } from "@/stores/citation.store";
 
 const HEADER_H = 72; // px
 
@@ -11,9 +12,8 @@ const ContentBox = () => {
   const [isCreatingNewCitation, setIsCreatingNewCitation] =
     useState<boolean>(true);
 
-  // const {mutate} = useMutation({
-  //   mutationKey: ["createCitation", urlValue,]
-  // })
+  const newCitation = useCitationStore((s) => s.newCitation);
+  const changedCitation = useCitationStore((s) => s.changedCitation);
 
   useEffect(() => {
     let ticking = false;
@@ -82,7 +82,10 @@ const ContentBox = () => {
         )}
 
         {/* 오른쪽 영역 */}
-        <div className="w-full p-[16px] border-t">결과가 출력됩니다.</div>
+        <div className="w-full p-[16px] border-t">
+          {isCreatingNewCitation && (newCitation ?? "결과가 출력됩니다.")}
+          {!isCreatingNewCitation && (changedCitation ?? "결과가 출력됩니다.")}
+        </div>
       </div>
     </section>
   );
