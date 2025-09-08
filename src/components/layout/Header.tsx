@@ -34,16 +34,16 @@ const Header = () => {
         Phraiz
       </Link>
       {isLogin ? (
-        <div className="flex gap-[15px]">
-          <Link href="/my" className="flex items-center gap-[4px]">
-            <Image src="/icons/avatar.svg" alt="" width={18} height={18} />
-            <p className="text-white text-[18px] font-nanum-bold">
+        <div className="flex items-center gap-[15px]">
+          <Link href="/pricing-plan" className="flex items-center gap-[4px]">
+            <Image src="/icons/grade_free.png" alt="" width={50} height={50} />
+            <p className="text-white text-[18px] font-nanum-bold ml-[-7px]">
               {userName!} 님
             </p>
           </Link>
           <button
             onClick={() => logoutMutate()}
-            className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px] hover:font-nanum-extrabold text-[14px]"
+            className="bg-gradient-to-r from-white to-main backdrop-blur-md border-[0.2px] border-white/60 rounded-full py-[6px] px-[24px] hover:font-nanum-extrabold text-[14px] h-fit"
           >
             로그아웃
           </button>

@@ -6,36 +6,60 @@ import SelectScrollable from "../ui/select/SelectScrollable";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { sendUrl } from "@/apis/citation.api";
+import { sendCitation, sendUrl } from "@/apis/citation.api";
 import { v7 as uuidv7 } from "uuid";
 import clsx from "clsx";
+import { generateCitation } from "@/utils/citation";
+import { useCitationStore } from "@/stores/citation.store";
 
 const CreateNewCitationBox = () => {
   const [urlValue, setUrlValue] = useState<string>("");
   const [selectedForm, setSelectedForm] = useState<string | undefined>(
     undefined
   );
+  const [citationResult, setCitationResult] = useState<string>("");
 
   const isLogin = useAuthStore((s) => s.isLogin);
+  const setCitation = useCitationStore((s) => s.setCitation);
   const router = useRouter();
 
-  console.log("urlValue:", urlValue);
-  console.log("selectedForm:", selectedForm);
-
-  // 인용문 생성 뮤테이션
+  // CSL-JSON 생성 뮤테이션
   const { mutate: sendUrlMutate, isPending: isSendingUrl } = useMutation({
     mutationKey: ["sendUrl", urlValue, selectedForm],
     mutationFn: sendUrl,
     onSuccess: (data) => {
-      console.log("✅ 인용문 생성 성공", data);
+      console.log("✅ CSL-JSON 생성 성공", data);
+      const result = generateCitation(data.csl, selectedForm!);
+      if (result !== "") {
+        setCitationResult(result);
+        setCitation(result);
+      }
+      sendCitationMutate({
+        citeId: data.citeId,
+        citation: result,
+        style: selectedForm!,
+      });
     },
     onError: (err) => {
-      console.error("❌ 인용문 생성 실패: ", err.message);
+      console.error("❌ CSL-JSON 생성 실패: ", err.message);
       alert(err.message);
     },
   });
 
-  // 인용문 생성 핸들러
+  // 인용문 전송 뮤테이션
+  const { mutate: sendCitationMutate } = useMutation({
+    mutationKey: ["sendCitation", citationResult],
+    mutationFn: sendCitation,
+    onSuccess: (data) => {
+      console.log("✅ 인용문 전달 성공", data);
+    },
+    onError: (err) => {
+      console.error("❌ 인용문 전달 실패: ", err.message);
+      alert(err.message);
+    },
+  });
+
+  // CSL-JSON 생성 핸들러
   const handleCreateCitation = () => {
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
@@ -44,7 +68,7 @@ const CreateNewCitationBox = () => {
     }
 
     if (!urlValue || !urlValue.trim()) {
-      alert("URL을 입력해주세요.");
+      alert("URL 또는 DOI를 입력해주세요.");
       return;
     }
     if (!selectedForm) {
@@ -60,7 +84,7 @@ const CreateNewCitationBox = () => {
     <div className="p-[16px] flex flex-col gap-[10px] md:gap-[15px] w-full">
       <div className="flex flex-col gap-[2px] md:gap-[5px]">
         <h1 className="text-[14px] sm:text-[16px] md:text-[18px]">
-          URL을 입력하세요
+          URL 또는 DOI를 입력하세요
         </h1>
         <Input
           type="text"

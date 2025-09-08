@@ -49,6 +49,7 @@ html {
 :root {
   --header-h: 72px; /* 헤더 고정 높이 */
   --header-offset: var(--header-h); /* 스크롤에 따라 0~72px 로 변함 */
+  --content-gap: 16px;
 }
 
 @layer base {

@@ -234,12 +234,20 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
-            "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
-            variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+            "relative bg-transparent transition-[width] duration-200 ease-linear",
+
+            // 기본(=expanded): 사이드바 폭 + gap
+            "w-[calc(var(--sidebar-width)_+_var(--content-gap))]",
+
+            // 아이콘 레일(=collapsed)일 때: 아이콘 폭 + gap
+            "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_var(--content-gap))]",
+
+            // 완전 숨김(offcanvas)일 때는 gap만 남기고 0으로도 가능 (원하는 동작 택1)
+            // "group-data-[collapsible=offcanvas]:w-0",
+            "group-data-[collapsible=offcanvas]:w-[var(--content-gap)]",
+
+            // 오른쪽 사이드바일 때 기존 회전 유지
+            "group-data-[side=right]:rotate-180"
           )}
         />
         <div

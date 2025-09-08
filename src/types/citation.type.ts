@@ -4,7 +4,7 @@ export type SendUrlType = {
 };
 
 export type SendCitationType = {
-  citeId: string;
+  citeId: number;
   citation: string;
   style: string;
 };
@@ -36,7 +36,7 @@ export type CSL = {
 };
 
 export type SendUrlResponseData = {
-  cite_id: number;
+  citeId: number;
   csl: CSL;
 };
 
