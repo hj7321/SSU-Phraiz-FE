@@ -23,6 +23,7 @@ export type LoginResponseData = {
   id: string;
   email: string;
   role: string;
+  planId: number;
 };
 
 export type SignupResponseData = {
