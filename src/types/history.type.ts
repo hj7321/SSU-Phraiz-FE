@@ -14,12 +14,18 @@ export type LatestHistory = {
   citeId: number;
 };
 
-export type History = {
+export type HistoryName = {
   id: number;
   name: string;
   lastUpdate: string;
 };
 
-export type HistoryWrapper = { histories: History[] };
+export type HistoryContent = {
+  id: number;
+  content: string;
+  lastUpdate: string;
+};
+
+export type HistoryWrapper = { histories: HistoryName[] };
 
 export type HistoryList = ApiResponse<HistoryWrapper>;

@@ -63,9 +63,9 @@ api.interceptors.response.use(
         );
 
         // 2. 서버가 새 accessToken 반환 → Zustand에 저장
-        const { accessToken, id } = res.data;
+        const { accessToken, id, planId } = res.data;
         console.log("🔑 재발급된 accessToken:", accessToken);
-        useAuthStore.getState().login(accessToken, id);
+        useAuthStore.getState().login(accessToken, id, planId);
 
         // 3. 원래 실패한 요청의 Authorization 헤더를 새 토큰으로 덮어쓰기
         originalRequest.headers = originalRequest.headers || {};

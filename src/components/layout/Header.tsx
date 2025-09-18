@@ -39,7 +39,7 @@ const Header = () => {
           <Link href="/pricing-plan" className="flex items-center gap-[4px]">
             {planTier && (
               <Image
-                src={`/icons/grade_${planTier}.png`}
+                src={`/icons/grade_${planTier.toLowerCase()}.png`}
                 alt=""
                 width={50}
                 height={50}
