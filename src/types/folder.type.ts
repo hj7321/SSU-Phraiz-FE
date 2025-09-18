@@ -13,4 +13,6 @@ export type Folder = {
   createdAt: string;
 };
 
-export type FolderList = ApiResponse<Folder>;
+export type FolderWrapper = { folders: Folder[] };
+
+export type FolderList = ApiResponse<FolderWrapper>;
