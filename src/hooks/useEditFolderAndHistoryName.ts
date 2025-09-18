@@ -1,38 +1,41 @@
+import { useEffect, useRef } from "react";
+import {
+  useMutation,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
+
 import { editFolderName } from "@/apis/folder.api";
 import { editHistoryName } from "@/apis/history.api";
-import { ServiceCode } from "@/types/common.type";
-import { FolderList } from "@/types/folder.type";
-import { HistoryList } from "@/types/history.type";
+import type { ServiceCode } from "@/types/common.type";
+import type { FolderList } from "@/types/folder.type";
+import type { HistoryList } from "@/types/history.type";
 import {
   updateFolderNameInCache,
   updateHistoryNameInCache,
 } from "@/utils/sidebarCache";
-import {
-  InfiniteData,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
 
-type EditFolderVars = { folderId: number; name: string };
-type EditHistoryVars = { historyId: number; name: string };
+/** optimistic update context */
 type Ctx<T> = { prev?: InfiniteData<T, number> };
 
 const useEditFolderAndHistoryName = (service?: ServiceCode) => {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
+  /** service가 뮤테이션 클로저에 고정되지 않도록 ref로 보관 */
   const serviceRef = useRef<ServiceCode | undefined>(service);
   useEffect(() => {
     serviceRef.current = service;
   }, [service]);
 
+  /** ───────────── 폴더 이름 변경 ───────────── */
   const { mutateAsync: editFolderNameAsync } = useMutation<
     void,
     Error,
-    EditFolderVars,
+    { folderId: number; name: string },
     Ctx<FolderList>
   >({
     mutationKey: ["editFolderName", service],
+    retry: 0, // 실패 시 재시도 금지 (alert/blur 루프 방지)
     mutationFn: async ({ folderId, name }) => {
       const svc = serviceRef.current;
       if (!svc) throw new Error("서비스가 설정되지 않았습니다.");
@@ -41,14 +44,15 @@ const useEditFolderAndHistoryName = (service?: ServiceCode) => {
     onMutate: async ({ folderId, name }) => {
       const svc = serviceRef.current;
       if (!svc) return {};
-      await queryClient.cancelQueries({ queryKey: ["sidebar-folder", svc] });
 
-      const prev = queryClient.getQueryData<InfiniteData<FolderList, number>>([
+      await qc.cancelQueries({ queryKey: ["sidebar-folder", svc] });
+
+      const prev = qc.getQueryData<InfiniteData<FolderList, number>>([
         "sidebar-folder",
         svc,
       ]);
 
-      queryClient.setQueryData(
+      qc.setQueryData(
         ["sidebar-folder", svc],
         (old: InfiniteData<FolderList, number> | undefined) =>
           updateFolderNameInCache(old, folderId, name)
@@ -56,26 +60,28 @@ const useEditFolderAndHistoryName = (service?: ServiceCode) => {
 
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (_err, _vars, ctx) => {
+      // 조용히 롤백만. 사용자 알림은 호출부에서 1회 처리.
       const svc = serviceRef.current;
-      if (svc && ctx?.prev)
-        queryClient.setQueryData(["sidebar-folder", svc], ctx.prev);
-      alert("폴더 이름 변경 중 오류가 발생했습니다.");
+      if (svc && ctx?.prev) {
+        qc.setQueryData(["sidebar-folder", svc], ctx.prev);
+      }
     },
     onSettled: () => {
       const svc = serviceRef.current;
-      if (!svc) return;
-      queryClient.invalidateQueries({ queryKey: ["sidebar-folder", svc] });
+      if (svc) qc.invalidateQueries({ queryKey: ["sidebar-folder", svc] });
     },
   });
 
+  /** ───────────── 히스토리 이름 변경 ───────────── */
   const { mutateAsync: editHistoryNameAsync } = useMutation<
     void,
     Error,
-    EditHistoryVars,
+    { historyId: number; name: string },
     Ctx<HistoryList>
   >({
     mutationKey: ["editHistoryName", service],
+    retry: 0,
     mutationFn: async ({ historyId, name }) => {
       const svc = serviceRef.current;
       if (!svc) throw new Error("서비스가 설정되지 않았습니다.");
@@ -84,14 +90,15 @@ const useEditFolderAndHistoryName = (service?: ServiceCode) => {
     onMutate: async ({ historyId, name }) => {
       const svc = serviceRef.current;
       if (!svc) return {};
-      await queryClient.cancelQueries({ queryKey: ["sidebar-history", svc] });
 
-      const prev = queryClient.getQueryData<InfiniteData<HistoryList, number>>([
+      await qc.cancelQueries({ queryKey: ["sidebar-history", svc] });
+
+      const prev = qc.getQueryData<InfiniteData<HistoryList, number>>([
         "sidebar-history",
         svc,
       ]);
 
-      queryClient.setQueryData(
+      qc.setQueryData(
         ["sidebar-history", svc],
         (old: InfiniteData<HistoryList, number> | undefined) =>
           updateHistoryNameInCache(old, historyId, name)
@@ -99,16 +106,15 @@ const useEditFolderAndHistoryName = (service?: ServiceCode) => {
 
       return { prev };
     },
-    onError: (_e, _v, ctx) => {
+    onError: (_err, _vars, ctx) => {
       const svc = serviceRef.current;
-      if (svc && ctx?.prev)
-        queryClient.setQueryData(["sidebar-history", svc], ctx.prev);
-      alert("히스토리 이름 변경 중 오류가 발생했습니다.");
+      if (svc && ctx?.prev) {
+        qc.setQueryData(["sidebar-history", svc], ctx.prev);
+      }
     },
     onSettled: () => {
       const svc = serviceRef.current;
-      if (!svc) return;
-      queryClient.invalidateQueries({ queryKey: ["sidebar-history", svc] });
+      if (svc) qc.invalidateQueries({ queryKey: ["sidebar-history", svc] });
     },
   });
 
