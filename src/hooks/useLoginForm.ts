@@ -32,7 +32,7 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
     mutationKey: ["selfLogin", id],
     mutationFn: selfLogin,
     onSuccess: (data) => {
-      login(data.accessToken, data.id);
+      login(data.accessToken, data.id, data.planId);
       console.log("✅ 로그인 완료", data);
       alert(`${data.id}님, 안녕하세요!`);
       router.push("/"); // 로그인 성공 시 홈페이지로 이동
