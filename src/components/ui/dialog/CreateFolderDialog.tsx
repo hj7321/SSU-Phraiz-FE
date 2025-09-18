@@ -48,8 +48,12 @@ const CreateFolderDialog = ({
       setPending(true);
       await onSubmit(trimmed);
       onOpenChange(false);
-    } catch (e: any) {
-      setErr(e?.message ?? "폴더 생성 중 오류가 발생했습니다.");
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setErr(e.message);
+      } else {
+        setErr("폴더 생성 중 오류가 발생했습니다.");
+      }
     } finally {
       setPending(false);
     }
