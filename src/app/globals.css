@@ -32,8 +32,7 @@
 
 @font-face {
   font-family: "ghanachoco";
-  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ghanachoco.woff")
-    format("woff");
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ghanachoco.woff") format("woff");
   font-weight: normal;
   font-style: normal;
 }
@@ -135,8 +134,7 @@ html {
 
 @layer utilities {
   .text-glow {
-    text-shadow: 4px 4px 6px rgba(255, 255, 255, 0.35),
-      4px 4px 16px rgb(100, 108, 252);
+    text-shadow: 4px 4px 6px rgba(255, 255, 255, 0.35), 4px 4px 16px rgb(100, 108, 252);
   }
 }
 
