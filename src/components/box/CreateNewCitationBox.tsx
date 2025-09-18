@@ -88,9 +88,14 @@ const CreateNewCitationBox = () => {
       queryClient.invalidateQueries({
         queryKey: ["sidebar-history", "cite"],
       });
-    } catch (err: any) {
-      console.error("❌ 인용 생성/전송 실패:", err?.message ?? err);
-      alert(err?.message ?? "요청 처리 중 오류가 발생했습니다.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("❌ 인용 생성/전송 실패:", err.message);
+        alert(err.message);
+      } else {
+        console.error("❌ 인용 생성/전송 실패:", err);
+        alert("요청 처리 중 오류가 발생했습니다.");
+      }
     }
   };
 
