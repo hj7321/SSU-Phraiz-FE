@@ -97,31 +97,28 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
                   !open && "justify-center"
                 )}
               >
-                {/* asChild → 여기서 native button으로 렌더 */}
-                <button
-                  type="button"
+                {/* ⬇️ div를 루트로 사용 (button 금지) */}
+                <div
+                  role="button"
+                  tabIndex={disabled ? -1 : 0}
+                  aria-disabled={disabled || undefined}
                   onClick={() => {
-                    if (disabled) return; // 기능 차단
+                    if (disabled) return;
                     handleSelect(key);
                   }}
-                  disabled={disabled} // 키보드 포커스/클릭 자연 차단
-                  tabIndex={disabled ? -1 : 0} // 포커스 제거(안전)
-                  aria-disabled={disabled}
                   className={clsx(
                     "w-full h-full flex items-center",
                     "hover:bg-sidebar-accent/80",
-                    disabled &&
-                      "opacity-40 cursor-not-allowed hover:bg-transparent"
+                    disabled && "opacity-40 cursor-not-allowed"
                   )}
                 >
                   <Icon className="size-5 shrink-0" />
                   {open && (
                     <span className="ml-1 truncate leading-none">
                       {TABS[key].label}
-                      {disabled}
                     </span>
                   )}
-                </button>
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           );
