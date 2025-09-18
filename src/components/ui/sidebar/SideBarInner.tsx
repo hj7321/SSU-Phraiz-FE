@@ -20,6 +20,7 @@ import { useNewWorkStore } from "@/stores/newWork.store";
 import { useHistoryStore } from "@/stores/history.store";
 import { useState } from "react";
 import CreateFolderDialog from "../dialog/CreateFolderDialog";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface SideBarInnerProps {
   activeTab: TabKey | null;
@@ -34,6 +35,9 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
   const matched = SERVICE_PATH.find((p) => pathname.includes(p.path));
   const service = matched ? matched.service : undefined;
 
+  const planTier = useAuthStore((s) => s.planTier);
+  const isFree = planTier === "Free";
+
   const queryClient = useQueryClient();
 
   const { mutateAsync: createFolderMutate } = useMutation({
@@ -45,14 +49,15 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
   });
 
   const handleSelect = async (k: TabKey) => {
+    if (k === "new-folder" && isFree) return;
+
     switch (k) {
       case "usage-history": {
         if (open) {
           setOpen(false);
-          setActiveTab(null); // 아이콘 활성화 해제
+          setActiveTab(null);
           return;
         }
-        // 열려 있지 않으면 열어 주기
         setOpen(true);
         break;
       }
@@ -69,7 +74,7 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
         break;
       }
     }
-    setActiveTab(k); // 아이콘 활성화만 변경
+    setActiveTab(k);
   };
 
   return (
@@ -78,24 +83,45 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
       <SidebarMenu className="mt-2">
         {(Object.keys(TABS) as TabKey[]).map((key) => {
           const Icon = TABS[key].icon;
+
+          const disabled = key === "new-folder" && isFree;
+
           return (
             <SidebarMenuItem key={key}>
               <SidebarMenuButton
+                asChild
                 data-active={activeTab === key}
-                onClick={() => handleSelect(key)}
                 className={clsx(
-                  "w-full h-11 flex items-center rounded-md px-3 transition",
-                  "hover:bg-sidebar-accent/80",
+                  "w-full h-11 rounded-md px-3 transition",
                   "data-[active=true]:bg-bg-sidebar-accent data-[active=true]:font-medium",
                   !open && "justify-center"
                 )}
               >
-                <Icon className="size-5 shrink-0" />
-                {open && (
-                  <span className="ml-1 truncate leading-none">
-                    {TABS[key].label}
-                  </span>
-                )}
+                {/* asChild → 여기서 native button으로 렌더 */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (disabled) return; // 기능 차단
+                    handleSelect(key);
+                  }}
+                  disabled={disabled} // 키보드 포커스/클릭 자연 차단
+                  tabIndex={disabled ? -1 : 0} // 포커스 제거(안전)
+                  aria-disabled={disabled}
+                  className={clsx(
+                    "w-full h-full flex items-center",
+                    "hover:bg-sidebar-accent/80",
+                    disabled &&
+                      "opacity-40 cursor-not-allowed hover:bg-transparent"
+                  )}
+                >
+                  <Icon className="size-5 shrink-0" />
+                  {open && (
+                    <span className="ml-1 truncate leading-none">
+                      {TABS[key].label}
+                      {disabled}
+                    </span>
+                  )}
+                </button>
               </SidebarMenuButton>
             </SidebarMenuItem>
           );
