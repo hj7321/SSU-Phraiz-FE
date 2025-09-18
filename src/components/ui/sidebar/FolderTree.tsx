@@ -2,34 +2,24 @@
 
 import { usePathname } from "next/navigation";
 import TreeNode from "./TreeNode";
-// import { useQuery } from "@tanstack/react-query";
-
-const dummy = [
-  { id: 1, name: "레포트 작성", children: [] },
-  { id: 2, name: "보수사항미완료내기", children: [] },
-  {
-    id: 3,
-    name: "발표 자료",
-    children: [
-      { id: 31, name: "자바 2장 본문 발표" },
-      { id: 32, name: "AI 윤리와 사회적 영향 발표" },
-    ],
-  },
-];
+import { SERVICE_PATH } from "@/constants/servicePath";
+import useFindFolderAndHistory from "@/hooks/useFindFolderAndHistory";
 
 const FolderTree = () => {
   const pathname = usePathname();
-  console.log(pathname);
+  const matched = SERVICE_PATH.find((p) => pathname.includes(p.path));
+  const service = matched ? matched.service : undefined;
 
-  // const {data} = useQuery({
-  //   queryKey: ["sidebar-history", pathname],
-  //   queryFn: () =>
-  // })
+  const { folderInfiniteQuery, historyInfiniteQuery } =
+    useFindFolderAndHistory(service);
+
+  console.log(folderInfiniteQuery.data);
+  console.log(historyInfiniteQuery.data);
 
   return (
     <ul className="space-y-1 text-sm">
-      {dummy.map((n) => (
-        <TreeNode key={n.id} node={n} />
+      {(historyInfiniteQuery.data ?? []).map((h) => (
+        <TreeNode key={h.id} node={{ id: h.id, name: h.name }} />
       ))}
     </ul>
   );

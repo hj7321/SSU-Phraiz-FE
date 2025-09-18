@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/stores/auth.store";
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-export const BASE_URL = "http://52.79.34.104/api";
+export const BASE_URL = "https://api.phraiz.com/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
