@@ -5,20 +5,21 @@ export type ParaphraseApiMode = "standard" | "academic" | "creative" | "fluency"
 interface ParaphraseRequest {
   text: string;
   userRequestMode?: string;
+  scale?: number;
 }
 
-// api 응답 데이터타입 정의
-interface ParaphraseResponse {
+export interface ParaphraseResponse {
   result: string;
+  resultHistoryId: number;
+  name: string;
+  remainingToken: number;
 
-  // 토큰 사용량 정보 (optional로 추가)
+  // 토큰 필드 (fallback용)
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
-
-  // 다른 가능한 토큰 필드명들도 대비
   tokens_used?: number;
   token_count?: number;
 }
