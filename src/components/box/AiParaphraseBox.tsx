@@ -7,7 +7,6 @@ import { requestParaphrase, ParaphraseApiMode } from "@/apis/paraphrase.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import { useHistoryStore } from "@/stores/history.store";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
