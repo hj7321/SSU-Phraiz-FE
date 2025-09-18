@@ -10,6 +10,17 @@ interface ParaphraseRequest {
 // api 응답 데이터타입 정의
 interface ParaphraseResponse {
   result: string;
+
+  // 토큰 사용량 정보 (optional로 추가)
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+
+  // 다른 가능한 토큰 필드명들도 대비
+  tokens_used?: number;
+  token_count?: number;
 }
 
 export const requestParaphrase = async (mode: ParaphraseApiMode, data: ParaphraseRequest): Promise<ParaphraseResponse> => {
