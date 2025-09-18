@@ -11,6 +11,9 @@ interface SummarizeRequest {
 // api 응답 데이터타입 정의
 interface SummarizeResponse {
   result: string;
+  historyId: number;
+  name: string;
+  remainingToken: number;
 
   // 토큰 사용량 정보 (optional로 추가)
   usage?: {
