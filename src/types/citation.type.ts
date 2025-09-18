@@ -9,11 +9,6 @@ export type SendCitationType = {
   style: string;
 };
 
-export type EditCitationFileNameType = {
-  citeId: string;
-  title: string;
-};
-
 export type CSLDate = {
   /** [ [YYYY, MM, DD] ] 형태 */
   "date-parts": [number, number?, number?][];

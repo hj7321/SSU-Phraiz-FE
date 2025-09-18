@@ -1,3 +1,4 @@
+import { PLAN_NUMBER } from "@/constants/planNumber";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -6,7 +7,7 @@ export type PlanTier = "Free" | "Basic" | "Standard" | "Pro";
 interface AuthState {
   isLogin: boolean;
   accessToken: string | null;
-  login: (token: string, userName: string) => void;
+  login: (token: string, userName: string, planId: number) => void;
   logout: () => void;
   userName: string | null;
   setUserName: (name: string) => void;
@@ -19,12 +20,12 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       isLogin: false,
       accessToken: null,
-      login: (token, name) =>
+      login: (token, name, planId) =>
         set({
           isLogin: true,
           accessToken: token,
           userName: name,
-          planTier: "Free",
+          planTier: PLAN_NUMBER[planId],
         }),
       logout: () =>
         set({

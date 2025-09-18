@@ -16,12 +16,14 @@ export const findHistoryList = async ({
   page,
   size,
 }: Service & FolderIdWithPageAndSize): Promise<HistoryList> => {
-  const path = folderId
-    ? `/${service}/histories/${folderId}`
-    : `/${service}/histories`;
+  const path = `/${service}/histories`;
   try {
     const response = await api.get<HistoryList>(path, {
-      params: { page: page ?? undefined, size: size ?? undefined },
+      params: {
+        page: page ?? undefined,
+        size: size ?? undefined,
+        folderId: folderId ?? undefined,
+      },
     });
     return response.data;
   } catch (error) {
