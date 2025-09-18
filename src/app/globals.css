@@ -139,3 +139,10 @@ html {
       4px 4px 16px rgb(100, 108, 252);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
