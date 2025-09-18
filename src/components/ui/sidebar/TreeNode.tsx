@@ -156,9 +156,13 @@ const TreeNode = ({
         });
       }
       setIsEditing(false);
-    } catch (e) {
+    } catch (err) {
       // 알림은 여기서 1회만
-      alert(isFolder ? "폴더 이름 변경 실패" : "히스토리 이름 변경 실패");
+      alert(
+        isFolder
+          ? `폴더 이름 변경 실패: ${err}`
+          : `히스토리 이름 변경 실패: ${err}`
+      );
       // 실패 시 편집 상태 유지 + 포커스 복원
       requestAnimationFrame(() => inputRef.current?.focus());
     } finally {
