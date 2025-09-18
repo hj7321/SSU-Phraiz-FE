@@ -14,7 +14,7 @@ const OAuthRedirectPageContent = () => {
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: requestOAuthToken,
     onSuccess: (data) => {
-      login(data.accessToken, data.id);
+      login(data.accessToken, data.id, data.planId ?? 1);
       alert(`${data.id}님, 안녕하세요!`);
       router.push("/");
     },

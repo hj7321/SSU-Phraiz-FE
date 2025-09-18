@@ -12,9 +12,12 @@ import { usePathname } from "next/navigation";
 
 const MobileNavBar = () => {
   const pathname = usePathname();
+
   const isLogin = useAuthStore((s) => s.isLogin);
   const authLogout = useAuthStore((s) => s.logout);
   const userName = useAuthStore((s) => s.userName);
+  const planTier = useAuthStore((s) => s.planTier);
+
   const isOpenNavbar = useNavbarStore((s) => s.isOpenNavbar);
   const closeNavbar = useNavbarStore((s) => s.closeNavbar);
 
@@ -52,10 +55,17 @@ const MobileNavBar = () => {
         {isLogin ? (
           <Link
             onClick={closeNavbar}
-            href="/my"
-            className="flex items-center gap-[4px] ml-[8px]"
+            href="/pricing-plan"
+            className="flex items-center gap-[4px]"
           >
-            <Image src="/icons/avatar.svg" alt="" width={18} height={18} />
+            {planTier && (
+              <Image
+                src={`/icons/grade_${planTier.toLowerCase()}.png`}
+                alt=""
+                width={50}
+                height={50}
+              />
+            )}
             <p className="text-white text-[18px] font-nanum-bold">
               {userName!} 님
             </p>

@@ -20,7 +20,7 @@ const ChangeExistedCitationBox = () => {
   console.log(citationResult);
 
   const isLogin = useAuthStore((s) => s.isLogin);
-  const setCitation = useCitationStore((s) => s.setCitation);
+  const setChangedCitation = useCitationStore((s) => s.setChangedCitation);
   const router = useRouter();
 
   // 인용문 전송 뮤테이션
@@ -56,7 +56,7 @@ const ChangeExistedCitationBox = () => {
     const result = generateCitation(citationValue, selectedForm);
     if (result !== "") {
       setCitationResult(result);
-      setCitation(result);
+      setChangedCitation(result);
     }
     // sendCitationMutate({
     //     // citeId: 없음...,
