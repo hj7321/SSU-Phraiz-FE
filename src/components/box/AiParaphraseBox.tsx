@@ -7,6 +7,9 @@ import { requestParaphrase, ParaphraseApiMode } from "@/apis/paraphrase.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
+import { usePlanRestriction } from "@/hooks/usePlanRestriction";
+import { useTokenUsage } from "@/hooks/useTokenUsage"; // 토큰 사용량 hook 추가
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const HEADER_H = 72; // px
 
@@ -15,40 +18,24 @@ type ParaphraseMode = "표준" | "학술적" | "창의적" | "유창성" | "문�
 
 const ToneBlendSlider = ({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
   return (
-    <div className="w-full bg-blue-50 rounded-lg shadow-2xl p-3">
-      {" "}
-      {/* ← w-80 대신 w-full */}
+    <div className="w-full bg-blue-50 rounded-lg border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-gray-600">정확성</span>
+        <span className="text-xs text-gray-600">기본</span>
         <div className="flex items-center gap-1">
           <span className="text-sm font-bold text-purple-600">{value}</span>
           <span className="text-xs text-gray-500">/ 100</span>
         </div>
-        <span className="text-xs text-gray-600">창의성</span>
+        <span className="text-xs text-gray-600">강조</span>
       </div>
       <div className="relative mb-2">
-        {/* 슬라이더 배경 그라데이션 */}
         <div className="h-1.5 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 rounded-full"></div>
-
-        {/* 실제 슬라이더 입력 */}
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className="absolute top-0 left-0 w-full h-1.5 bg-transparent appearance-none cursor-pointer slider-thumb"
-          style={{
-            background: "transparent"
-          }}
-        />
+        <input type="range" min="0" max="100" value={value} onChange={(e) => onChange(parseInt(e.target.value))} className="absolute top-0 left-0 w-full h-1.5 bg-transparent appearance-none cursor-pointer slider-thumb" style={{ background: "transparent" }} />
       </div>
-      {/* 모바일에서는 텍스트를 더 짧게 */}
       <div className="flex justify-between text-xs text-gray-500">
-        <span className="hidden sm:inline">원문에 충실</span>
-        <span className="sm:hidden">정확</span>
-        <span className="hidden sm:inline">자유로운 표현</span>
-        <span className="sm:hidden">창의</span>
+        <span className="hidden sm:inline">기본적으로 적용</span>
+        <span className="sm:hidden">기본</span>
+        <span className="hidden sm:inline">강하게 적용</span>
+        <span className="sm:hidden">강조</span>
       </div>
     </div>
   );
@@ -60,20 +47,14 @@ const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const customButtonRef = useRef<HTMLButtonElement>(null);
-  // 창의적 슬라이더 상태
-  const [isCreativeSliderOpen, setIsCreativeSliderOpen] = useState(false);
-  const creativeSliderRef = useRef<HTMLDivElement>(null);
-  const creativeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 요금제 제한 hook 추가
+  const { canUseFeature, getRequiredPlanName } = usePlanRestriction();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // 사용자 지정 팝업 퍼리
       if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
         setIsPopoverOpen(false);
-      }
-      // 창의적 슬라이더 팝업 처리
-      if (creativeSliderRef.current && !creativeSliderRef.current.contains(event.target as Node) && creativeButtonRef.current && !creativeButtonRef.current.contains(event.target as Node)) {
-        setIsCreativeSliderOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -81,64 +62,75 @@ const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, 
   }, []);
 
   const handleModeClick = (mode: ParaphraseMode) => {
+    // 기본 모드들(표준, 학술적, 창의적, 유창성, 문학적)은 모든 사용자가 사용 가능
     setActiveMode(mode);
     setIsPopoverOpen(false);
-
-    if (mode === "창의적") {
-      setIsCreativeSliderOpen(true); // 창의적 선택 시 슬라이더 팝업 열기
-    } else {
-      setIsCreativeSliderOpen(false); // 다른 모드 선택 시 슬라이더 팝업 닫기
-    }
   };
 
   const handleCustomClick = () => {
-    setActiveMode("사용자 지정");
-    setIsPopoverOpen((prev) => !prev);
-    setIsCreativeSliderOpen(false); // 사용자 지정 선택 시 슬라이더 닫기
+    // 사용자 지정 모드만 권한 체크
+    const canUse = canUseFeature("paraphrasing", "custom");
+    if (canUse) {
+      setActiveMode("사용자 지정");
+      setIsPopoverOpen((prev) => !prev);
+    }
   };
 
   const baseButtonClass = "h-9 md:h-11 text-[11px] md:text-sm whitespace-nowrap rounded-full font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
   const inactiveClass = "bg-purple-100 border border-purple-600/30 hover:bg-purple-200/60";
   const activeClass = "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
+  const disabledClass = "bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed opacity-50";
 
   return (
     <div className="w-full">
       <div className="flex w-full gap-2 md:gap-3">
         {modes.map((mode) => (
-          <div key={mode} className="relative flex-1">
-            <button ref={mode === "창의적" ? creativeButtonRef : undefined} onClick={() => handleModeClick(mode)} className={clsx("w-full", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
-              {mode}
-            </button>
-
-            {/* 창의적 모드 슬라이더 팝업 */}
-            {mode === "창의적" && isCreativeSliderOpen && (
-              <div ref={creativeSliderRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "left-1/2 -translate-x-1/2")}>
-                <div className="relative">
-                  {/* 뾰족한 삼각형 */}
-                  <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-1/2")}></div>
-
-                  <ToneBlendSlider value={creativityLevel} onChange={setCreativityLevel} />
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-        {/* 사용자 지정 버튼, 팝업 */}
-        <div className="relative flex-1">
-          <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "사용자 지정" ? activeClass : inactiveClass)}>
-            사용자 지정
-            <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+          <button key={mode} onClick={() => handleModeClick(mode)} className={clsx("flex-1", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
+            {mode}
           </button>
-          {isPopoverOpen && (
-            <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-50 p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
-              <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
-                <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
-                <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
-              </div>
-            </div>
+        ))}
+
+        {/* 사용자 지정 버튼만 요금제 제한 적용 */}
+        <div className="relative flex-1">
+          {canUseFeature("paraphrasing", "custom") ? (
+            // Basic 이상 사용자
+            <>
+              <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "사용자 지정" ? activeClass : inactiveClass)}>
+                사용자 지정
+                <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+              </button>
+              {isPopoverOpen && (
+                <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-50 p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                  <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
+                    <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                    <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
+                    <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            // Free 사용자: 툴팁과 함께 비활성화
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button disabled className={clsx("w-full", baseButtonClass, "relative gap-2", disabledClass)}>
+                    사용자 지정
+                    <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getRequiredPlanName("paraphrasing", "custom")} 플랜부터 사용 가능합니다</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
+      </div>
+
+      {/* Tone Blend Slider 표시 */}
+      <div className="mt-3">
+        <ToneBlendSlider value={creativityLevel} onChange={setCreativityLevel} />
       </div>
     </div>
   );
@@ -171,6 +163,10 @@ const AiParaphraseBox = () => {
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const router = useRouter();
+  const { canUseFeature } = usePlanRestriction();
+
+  // 토큰 사용량 관리 hook 추가
+  const { addTokenUsage, showTokenAlert } = useTokenUsage();
 
   const handleApiCall = async () => {
     if (!isLogin) {
@@ -178,6 +174,13 @@ const AiParaphraseBox = () => {
       router.push("/login");
       return;
     }
+
+    // 사용자 지정 모드만 권한 체크
+    if (activeMode === "사용자 지정" && !canUseFeature("paraphrasing", "custom")) {
+      alert("사용자 지정 모드는 Basic 플랜부터 이용 가능합니다.");
+      return;
+    }
+
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
@@ -195,12 +198,36 @@ const AiParaphraseBox = () => {
     const requestData = {
       text: inputText,
       userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined,
-      creativityLevel: activeMode === "창의적" ? creativityLevel : undefined
+      creativityLevel: creativityLevel
     };
 
     try {
       const response = await requestParaphrase(apiMode, requestData);
       setOutputText(response.result);
+
+      // 🔥 토큰 사용량 처리 추가
+      let tokensUsed = 0;
+
+      // API 응답에서 토큰 사용량 확인 (여러 가능한 필드명 체크)
+      if (response.usage?.total_tokens) {
+        tokensUsed = response.usage.total_tokens;
+      } else if (response.tokens_used) {
+        tokensUsed = response.tokens_used;
+      } else if (response.token_count) {
+        tokensUsed = response.token_count;
+      } else {
+        // API에 토큰 정보가 없는 경우 대략적인 계산
+        // 일반적으로 1토큰 ≈ 4글자 정도로 추정
+        const inputTokens = Math.ceil(inputText.length / 4);
+        const outputTokens = Math.ceil((response.result?.length || 0) / 4);
+        tokensUsed = inputTokens + outputTokens;
+      }
+
+      // 토큰 사용량 업데이트 및 alert 표시
+      if (tokensUsed > 0) {
+        addTokenUsage(tokensUsed);
+        showTokenAlert(tokensUsed);
+      }
     } catch (error) {
       console.error("API 요청 오류:", error);
       setOutputText("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");

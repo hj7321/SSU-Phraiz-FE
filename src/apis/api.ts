@@ -1,13 +1,13 @@
 import { useAuthStore } from "@/stores/auth.store";
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-export const BASE_URL = "http://52.79.34.104/api";
+export const BASE_URL = "https://api.phraiz.com/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: {
-    "Content-Type": "application/json",
-  },
+    "Content-Type": "application/json"
+  }
 });
 
 // 요청 인터셉터: 토큰 자동 부착
@@ -16,32 +16,17 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().accessToken;
 
-    const noAuthNeeded = [
-      "/signUp",
-      "/login",
-      "/emails",
-      "/checkId",
-      "/findId",
-      "/findPwd",
-      "/resetPwd",
-      "/oauth",
-      "/oauth2",
-      "/members/reissue",
-    ];
+    const noAuthNeeded = ["/signUp", "/login", "/emails", "/checkId", "/findId", "/findPwd", "/resetPwd", "/oauth", "/oauth2", "/members/reissue"];
 
     // URL 파싱해서 pathname만 비교
     const fullUrl = new URL(config.url!, config.baseURL || BASE_URL);
-    const isPublicRoute = noAuthNeeded.some((path) =>
-      fullUrl.pathname.startsWith(path)
-    );
+    const isPublicRoute = noAuthNeeded.some((path) => fullUrl.pathname.startsWith(path));
 
     // headers가 없을 경우 초기화
     config.headers = config.headers || {};
 
     if (token && !isPublicRoute) {
-      config.headers.Authorization = token.startsWith("Bearer ")
-        ? token
-        : `Bearer ${token}`;
+      config.headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
       console.log("✅ 요청에 토큰 붙임:", config.headers.Authorization);
     }
 
