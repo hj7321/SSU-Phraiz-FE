@@ -11,6 +11,7 @@ const Header = () => {
   const isLogin = useAuthStore((s) => s.isLogin);
   const authLogout = useAuthStore((s) => s.logout);
   const userName = useAuthStore((s) => s.userName);
+  const planTier = useAuthStore((s) => s.planTier);
 
   const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
@@ -36,7 +37,14 @@ const Header = () => {
       {isLogin ? (
         <div className="flex items-center gap-[15px]">
           <Link href="/pricing-plan" className="flex items-center gap-[4px]">
-            <Image src="/icons/grade_free.png" alt="" width={50} height={50} />
+            {planTier && (
+              <Image
+                src={`/icons/grade_${planTier}.png`}
+                alt=""
+                width={50}
+                height={50}
+              />
+            )}
             <p className="text-white text-[18px] font-nanum-bold ml-[-7px]">
               {userName!} 님
             </p>

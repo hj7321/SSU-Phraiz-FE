@@ -7,6 +7,10 @@ import { requestSummarize, SummarizeApiMode } from "@/apis/summarize.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
+import { usePlanRestriction } from "@/hooks/usePlanRestriction";
+import { useTokenUsage } from "@/hooks/useTokenUsage"; // 토큰 사용량 hook 추가
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQueryClient } from "@tanstack/react-query";
 
 const HEADER_H = 72; // px
 
@@ -15,7 +19,13 @@ type SummarizeMode = "한줄 요약" | "전체 요약" | "문단별 요약" | "�
 
 // 모드 선택 버튼 UI 컴포넌트
 const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudience, questionText, setQuestionText }: { activeMode: SummarizeMode; setActiveMode: (mode: SummarizeMode) => void; targetAudience: string; setTargetAudience: (style: string) => void; questionText: string; setQuestionText: (text: string) => void }) => {
-  const modes: SummarizeMode[] = ["한줄 요약", "전체 요약", "문단별 요약", "핵심 요약", "질문 기반 요약"];
+  const modes: SummarizeMode[] = [
+    "한줄 요약",
+    "전체 요약",
+    "문단별 요약",
+    "핵심 요약",
+    "질문 기반 요약" // 이 줄이 포함된 버전 유지
+  ];
 
   // 타겟 요약 팝업 상태
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -26,6 +36,9 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   const [isQuestionPopoverOpen, setIsQuestionPopoverOpen] = useState(false);
   const questionPopoverRef = useRef<HTMLDivElement>(null);
   const questionButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 요금제 제한 hook 추가
+  const { canUseFeature, getRequiredPlanName } = usePlanRestriction();
 
   // 외부 클릭 감지 (두 팝업 모두 처리)
   useEffect(() => {
@@ -45,64 +58,119 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   }, []);
 
   const handleModeClick = (mode: SummarizeMode) => {
-    if (mode === "질문 기반 요약") {
-      // 질문 기반 요약 클릭 시 팝업 토글
-      setActiveMode(mode);
+    // 기본 모드들(한줄, 전체, 문단별, 핵심)은 모든 사용자가 사용 가능
+    setActiveMode(mode);
+    setIsPopoverOpen(false);
+    setIsQuestionPopoverOpen(false);
+  };
+
+  const handleQuestionClick = () => {
+    // 질문 기반 요약만 권한 체크
+    const canUse = canUseFeature("summarize", "questionBased");
+    if (canUse) {
+      setActiveMode("질문 기반 요약");
       setIsQuestionPopoverOpen((prev) => !prev);
-      setIsPopoverOpen(false); // 다른 팝업은 닫기
-    } else {
-      // 일반 모드 클릭
-      setActiveMode(mode);
       setIsPopoverOpen(false);
-      setIsQuestionPopoverOpen(false);
     }
   };
 
   const handleCustomClick = () => {
-    setActiveMode("타겟 요약");
-    setIsPopoverOpen((prev) => !prev);
-    setIsQuestionPopoverOpen(false); // 다른 팝업은 닫기
+    // 타겟 요약만 권한 체크
+    const canUse = canUseFeature("summarize", "targeted");
+    if (canUse) {
+      setActiveMode("타겟 요약");
+      setIsPopoverOpen((prev) => !prev);
+      setIsQuestionPopoverOpen(false);
+    }
   };
 
   const baseButtonClass = "h-9 md:h-11 text-[11px] md:text-sm whitespace-nowrap rounded-full font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
   const inactiveClass = "bg-purple-100 border border-purple-600/30 hover:bg-purple-200/60";
   const activeClass = "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
+  const disabledClass = "bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed opacity-50";
 
   return (
     <div className="flex w-full gap-2 md:gap-3 relative">
+      {/* 기본 모드들은 모든 사용자가 사용 가능하므로 제한 없음 */}
       {modes.map((mode) => (
         <div key={mode} className="relative flex-1">
-          <button ref={mode === "질문 기반 요약" ? questionButtonRef : undefined} onClick={() => handleModeClick(mode)} className={clsx("w-full", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
+          <button onClick={() => handleModeClick(mode)} className={clsx("w-full", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
             {mode}
           </button>
-
-          {/* 질문 기반 요약 팝업 */}
-          {mode === "질문 기반 요약" && isQuestionPopoverOpen && (
-            <div ref={questionPopoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
-              <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
-                <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
-                <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
-              </div>
-            </div>
-          )}
         </div>
       ))}
 
-      {/* 타겟 요약 버튼, 팝업 */}
+      {/* 질문 기반 요약 버튼 - 요금제 제한 적용 */}
       <div className="relative flex-1">
-        <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
-          타겟 요약
-          <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
-        </button>
-        {isPopoverOpen && (
-          <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
-            <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-              <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
-              <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
-              <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
-            </div>
-          </div>
+        {canUseFeature("summarize", "questionBased") ? (
+          // Basic 이상 사용자: 기존 코드 그대로
+          <>
+            <button ref={questionButtonRef} onClick={handleQuestionClick} className={clsx("w-full", baseButtonClass, activeMode === "질문 기반 요약" ? activeClass : inactiveClass)}>
+              질문 기반 요약
+            </button>
+
+            {/* 질문 기반 요약 팝업 */}
+            {isQuestionPopoverOpen && (
+              <div ref={questionPopoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
+                  <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                  <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
+                  <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Free 사용자: 툴팁과 함께 비활성화
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button disabled className={clsx("w-full", baseButtonClass, disabledClass)}>
+                  질문 기반 요약
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getRequiredPlanName("summarize", "questionBased")} 플랜부터 사용 가능합니다</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+
+      {/* 타겟 요약 버튼 - 요금제 제한 적용 */}
+      <div className="relative flex-1">
+        {canUseFeature("summarize", "targeted") ? (
+          // Basic 이상 사용자: 기존 코드 그대로
+          <>
+            <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
+              타겟 요약
+              <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+            </button>
+            {isPopoverOpen && (
+              <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
+                  <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                  <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
+                  <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Free 사용자: 툴팁과 함께 비활성화
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button disabled className={clsx("w-full", baseButtonClass, "relative gap-2", disabledClass)}>
+                  타겟 요약
+                  <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getRequiredPlanName("summarize", "targeted")} 플랜부터 사용 가능합니다</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </div>
@@ -125,7 +193,6 @@ const AiSummarizeBox = () => {
     window.addEventListener("scroll", syncOffset, { passive: true });
     return () => window.removeEventListener("scroll", syncOffset);
   }, []);
-  // =============================================================
 
   // AI 요약 기능에 필요한 모든 상태와 로직
   const [inputText, setInputText] = useState("");
@@ -137,6 +204,11 @@ const AiSummarizeBox = () => {
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const router = useRouter();
+  const { canUseFeature } = usePlanRestriction();
+
+  // 토큰 사용량 관리 hook 추가
+  const { addTokenUsage, showTokenAlert } = useTokenUsage();
+  const queryClient = useQueryClient();
 
   const handleApiCall = async () => {
     if (!isLogin) {
@@ -145,9 +217,20 @@ const AiSummarizeBox = () => {
       return;
     }
 
+    // 질문 기반 요약과 타겟 요약만 권한 체크
+    if (activeMode === "질문 기반 요약" && !canUseFeature("summarize", "questionBased")) {
+      alert("질문 기반 요약은 Basic 플랜부터 이용 가능합니다.");
+      return;
+    }
+    if (activeMode === "타겟 요약" && !canUseFeature("summarize", "targeted")) {
+      alert("타겟 요약은 Basic 플랜부터 이용 가능합니다.");
+      return;
+    }
+
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
+
     // UI의 한글 모드 이름을 API가 요구하는 영문 이름으로 변환합니다.
     const modeMap: Record<SummarizeMode, SummarizeApiMode> = {
       "한줄 요약": "one-line",
@@ -167,9 +250,36 @@ const AiSummarizeBox = () => {
     };
 
     try {
-      // API 파일을 통해 요청을 보냅니다.
+      // API 파일을 통해 요청
       const response = await requestSummarize(apiMode, requestData);
-      setOutputText(response.result); // '.result' 키로 결과값을 사용합니다.
+      setOutputText(response.result); // '.result' 키로 결과값을 사용
+
+      // 토큰 사용량 처리 추가
+      let tokensUsed = 0;
+
+      // API 응답에서 토큰 사용량 확인 (여러 가능한 필드명 체크)
+      if (response.usage?.total_tokens) {
+        tokensUsed = response.usage.total_tokens;
+      } else if (response.tokens_used) {
+        tokensUsed = response.tokens_used;
+      } else if (response.token_count) {
+        tokensUsed = response.token_count;
+      } else {
+        // API에 토큰 정보가 없는 경우 대략적인 계산
+        // 일반적으로 1토큰 ≈ 4글자 정도로 추정
+        const inputTokens = Math.ceil(inputText.length / 4);
+        const outputTokens = Math.ceil((response.result?.length || 0) / 4);
+        tokensUsed = inputTokens + outputTokens;
+      }
+
+      // 토큰 사용량 업데이트 및 alert 표시
+      if (tokensUsed > 0) {
+        addTokenUsage(tokensUsed);
+        showTokenAlert(tokensUsed);
+      }
+      queryClient.invalidateQueries({
+        queryKey: ["sidebar-history", "summary"]
+      });
     } catch (error) {
       console.error("API 요청 오류:", error);
       setOutputText("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");

@@ -5,12 +5,13 @@ import { Input } from "../ui/input/input";
 import SelectScrollable from "../ui/select/SelectScrollable";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendCitation, sendUrl } from "@/apis/citation.api";
 import { v7 as uuidv7 } from "uuid";
 import clsx from "clsx";
 import { generateCitation } from "@/utils/citation";
 import { useCitationStore } from "@/stores/citation.store";
+import { createHistory } from "@/apis/history.api";
 
 const CreateNewCitationBox = () => {
   const [urlValue, setUrlValue] = useState<string>("");
@@ -22,51 +23,27 @@ const CreateNewCitationBox = () => {
   const isLogin = useAuthStore((s) => s.isLogin);
   const setCitation = useCitationStore((s) => s.setCitation);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // CSL-JSON 생성 뮤테이션
-  const { mutate: sendUrlMutate, isPending: isSendingUrl } = useMutation({
-    mutationKey: ["sendUrl", urlValue, selectedForm],
+  const { mutateAsync: sendUrlAsync, isPending: isSendingUrl } = useMutation({
+    mutationKey: ["sendUrl"],
     mutationFn: sendUrl,
-    onSuccess: (data) => {
-      console.log("✅ CSL-JSON 생성 성공", data);
-      const result = generateCitation(data.csl, selectedForm!);
-      if (result !== "") {
-        setCitationResult(result);
-        setCitation(result);
-      }
-      sendCitationMutate({
-        citeId: data.citeId,
-        citation: result,
-        style: selectedForm!,
-      });
-    },
-    onError: (err) => {
-      console.error("❌ CSL-JSON 생성 실패: ", err.message);
-      alert(err.message);
-    },
   });
 
   // 인용문 전송 뮤테이션
-  const { mutate: sendCitationMutate } = useMutation({
-    mutationKey: ["sendCitation", citationResult],
+  const { mutateAsync: sendCitationAsync } = useMutation({
+    mutationKey: ["sendCitation"],
     mutationFn: sendCitation,
-    onSuccess: (data) => {
-      console.log("✅ 인용문 전달 성공", data);
-    },
-    onError: (err) => {
-      console.error("❌ 인용문 전달 실패: ", err.message);
-      alert(err.message);
-    },
   });
 
   // CSL-JSON 생성 핸들러
-  const handleCreateCitation = () => {
+  const handleCreateCitation = async () => {
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
       router.push("/login");
       return;
     }
-
     if (!urlValue || !urlValue.trim()) {
       alert("URL 또는 DOI를 입력해주세요.");
       return;
@@ -76,8 +53,35 @@ const CreateNewCitationBox = () => {
       return;
     }
 
-    const sessionId = uuidv7();
-    sendUrlMutate({ url: urlValue, session: sessionId });
+    try {
+      const sessionId = uuidv7();
+
+      // 1) URL 처리
+      const data = await sendUrlAsync({ url: urlValue, session: sessionId });
+      console.log("✅ CSL-JSON 생성 성공", data);
+
+      // 2) 인용문 생성
+      const result = generateCitation(data.csl, selectedForm!);
+      if (!result) return;
+      setCitationResult(result);
+      setCitation(result);
+
+      // 3) 인용문 전송
+      const res = await sendCitationAsync({
+        citeId: data.citeId,
+        citation: result,
+        style: selectedForm!,
+      });
+      console.log("✅ 인용문 전달 성공");
+
+      // 4) 사이드바 업데이트
+      queryClient.invalidateQueries({
+        queryKey: ["sidebar-history", "cite"],
+      });
+    } catch (err: any) {
+      console.error("❌ 인용 생성/전송 실패:", err?.message ?? err);
+      alert(err?.message ?? "요청 처리 중 오류가 발생했습니다.");
+    }
   };
 
   return (
