@@ -20,6 +20,7 @@ import { usePathname } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import useEditFolderAndHistoryName from "@/hooks/useEditFolderAndHistoryName";
 import useFindHistoryInFolder from "@/hooks/useFindHistoryInFolder";
+import useFolderHistoryCount from "@/hooks/useFolderHistoryCount";
 
 interface TreeNodeData {
   id: string | number;
@@ -31,15 +32,24 @@ interface TreeNodeProps {
   node: TreeNodeData;
   onRequestDelete?: () => void;
   onRequestMove?: () => void;
+  compact?: boolean;
+  depth?: number;
 }
 
-const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
+const TreeNode = ({
+  node,
+  onRequestDelete,
+  onRequestMove,
+  compact = false,
+  depth = 0,
+}: TreeNodeProps) => {
   const isFolder = Array.isArray(node.children);
 
   const [openChild, setOpenChild] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [tempName, setTempName] = useState<string>(node.name);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const savingRef = useRef<boolean>(false);
 
   const pathname = usePathname();
   const matched = SERVICE_PATH.find((p) => pathname.includes(p.path));
@@ -50,9 +60,15 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
   const { editFolderNameAsync, editHistoryNameAsync } =
     useEditFolderAndHistoryName(service);
 
+  const { data: initialCount } = useFolderHistoryCount(
+    service,
+    isFolder ? Number(node.id) : undefined,
+    true
+  );
+
   const {
     items: folderHistories,
-    total: folderCount,
+    total: folderTotalFromList, // (열렸을 때 목록 쪽 total)
     isFetchingHistoryInFolder,
     hasNextPage,
     fetchNextPage,
@@ -60,8 +76,12 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
   } = useFindHistoryInFolder({
     service,
     folderId: isFolder ? Number(node.id) : undefined,
-    enabled: openChild, // 폴더 펼칠 때만 불러오기
+    enabled: openChild,
   });
+
+  const folderCount = openChild
+    ? folderTotalFromList ?? initialCount ?? 0
+    : initialCount ?? 0;
 
   // 히스토리 라인 클릭 시 최신 내용 로드
   const { refetch } = useQuery({
@@ -105,6 +125,7 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
   };
 
   const finishEdit = async (source: "blur" | "submit") => {
+    if (savingRef.current) return;
     const trimmed = (tempName ?? "").trim();
     if (!trimmed) {
       if (source === "submit") {
@@ -124,12 +145,25 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
     }
 
     if (!service) return;
-    if (isFolder)
-      await editFolderNameAsync({ folderId: Number(node.id), name: trimmed });
-    else
-      await editHistoryNameAsync({ historyId: Number(node.id), name: trimmed });
-
-    setIsEditing(false);
+    try {
+      savingRef.current = true;
+      if (isFolder) {
+        await editFolderNameAsync({ folderId: Number(node.id), name: trimmed });
+      } else {
+        await editHistoryNameAsync({
+          historyId: Number(node.id),
+          name: trimmed,
+        });
+      }
+      setIsEditing(false);
+    } catch (e) {
+      // 알림은 여기서 1회만
+      alert(isFolder ? "폴더 이름 변경 실패" : "히스토리 이름 변경 실패");
+      // 실패 시 편집 상태 유지 + 포커스 복원
+      requestAnimationFrame(() => inputRef.current?.focus());
+    } finally {
+      savingRef.current = false;
+    }
   };
 
   useEffect(() => {
@@ -146,7 +180,8 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
       <div
         className={clsx(
           "group relative flex w-full items-center gap-2 px-1 py-1 rounded hover:bg-accent/40 cursor-pointer",
-          !isFolder && "pl-1"
+          compact ? "gap-1 px-1 py-[3px] text-[13px]" : "gap-2 px-1 py-1",
+          depth > 0 && "pl-1"
         )}
         onClick={handleClickLine}
         role="button"
@@ -161,7 +196,7 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
             className="flex-1 min-w-0 bg-transparent outline-none border-b border-muted-foreground/30 text-sm py-[1px]"
             value={tempName}
             onChange={(e) => setTempName(e.target.value)}
-            onBlur={() => finishEdit("blur")}
+            // onBlur={() => finishEdit("blur")}
             onKeyDown={(e) => {
               if (e.key === "Enter") finishEdit("submit");
               if (e.key === "Escape") {
@@ -223,16 +258,46 @@ const TreeNode = ({ node, onRequestDelete, onRequestMove }: TreeNodeProps) => {
         </DropdownMenu>
       </div>
 
-      {isFolder && openChild && (node.children?.length ?? 0) > 0 && (
-        <ul className="ml-4 mt-1 space-y-1">
-          {node.children!.map((c) => (
+      {isFolder && openChild && (
+        <ul
+          className={clsx(
+            "mt-1 space-y-[2px] border-l border-accent/30",
+            // depth에 따라 들여쓰기
+            depth === 0 ? "ml-3 pl-2" : "ml-2 pl-2"
+          )}
+        >
+          {/* 로딩 표시 */}
+          {isFetchingHistoryInFolder && folderHistories.length === 0 && (
+            <li className="text-xs text-muted-foreground px-2 py-[2px]">
+              불러오는 중…
+            </li>
+          )}
+
+          {/* 히스토리 목록 (촘촘/자식 깊이 1로 전달) */}
+          {folderHistories.map((h) => (
             <TreeNode
-              key={c.id}
-              node={c}
+              key={h.id}
+              node={{ id: h.id, name: h.name }}
               onRequestDelete={onRequestDelete}
               onRequestMove={onRequestMove}
+              compact
+              depth={depth + 1}
             />
           ))}
+
+          {hasNextPage && (
+            <li>
+              <button
+                className="text-[12px] px-2 py-[3px] rounded hover:bg-accent/30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fetchNextPage();
+                }}
+              >
+                더 보기
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </li>
