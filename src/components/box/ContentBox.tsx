@@ -5,6 +5,11 @@ import clsx from "clsx";
 import CreateNewCitationBox from "./CreateNewCitationBox";
 import ChangeExistedCitationBox from "./ChangeExistedCitationBox";
 import { useCitationStore } from "@/stores/citation.store";
+import { useHistoryStore } from "@/stores/history.store";
+import useClearContent from "@/hooks/useClearContent";
+import useResetOnNewWork from "@/hooks/useResetOnNewWork";
+import { Copy } from "lucide-react";
+import { useNewWorkStore } from "@/stores/newWork.store";
 
 const HEADER_H = 72; // px
 
@@ -13,7 +18,28 @@ const ContentBox = () => {
     useState<boolean>(true);
 
   const newCitation = useCitationStore((s) => s.newCitation);
+  const setNewCitation = useCitationStore((s) => s.setNewCitation);
   const changedCitation = useCitationStore((s) => s.changedCitation);
+  const setChangedCitation = useCitationStore((s) => s.setChangedCitation);
+
+  const selectedHistory = useHistoryStore((s) => s.selectedHistory);
+  const clearHistory = useHistoryStore((s) => s.clearHistory);
+
+  const newWorkVersion = useNewWorkStore((s) => s.version);
+
+  const displayText =
+    selectedHistory?.content ??
+    (isCreatingNewCitation ? newCitation : changedCitation) ??
+    "결과가 출력됩니다.";
+
+  useClearContent();
+
+  useResetOnNewWork(() => {
+    setIsCreatingNewCitation(true);
+    setNewCitation("");
+    setChangedCitation("");
+    clearHistory();
+  });
 
   useEffect(() => {
     let ticking = false;
@@ -76,15 +102,33 @@ const ContentBox = () => {
       >
         {/* 왼쪽 영역 */}
         {isCreatingNewCitation ? (
-          <CreateNewCitationBox />
+          <CreateNewCitationBox key={newWorkVersion} />
         ) : (
-          <ChangeExistedCitationBox />
+          <ChangeExistedCitationBox key={newWorkVersion} />
         )}
 
         {/* 오른쪽 영역 */}
-        <div className="w-full p-[16px] border-t">
-          {isCreatingNewCitation && (newCitation ?? "결과가 출력됩니다.")}
-          {!isCreatingNewCitation && (changedCitation ?? "결과가 출력됩니다.")}
+        <div className="relative w-full p-[16px] pr-10 border-t whitespace-pre-wrap break-words">
+          {displayText}
+
+          {Boolean(
+            selectedHistory?.content ??
+              (isCreatingNewCitation ? newCitation : changedCitation)
+          ) && (
+            <button
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  selectedHistory?.content ||
+                    (isCreatingNewCitation ? newCitation : changedCitation)!
+                )
+              }
+              className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full z-10"
+              aria-label="결과 복사"
+              title="복사"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
     </section>

@@ -11,19 +11,28 @@ import { v7 as uuidv7 } from "uuid";
 import clsx from "clsx";
 import { generateCitation } from "@/utils/citation";
 import { useCitationStore } from "@/stores/citation.store";
-import { createHistory } from "@/apis/history.api";
+import { useHistoryStore } from "@/stores/history.store";
+import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 
 const CreateNewCitationBox = () => {
   const [urlValue, setUrlValue] = useState<string>("");
   const [selectedForm, setSelectedForm] = useState<string | undefined>(
     undefined
   );
-  const [citationResult, setCitationResult] = useState<string>("");
 
   const isLogin = useAuthStore((s) => s.isLogin);
-  const setCitation = useCitationStore((s) => s.setCitation);
+  const setNewCitation = useCitationStore((s) => s.setNewCitation);
+  const clearHistory = useHistoryStore((state) => state.clearHistory);
+
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  useResetOnNewWork(() => {
+    setUrlValue("");
+    setSelectedForm(undefined);
+    setNewCitation("");
+    clearHistory();
+  });
 
   // CSL-JSON 생성 뮤테이션
   const { mutateAsync: sendUrlAsync, isPending: isSendingUrl } = useMutation({
@@ -54,6 +63,7 @@ const CreateNewCitationBox = () => {
     }
 
     try {
+      clearHistory();
       const sessionId = uuidv7();
 
       // 1) URL 처리
@@ -63,11 +73,11 @@ const CreateNewCitationBox = () => {
       // 2) 인용문 생성
       const result = generateCitation(data.csl, selectedForm!);
       if (!result) return;
-      setCitationResult(result);
-      setCitation(result);
+      setNewCitation(result);
+      console.log("✅ 인용문 생성 성공", result);
 
       // 3) 인용문 전송
-      const res = await sendCitationAsync({
+      await sendCitationAsync({
         citeId: data.citeId,
         citation: result,
         style: selectedForm!,

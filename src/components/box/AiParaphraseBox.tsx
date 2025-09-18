@@ -8,6 +8,9 @@ import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useHistoryStore } from "@/stores/history.store";
+import useClearContent from "@/hooks/useClearContent";
+import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 
 const HEADER_H = 72; // px
 
@@ -248,6 +251,11 @@ const ModeSelector = ({
 };
 
 const AiParaphraseBox = () => {
+  const selectedHistory = useHistoryStore((state) => state.selectedHistory);
+  const clearHistory = useHistoryStore((state) => state.clearHistory);
+
+  useClearContent();
+
   useEffect(() => {
     let ticking = false;
     const syncOffset = () => {
@@ -279,6 +287,16 @@ const AiParaphraseBox = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  useResetOnNewWork(() => {
+    setInputText("");
+    setOutputText("");
+    setActiveMode("표준");
+    setCustomStyle("");
+    // setCreativityLevel(50);
+    setIsLoading(false);
+    clearHistory();
+  });
+
   const handleApiCall = async () => {
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
@@ -288,6 +306,7 @@ const AiParaphraseBox = () => {
     if (!inputText.trim()) return;
     setIsLoading(true);
     setOutputText("");
+    clearHistory();
 
     const modeMap: Record<ParaphraseMode, ParaphraseApiMode> = {
       표준: "standard",
@@ -364,11 +383,17 @@ const AiParaphraseBox = () => {
           <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10 text-sm md:text-base">
             {isLoading
               ? "결과 생성 중..."
-              : outputText || "여기에 변환 결과가 표시됩니다."}
+              : selectedHistory?.content ||
+                outputText ||
+                "여기에 변환 결과가 표시됩니다."}
           </div>
-          {outputText && (
+          {(selectedHistory?.content || outputText) && (
             <button
-              onClick={() => navigator.clipboard.writeText(outputText)}
+              onClick={() =>
+                navigator.clipboard.writeText(
+                  selectedHistory?.content || outputText
+                )
+              }
               className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full"
             >
               <Copy className="h-4 w-4" />
