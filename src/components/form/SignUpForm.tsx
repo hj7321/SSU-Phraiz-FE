@@ -175,19 +175,19 @@ const SignUpForm = () => {
   // 6. 버튼 클릭 핸들러를 안정화
   const onSendEmailClick = useCallback(() => {
     sendEmailBtnRef.current?.blur();
-    // @ts-expect-error
+    // @ts-expect-error -- trigger without MouseEvent (programmatic click)
     handleSendEmail();
   }, [handleSendEmail]);
 
   const onVerifyClick = useCallback(() => {
     verifyBtnRef.current?.blur();
-    // @ts-expect-error
+    // @ts-expect-error -- trigger without MouseEvent (programmatic click)
     handleVerifyEmailNum();
   }, [handleVerifyEmailNum]);
 
   const onCheckIdClick = useCallback(() => {
     checkIdBtnRef.current?.blur();
-    // @ts-expect-error
+    // @ts-expect-error -- trigger without MouseEvent (programmatic click)
     handleCheckIdDuplicated();
   }, [handleCheckIdDuplicated]);
 
