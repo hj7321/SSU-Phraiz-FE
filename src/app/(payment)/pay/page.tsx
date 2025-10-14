@@ -2,18 +2,41 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Check, CreditCard, Users, Zap, Crown, BookOpen, Star } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  CreditCard,
+  Users,
+  Zap,
+  Crown,
+  BookOpen,
+  Star,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ServicePlan, OrderInfo } from "@/types/payment.type";
 import TossPaymentWidget from "@/components/payment/TossPaymentWidget";
 import { generateOrderId, validateEmail } from "@/lib/utils";
+// import { Metadata } from "next";
+
+// 메타데이터 쓰려면 서버 컴포넌트여야 함 ("use client"가 없어야 함)
+// export const metadata: Metadata = {
+//   title: "결제",
+//   robots: { index: false, follow: false },
+//   alternates: { canonical: "/pay" },
+// };
 
 interface UserInfo {
   memberId: number;
@@ -32,7 +55,15 @@ const SERVICE_PLANS: Record<string, ServicePlan> = {
     description: "대학생, 일반 사용자를 위한 기본 AI 문장 변환",
     monthlyPrice: 4900,
     yearlyPrice: 49000,
-    features: ["AI 패러프레이징 (기본/학술적/창의적 모드)", "사용자 커스텀 모드", "AI 요약 (한 줄, 핵심 문장/단락, 질문 기반)", "자동 인용 생성 (모든 형식)", "히스토리 폴더 기능", "무제한 저장", "월 2,900,000 토큰"]
+    features: [
+      "AI 패러프레이징 (기본/학술적/창의적 모드)",
+      "사용자 커스텀 모드",
+      "AI 요약 (한 줄, 핵심 문장/단락, 질문 기반)",
+      "자동 인용 생성 (모든 형식)",
+      "히스토리 폴더 기능",
+      "무제한 저장",
+      "월 2,900,000 토큰",
+    ],
   },
   standard: {
     id: "standard",
@@ -40,7 +71,16 @@ const SERVICE_PLANS: Record<string, ServicePlan> = {
     description: "대학원생, 파워 유저를 위한 고급 AI 서비스",
     monthlyPrice: 9900,
     yearlyPrice: 99000,
-    features: ["모든 Basic 기능 포함", "AI 패러프레이징 (모든 모드)", "고급 AI 요약 기능", "자동 인용 생성 (전체 형식 지원)", "히스토리 폴더 기능", "무제한 저장", "월 6,800,000 토큰", "우선 지원"]
+    features: [
+      "모든 Basic 기능 포함",
+      "AI 패러프레이징 (모든 모드)",
+      "고급 AI 요약 기능",
+      "자동 인용 생성 (전체 형식 지원)",
+      "히스토리 폴더 기능",
+      "무제한 저장",
+      "월 6,800,000 토큰",
+      "우선 지원",
+    ],
   },
   pro: {
     id: "pro",
@@ -48,8 +88,18 @@ const SERVICE_PLANS: Record<string, ServicePlan> = {
     description: "연구자, 전문가, 팀을 위한 프리미엄 서비스",
     monthlyPrice: 12900,
     yearlyPrice: 119000,
-    features: ["모든 Standard 기능 포함", "무제한 토큰 (공정 사용 정책)", "모든 AI 패러프레이징 모드", "고급 AI 요약 (질문 기반/타겟 요약)", "자동 인용 생성 (모든 형식)", "히스토리 폴더 기능", "무제한 저장", "전담 지원", "팀 협업 기능"]
-  }
+    features: [
+      "모든 Standard 기능 포함",
+      "무제한 토큰 (공정 사용 정책)",
+      "모든 AI 패러프레이징 모드",
+      "고급 AI 요약 (질문 기반/타겟 요약)",
+      "자동 인용 생성 (모든 형식)",
+      "히스토리 폴더 기능",
+      "무제한 저장",
+      "전담 지원",
+      "팀 협업 기능",
+    ],
+  },
 };
 
 // 플랜별 아이콘
@@ -57,9 +107,11 @@ const getPlanIcon = (planId: string) => {
   const icons = {
     basic: <Users className="h-5 w-5" />,
     standard: <Zap className="h-5 w-5" />,
-    pro: <Crown className="h-5 w-5" />
+    pro: <Crown className="h-5 w-5" />,
   };
-  return icons[planId as keyof typeof icons] || <BookOpen className="h-5 w-5" />;
+  return (
+    icons[planId as keyof typeof icons] || <BookOpen className="h-5 w-5" />
+  );
 };
 
 // 플랜별 색상
@@ -68,9 +120,12 @@ const getPlanColors = (planId: string, isSelected: boolean) => {
     const selectedColors = {
       basic: "border-blue-500 bg-blue-50",
       standard: "border-purple-500 bg-purple-50",
-      pro: "border-yellow-500 bg-yellow-50"
+      pro: "border-yellow-500 bg-yellow-50",
     };
-    return selectedColors[planId as keyof typeof selectedColors] || "border-gray-500 bg-gray-50";
+    return (
+      selectedColors[planId as keyof typeof selectedColors] ||
+      "border-gray-500 bg-gray-50"
+    );
   }
   return "border-gray-200 hover:border-gray-300";
 };
@@ -79,7 +134,7 @@ const getBadgeColor = (planId: string) => {
   const colors = {
     basic: "bg-blue-100 text-blue-800",
     standard: "bg-purple-100 text-purple-800",
-    pro: "bg-yellow-100 text-yellow-800"
+    pro: "bg-yellow-100 text-yellow-800",
   };
   return colors[planId as keyof typeof colors] || "bg-gray-100 text-gray-800";
 };
@@ -91,7 +146,9 @@ function PayPageContent() {
   const [selectedPlanId, setSelectedPlanId] = useState(initialPlanId);
   const selectedPlan = SERVICE_PLANS[selectedPlanId];
 
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
+    "yearly"
+  );
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -107,8 +164,11 @@ function PayPageContent() {
     planId: selectedPlan.id,
     planName: selectedPlan.name,
     billingCycle,
-    amount: billingCycle === "monthly" ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice,
-    currency: "KRW"
+    amount:
+      billingCycle === "monthly"
+        ? selectedPlan.monthlyPrice
+        : selectedPlan.yearlyPrice,
+    currency: "KRW",
   };
 
   useEffect(() => {
@@ -128,7 +188,7 @@ function PayPageContent() {
             id: userId || "",
             email: userEmail || "",
             role: role || "ROLE_USER",
-            planId: parseInt(currentPlanId || "1")
+            planId: parseInt(currentPlanId || "1"),
           });
 
           if (userEmail) {
@@ -145,7 +205,8 @@ function PayPageContent() {
     loadUserInfo();
   }, []);
 
-  const isFormValid = customerName.trim() && customerEmail.trim() && validateEmail(customerEmail);
+  const isFormValid =
+    customerName.trim() && customerEmail.trim() && validateEmail(customerEmail);
 
   // 할인 계산 함수
   const calculateSavings = (plan: ServicePlan) => {
@@ -183,7 +244,9 @@ function PayPageContent() {
       )}
 
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Phraiz AI 구독하기</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Phraiz AI 구독하기
+        </h1>
         <p className="text-gray-600">완벽한 AI 문장변환 서비스를 선택하세요</p>
         {currentUser && (
           <p className="text-sm text-gray-500 mt-2">
@@ -195,7 +258,13 @@ function PayPageContent() {
       {/* 요금제 비교 섹션 */}
       <div className="mb-8">
         <div className="flex justify-center mb-6">
-          <RadioGroup value={billingCycle} onValueChange={(value: "monthly" | "yearly") => setBillingCycle(value)} className="flex bg-gray-100 p-1 rounded-lg">
+          <RadioGroup
+            value={billingCycle}
+            onValueChange={(value: "monthly" | "yearly") =>
+              setBillingCycle(value)
+            }
+            className="flex bg-gray-100 p-1 rounded-lg"
+          >
             <div className="flex items-center space-x-2 px-4 py-2">
               <RadioGroupItem value="monthly" id="monthly-toggle" />
               <Label htmlFor="monthly-toggle" className="cursor-pointer">
@@ -204,7 +273,10 @@ function PayPageContent() {
             </div>
             <div className="flex items-center space-x-2 px-4 py-2">
               <RadioGroupItem value="yearly" id="yearly-toggle" />
-              <Label htmlFor="yearly-toggle" className="cursor-pointer flex items-center gap-2">
+              <Label
+                htmlFor="yearly-toggle"
+                className="cursor-pointer flex items-center gap-2"
+              >
                 연간{" "}
                 <Badge variant="destructive" className="text-xs">
                   17% 할인
@@ -221,7 +293,14 @@ function PayPageContent() {
             const isPopular = plan.id === "standard";
 
             return (
-              <Card key={plan.id} className={`relative cursor-pointer transition-all ${getPlanColors(plan.id, isSelected)} ${isSelected ? "ring-2 ring-offset-2 ring-blue-500" : ""}`} onClick={() => setSelectedPlanId(plan.id)}>
+              <Card
+                key={plan.id}
+                className={`relative cursor-pointer transition-all ${getPlanColors(
+                  plan.id,
+                  isSelected
+                )} ${isSelected ? "ring-2 ring-offset-2 ring-blue-500" : ""}`}
+                onClick={() => setSelectedPlanId(plan.id)}
+              >
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     <Badge className="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-3 py-1">
@@ -236,27 +315,38 @@ function PayPageContent() {
                     {getPlanIcon(plan.id)}
                     <CardTitle className="text-xl">{plan.name}</CardTitle>
                   </div>
-                  <CardDescription className="text-sm">{plan.description}</CardDescription>
+                  <CardDescription className="text-sm">
+                    {plan.description}
+                  </CardDescription>
 
                   <div className="mt-4">
                     {billingCycle === "monthly" ? (
                       <div>
-                        <span className="text-3xl font-bold">₩{plan.monthlyPrice.toLocaleString()}</span>
+                        <span className="text-3xl font-bold">
+                          ₩{plan.monthlyPrice.toLocaleString()}
+                        </span>
                         <span className="text-gray-500">/월</span>
                       </div>
                     ) : (
                       <div>
                         <div className="flex items-center justify-center gap-2 mb-1">
-                          <span className="text-sm text-gray-500 line-through">₩{(plan.monthlyPrice * 12).toLocaleString()}</span>
+                          <span className="text-sm text-gray-500 line-through">
+                            ₩{(plan.monthlyPrice * 12).toLocaleString()}
+                          </span>
                           <Badge variant="destructive" className="text-xs">
                             {discountPercent}% 할인
                           </Badge>
                         </div>
                         <div>
-                          <span className="text-3xl font-bold">₩{plan.yearlyPrice.toLocaleString()}</span>
+                          <span className="text-3xl font-bold">
+                            ₩{plan.yearlyPrice.toLocaleString()}
+                          </span>
                           <span className="text-gray-500">/년</span>
                         </div>
-                        <p className="text-xs text-green-600 mt-1">월 평균 ₩{Math.round(plan.yearlyPrice / 12).toLocaleString()}</p>
+                        <p className="text-xs text-green-600 mt-1">
+                          월 평균 ₩
+                          {Math.round(plan.yearlyPrice / 12).toLocaleString()}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -265,15 +355,26 @@ function PayPageContent() {
                 <CardContent>
                   <ul className="space-y-2">
                     {plan.features.slice(0, 5).map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
+                      <li
+                        key={index}
+                        className="flex items-start gap-2 text-sm"
+                      >
                         <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}
-                    {plan.features.length > 5 && <li className="text-sm text-gray-500 ml-6">+{plan.features.length - 5}개 추가 기능</li>}
+                    {plan.features.length > 5 && (
+                      <li className="text-sm text-gray-500 ml-6">
+                        +{plan.features.length - 5}개 추가 기능
+                      </li>
+                    )}
                   </ul>
 
-                  <Button variant={isSelected ? "default" : "outline"} className="w-full mt-4" onClick={() => setSelectedPlanId(plan.id)}>
+                  <Button
+                    variant={isSelected ? "default" : "outline"}
+                    className="w-full mt-4"
+                    onClick={() => setSelectedPlanId(plan.id)}
+                  >
                     {isSelected ? "선택됨" : "선택하기"}
                   </Button>
                 </CardContent>
@@ -319,7 +420,11 @@ function PayPageContent() {
                   }}
                   required
                 />
-                {currentUser && <p className="text-xs text-gray-500 mt-1">로그인된 계정: {currentUser.email}</p>}
+                {currentUser && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    로그인된 계정: {currentUser.email}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -339,19 +444,28 @@ function PayPageContent() {
               <div className="flex justify-between items-center">
                 <div>
                   <span className="font-medium">{selectedPlan.name}</span>
-                  <Badge className={getBadgeColor(selectedPlanId) + " ml-2"}>{selectedPlanId.toUpperCase()}</Badge>
+                  <Badge className={getBadgeColor(selectedPlanId) + " ml-2"}>
+                    {selectedPlanId.toUpperCase()}
+                  </Badge>
                 </div>
               </div>
 
               <div className="flex justify-between">
-                <span>{billingCycle === "monthly" ? "월간 구독" : "연간 구독"}</span>
+                <span>
+                  {billingCycle === "monthly" ? "월간 구독" : "연간 구독"}
+                </span>
                 <span>₩{orderInfo.amount.toLocaleString()}</span>
               </div>
 
               {billingCycle === "yearly" && (
                 <div className="flex justify-between text-green-600">
-                  <span>연간 할인 ({calculateSavings(selectedPlan).discountPercent}%)</span>
-                  <span>-₩{calculateSavings(selectedPlan).savings.toLocaleString()}</span>
+                  <span>
+                    연간 할인 ({calculateSavings(selectedPlan).discountPercent}
+                    %)
+                  </span>
+                  <span>
+                    -₩{calculateSavings(selectedPlan).savings.toLocaleString()}
+                  </span>
                 </div>
               )}
 
@@ -362,7 +476,12 @@ function PayPageContent() {
                 <span>₩{orderInfo.amount.toLocaleString()}</span>
               </div>
 
-              {billingCycle === "yearly" && <p className="text-xs text-gray-500 text-center">월 평균 ₩{Math.round(orderInfo.amount / 12).toLocaleString()} • 7일 무료 체험</p>}
+              {billingCycle === "yearly" && (
+                <p className="text-xs text-gray-500 text-center">
+                  월 평균 ₩{Math.round(orderInfo.amount / 12).toLocaleString()}{" "}
+                  • 7일 무료 체험
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -386,13 +505,17 @@ function PayPageContent() {
               {!isFormValid ? (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>결제를 진행하려면 고객 정보를 모두 올바르게 입력해주세요.</AlertDescription>
+                  <AlertDescription>
+                    결제를 진행하려면 고객 정보를 모두 올바르게 입력해주세요.
+                  </AlertDescription>
                 </Alert>
               ) : (
                 <TossPaymentWidget
                   amount={orderInfo.amount}
                   orderId={orderInfo.orderId}
-                  orderName={`${orderInfo.planName} (${billingCycle === "monthly" ? "월간" : "연간"})`}
+                  orderName={`${orderInfo.planName} (${
+                    billingCycle === "monthly" ? "월간" : "연간"
+                  })`}
                   customerName={customerName}
                   customerEmail={customerEmail}
                   onPaymentRequest={(paymentData) => {
@@ -459,7 +582,8 @@ export default function PayPage() {
             </div>
           </div>
         </div>
-      }>
+      }
+    >
       <PayPageContent />
     </Suspense>
   );

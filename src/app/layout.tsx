@@ -7,9 +7,20 @@ import MobileHeader from "@/components/layout/MobileHeader";
 import MobileNavBar from "@/components/layout/MobileNavBar";
 
 export const metadata: Metadata = {
-  title: "Phraiz",
+  metadataBase: new URL("https://ssu-phraiz-fe.vercel.app"),
+  title: { default: "Phraiz", template: "%s | Phraiz" },
   description:
     "문장 변환, 요약, 인용 생성을 지원하는 AI 기반 통합 글쓰기 웹사이트",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: "https://ssu-phraiz-fe.vercel.app/",
+    title: "Phraiz",
+    description:
+      "문장 변환, 문장 요약,인용 생성을 한 곳에서 — Phraiz에서 더 빠르게 글을 완성해 보세요.",
+    images: ["/opengraph/main.jpg"],
+  },
 };
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID!;
