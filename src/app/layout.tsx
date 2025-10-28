@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Script from "next/script";
 import MobileHeader from "@/components/layout/MobileHeader";
 import MobileNavBar from "@/components/layout/MobileNavBar";
+import Analytics from "./Analytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ssu-phraiz-fe.vercel.app"),
@@ -58,6 +59,9 @@ export default function RootLayout({
             `,
           }}
         />
+
+        <Analytics />
+
         <QueryProvider>
           <div className="block relative lg:hidden">
             <MobileHeader />
