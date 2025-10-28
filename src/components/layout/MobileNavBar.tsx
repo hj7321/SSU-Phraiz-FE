@@ -28,11 +28,9 @@ const MobileNavBar = () => {
       closeNavbar();
     },
     onSuccess: (data) => {
-      console.log("✅ 로그아웃 성공", data);
       authLogout();
     },
     onError: (err) => {
-      console.error("❌ 로그아웃 실패: ", err.message);
       alert(err.message);
     },
   });
