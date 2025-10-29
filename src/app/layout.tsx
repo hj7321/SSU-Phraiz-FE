@@ -6,6 +6,7 @@ import Script from "next/script";
 import MobileHeader from "@/components/layout/MobileHeader";
 import MobileNavBar from "@/components/layout/MobileNavBar";
 import Analytics from "./Analytics";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ssu-phraiz-fe.vercel.app"),
@@ -60,7 +61,9 @@ export default function RootLayout({
           }}
         />
 
-        <Analytics />
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
 
         <QueryProvider>
           <div className="block relative lg:hidden">

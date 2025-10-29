@@ -17,7 +17,7 @@ import { SERVICE_PATH } from "@/constants/servicePath";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFolder } from "@/apis/folder.api";
 import { useNewWorkStore } from "@/stores/newWork.store";
-import { useHistoryStore } from "@/stores/history.store";
+import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 import { useState } from "react";
 import CreateFolderDialog from "../dialog/CreateFolderDialog";
 import { useAuthStore } from "@/stores/auth.store";
@@ -65,7 +65,7 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
         openDialog();
         break;
       case "new-work":
-        useHistoryStore.getState().clearHistory?.();
+        useCiteHistoryStore.getState().clearCiteHistory?.();
         useNewWorkStore.getState().trigger();
         break;
       case "new-folder": {

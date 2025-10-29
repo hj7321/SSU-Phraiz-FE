@@ -34,9 +34,6 @@ const FolderTree = () => {
   const { deleteFolderAsync, deleteHistoryAsync } =
     useDeleteFolderAndHistory(service);
 
-  console.log(folderInfiniteQuery.data);
-  console.log(historyInfiniteQuery.data);
-
   const folders = folderInfiniteQuery.data ?? [];
   const Histories = historyInfiniteQuery.data ?? [];
 

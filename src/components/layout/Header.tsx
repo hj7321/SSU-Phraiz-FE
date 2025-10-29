@@ -16,7 +16,7 @@ const Header = () => {
   const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logout,
-    onSuccess: (data) => {
+    onSuccess: () => {
       authLogout();
     },
     onError: (err) => {

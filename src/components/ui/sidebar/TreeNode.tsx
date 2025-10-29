@@ -2,8 +2,8 @@
 
 import { readLatestHistory } from "@/apis/history.api";
 import { SERVICE_PATH } from "@/constants/servicePath";
-import { useHistoryStore } from "@/stores/history.store";
-import { HistoryContent } from "@/types/history.type";
+import { useCiteHistoryStore } from "@/stores/citeHistory.store";
+import { HistoryAIContent, HistoryCiteContent } from "@/types/history.type";
 
 import {
   DropdownMenu,
@@ -21,6 +21,7 @@ import React, { useEffect, useRef, useState } from "react";
 import useEditFolderAndHistoryName from "@/hooks/useEditFolderAndHistoryName";
 import useFindHistoryInFolder from "@/hooks/useFindHistoryInFolder";
 import useFolderHistoryCount from "@/hooks/useFolderHistoryCount";
+import { useAiHistoryStore } from "@/stores/aiHistory.store";
 
 interface TreeNodeData {
   id: string | number;
@@ -55,7 +56,14 @@ const TreeNode = ({
   const matched = SERVICE_PATH.find((p) => pathname.includes(p.path));
   const service = matched ? matched.service : undefined;
 
-  const setSelected = useHistoryStore((state) => state.setSelectedHistory);
+  const setSelectedAiHistory = useAiHistoryStore(
+    (state) => state.setSelectedAiHistory
+  );
+  const clearAi = useAiHistoryStore((s) => s.clearAiHistory);
+  const setSelectedCiteHistory = useCiteHistoryStore(
+    (state) => state.setSelectedCiteHistory
+  );
+  const clearCite = useCiteHistoryStore((s) => s.clearCiteHistory);
 
   const { editFolderNameAsync, editHistoryNameAsync } =
     useEditFolderAndHistoryName(service);
@@ -69,7 +77,7 @@ const TreeNode = ({
   const {
     items: folderHistories,
     total: folderTotalFromList, // (열렸을 때 목록 쪽 total)
-    isFetchingHistoryInFolder,
+    // isFetchingHistoryInFolder,
     hasNextPage,
     fetchNextPage,
     refetchHistoryInFolder,
@@ -83,15 +91,45 @@ const TreeNode = ({
     ? folderTotalFromList ?? initialCount ?? 0
     : initialCount ?? 0;
 
+  type UiLatest =
+    | { kind: "cite"; data: HistoryCiteContent }
+    | { kind: "ai"; service: "paraphrase" | "summary"; data: HistoryAIContent };
+
   // 히스토리 라인 클릭 시 최신 내용 로드
-  const { refetch } = useQuery({
+  const { refetch } = useQuery<
+    HistoryAIContent | HistoryCiteContent,
+    Error,
+    UiLatest
+  >({
     queryKey: ["readLatestHistory", service, node.id],
-    queryFn: () =>
-      readLatestHistory({ service: service!, historyId: Number(node.id) }),
+    queryFn: () => {
+      if (!service) throw new Error("service 없음");
+      if (service === "cite") {
+        return readLatestHistory({
+          service: "cite",
+          historyId: Number(node.id),
+        });
+      }
+      // paraphrase | summary
+      return readLatestHistory({
+        service: service as "paraphrase" | "summary",
+        historyId: Number(node.id),
+      });
+    },
     enabled: false,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     retry: 1,
+    select: (raw) => {
+      if (service === "cite") {
+        return { kind: "cite", data: raw as HistoryCiteContent } as const;
+      }
+      return {
+        kind: "ai",
+        service: service as "paraphrase" | "summary",
+        data: raw as HistoryAIContent,
+      } as const;
+    },
   });
 
   const handleClickLine = async () => {
@@ -101,14 +139,18 @@ const TreeNode = ({
       return;
     }
     if (!service) return;
-    const result = await refetch();
-    const data = result.data as HistoryContent | undefined;
-    if (data) {
-      setSelected({
-        id: Number(data.id),
-        content: data.content,
-        lastUpdate: data.lastUpdate,
-      });
+
+    const { data } = await refetch();
+    if (!data) return;
+
+    console.log(data);
+
+    if (data.kind === "cite") {
+      setSelectedCiteHistory(data.data);
+      clearAi();
+    } else {
+      setSelectedAiHistory(data.data);
+      clearCite();
     }
   };
 
@@ -183,7 +225,7 @@ const TreeNode = ({
       {/* 행 전체가 hover 트리거가 되도록 group + relative */}
       <div
         className={clsx(
-          "group relative flex w-full items-center gap-2 px-1 py-1 rounded hover:bg-accent/40 cursor-pointer",
+          "group relative flex w-full min-w-0 items-center gap-2 px-1 py-1 rounded hover:bg-accent/40 cursor-pointer",
           compact ? "gap-1 px-1 py-[3px] text-[13px]" : "gap-2 px-1 py-1",
           depth > 0 && "pl-1"
         )}
@@ -208,6 +250,9 @@ const TreeNode = ({
                 setIsEditing(false);
               }
             }}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         ) : (
           // 제목 영역이 남은 공간을 모두 차지 → hover 누락 지대 제거
@@ -271,11 +316,9 @@ const TreeNode = ({
           )}
         >
           {/* 로딩 표시 */}
-          {isFetchingHistoryInFolder && folderHistories.length === 0 && (
-            <li className="text-xs text-muted-foreground px-2 py-[2px]">
-              불러오는 중…
-            </li>
-          )}
+          {/* {isFetchingHistoryInFolder && folderHistories.length === 0 && (
+            <li className="text-xs text-muted-foreground px-2 py-[2px]">...</li>
+          )} */}
 
           {/* 히스토리 목록 (촘촘/자식 깊이 1로 전달) */}
           {folderHistories.map((h) => (

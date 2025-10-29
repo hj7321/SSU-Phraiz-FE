@@ -27,7 +27,7 @@ const MobileNavBar = () => {
     onMutate: () => {
       closeNavbar();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       authLogout();
     },
     onError: (err) => {

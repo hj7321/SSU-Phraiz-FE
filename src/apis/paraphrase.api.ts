@@ -1,11 +1,19 @@
 import { api } from "./api";
-export type ParaphraseApiMode = "standard" | "academic" | "creative" | "fluency" | "experimental" | "custom";
+export type ParaphraseApiMode =
+  | "standard"
+  | "academic"
+  | "creative"
+  | "fluency"
+  | "experimental"
+  | "custom";
 
 // 파라미터 타입 정의
 interface ParaphraseRequest {
   text: string;
   userRequestMode?: string;
   scale?: number;
+  folderId?: null | number;
+  historyId?: null | number;
 }
 
 export interface ParaphraseResponse {
@@ -24,7 +32,10 @@ export interface ParaphraseResponse {
   token_count?: number;
 }
 
-export const requestParaphrase = async (mode: ParaphraseApiMode, data: ParaphraseRequest): Promise<ParaphraseResponse> => {
+export const requestParaphrase = async (
+  mode: ParaphraseApiMode,
+  data: ParaphraseRequest
+): Promise<ParaphraseResponse> => {
   const url = `/paraphrase/paraphrasing/${mode}`;
   const response = await api.post<ParaphraseResponse>(url, data);
   return response.data;

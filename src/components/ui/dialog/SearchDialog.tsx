@@ -22,6 +22,9 @@ const SearchDialog = () => {
           placeholder="검색어를 입력하세요"
           className="w-full border px-3 py-2 rounded-md outline-none"
           autoFocus
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
       </DialogContent>
     </Dialog>
