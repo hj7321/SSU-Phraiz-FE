@@ -283,10 +283,10 @@ const AiParaphraseBox = () => {
         response = await requestParaphrase(apiMode, requestData);
       }
 
-      setOutputText(response.result);
+      setOutputText(response.paraphrasedText);
 
       addParaphraseHistory({
-        content: response.result,
+        content: response.paraphrasedText,
         inputText: uploadedFile ? `[파일: ${uploadedFile.name}]` : inputText,
         mode: activeMode
       });
@@ -306,7 +306,7 @@ const AiParaphraseBox = () => {
           tokensUsed = response.token_count;
         } else {
           const inputTokens = Math.ceil(inputText.length / 4);
-          const outputTokens = Math.ceil((response.result?.length || 0) / 4);
+          const outputTokens = Math.ceil((response.paraphrasedText?.length || 0) / 4);
           tokensUsed = inputTokens + outputTokens;
         }
 
