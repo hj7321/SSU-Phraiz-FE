@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { FileUpload } from "@/components/FileUpload";
 import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
@@ -176,6 +177,7 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
     </div>
   );
 };
+
 const AiSummarizeBox = () => {
   const { toast } = useToast();
 
@@ -198,6 +200,7 @@ const AiSummarizeBox = () => {
   const [targetAudience, setTargetAudience] = useState("");
   const [questionText, setQuestionText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // ========== Hooks ==========
   useClearContent();
@@ -225,6 +228,7 @@ const AiSummarizeBox = () => {
     setTargetAudience("");
     setQuestionText("");
     setIsLoading(false);
+    setUploadedFile(null);
     clearHistory();
   });
 
@@ -270,7 +274,12 @@ const AiSummarizeBox = () => {
       return;
     }
 
-    if (!inputText.trim()) return;
+    // 입력 검증: 텍스트나 파일 중 하나는 필수
+    if (!inputText.trim() && !uploadedFile) {
+      alert("텍스트를 입력하거나 파일을 업로드해주세요.");
+      return;
+    }
+
     setIsLoading(true);
     setOutputText("");
     clearHistory();
@@ -285,22 +294,45 @@ const AiSummarizeBox = () => {
     };
     const apiMode = modeMap[activeMode];
 
-    const requestData = {
-      text: inputText,
-      question: activeMode === "질문 기반 요약" ? questionText : undefined,
-      target: activeMode === "타겟 요약" ? targetAudience : undefined
-    };
-
     try {
-      const response = await requestSummarize(apiMode, requestData);
+      let response;
+
+      // 파일이 있으면 FormData 사용, 없으면 기존 방식
+      if (uploadedFile) {
+        const formData = new FormData();
+
+        if (inputText.trim()) {
+          formData.append("text", inputText);
+        }
+        formData.append("file", uploadedFile);
+
+        if (activeMode === "질문 기반 요약" && questionText) {
+          formData.append("question", questionText);
+        }
+        if (activeMode === "타겟 요약" && targetAudience) {
+          formData.append("target", targetAudience);
+        }
+
+        response = await requestSummarize(apiMode, formData);
+      } else {
+        // 기존 방식 (텍스트만)
+        const requestData = {
+          text: inputText,
+          question: activeMode === "질문 기반 요약" ? questionText : undefined,
+          target: activeMode === "타겟 요약" ? targetAudience : undefined
+        };
+        response = await requestSummarize(apiMode, requestData);
+      }
+
       setOutputText(response.result);
 
       addSummarizeHistory({
         content: response.result,
-        inputText: inputText,
+        inputText: uploadedFile ? `[파일: ${uploadedFile.name}]` : inputText,
         mode: activeMode
       });
 
+      // 토큰 처리
       if (response.remainingToken !== undefined) {
         const tokensUsed = updateTokenUsage(response.remainingToken);
         showTokenAlert(response.remainingToken, true);
@@ -343,6 +375,7 @@ const AiSummarizeBox = () => {
     setActiveMode("한줄 요약");
     setTargetAudience("");
     setQuestionText("");
+    setUploadedFile(null);
 
     toast({
       title: "새 대화 시작",
@@ -352,7 +385,8 @@ const AiSummarizeBox = () => {
   };
 
   const isHistoryFull = isHistoryFullSummarize();
-  const isButtonDisabled = isLoading || !inputText.trim() || isHistoryFull;
+  // 텍스트나 파일 중 하나라도 있으면 활성화
+  const isButtonDisabled = isLoading || (!inputText.trim() && !uploadedFile) || isHistoryFull;
 
   // ========== Render ==========
   return (
@@ -377,13 +411,11 @@ const AiSummarizeBox = () => {
 
       <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
         <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
-          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="내용을 입력하세요." className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading}></textarea>
+          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={uploadedFile ? "파일이 업로드되었습니다. 추가 텍스트를 입력하거나 바로 요약하세요." : "내용을 입력하세요."} className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading}></textarea>
 
           <div className="flex justify-between items-center mt-2 md:mt-4">
-            <button className="flex items-center gap-1 md:gap-[6px]">
-              <Image src="/icons/upload.svg" alt="" width={22} height={22} />
-              <p className="hover:font-nanum-bold text-xs md:text-sm">파일 업로드하기</p>
-            </button>
+            {/* FileUpload 컴포넌트만 사용 */}
+            <FileUpload onFileSelect={setUploadedFile} maxSizeMB={2} disabled={isLoading} />
 
             <button onClick={handleApiCall} className={clsx("py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all", isHistoryFull ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white")} disabled={isButtonDisabled} title={isHistoryFull ? "히스토리가 가득 찼습니다. 새 대화를 시작해주세요." : ""}>
               {isHistoryFull ? "히스토리 가득참" : isLoading ? "요약 중..." : "요약하기"}
