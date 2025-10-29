@@ -396,7 +396,7 @@ const AiSummarizeBox = () => {
 
       <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
         <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
-          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={uploadedFile ? "파일이 업로드되었습니다. 파일 내용만 요약됩니다." : "내용을 입력하세요."} className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading || uploadedFile}></textarea>
+          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder={uploadedFile ? "파일이 업로드되었습니다. 파일 내용만 요약됩니다." : "내용을 입력하세요."} className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading || !!uploadedFile}></textarea>{" "}
           <div className="flex justify-between items-center mt-2 md:mt-4">
             {/* FileUpload 컴포넌트만 사용 */}
             <FileUpload onFileSelect={setUploadedFile} maxSizeMB={2} disabled={isLoading} />
@@ -405,7 +405,6 @@ const AiSummarizeBox = () => {
               {isHistoryFull ? "히스토리 가득참" : isLoading ? "요약 중..." : "요약하기"}
             </button>
           </div>
-
           {isHistoryFull && (
             <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
               ⚠️ 히스토리가 가득 찼습니다.
