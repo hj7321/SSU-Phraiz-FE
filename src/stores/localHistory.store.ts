@@ -162,5 +162,28 @@ export const useLocalHistory = create<LocalHistoryState>((set, get) => ({
     set({
       paraphraseHistories: [],
       paraphraseIndex: -1
+    }),
+  // 히스토리 제한 체크 메서드
+  isHistoryFullSummarize: () => {
+    const state = get();
+    return state.summarizeHistories.length >= state.maxHistories;
+  },
+
+  isHistoryFullParaphrase: () => {
+    const state = get();
+    return state.paraphraseHistories.length >= state.maxHistories;
+  },
+
+  // 새 대화 시작 (히스토리 초기화)
+  startNewSummarizeConversation: () =>
+    set({
+      summarizeHistories: [],
+      summarizeIndex: -1
+    }),
+
+  startNewParaphraseConversation: () =>
+    set({
+      paraphraseHistories: [],
+      paraphraseIndex: -1
     })
 }));
