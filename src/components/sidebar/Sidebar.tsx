@@ -19,7 +19,7 @@ const Ctx = createContext<SidebarCtx | null>(null);
 
 export function SidebarProvider({
   defaultOpen = false,
-  panelWidth = 312, // ← shadcn 기본 감성에 맞는 폭
+  panelWidth = 270,
   railWidth = 56,
   children,
 }: {

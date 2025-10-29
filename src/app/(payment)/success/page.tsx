@@ -9,15 +9,27 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { TossPaymentResponse, PlanType } from "@/types/payment.type";
 import { PLAN_ID_MAPPING } from "@/types/payment.type";
 import { updateUserPlan } from "@/lib/api"; // 추가된 import
+// import { Metadata } from "next";
+
+// 메타데이터 쓰려면 서버 컴포넌트여야 함 ("use client"가 없어야 함)
+// export const metadata: Metadata = {
+//   title: "결제 성공",
+//   robots: { index: false, follow: false },
+//   alternates: { canonical: "/success" },
+// };
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [paymentData, setPaymentData] = useState<TossPaymentResponse | null>(null);
+  const [paymentData, setPaymentData] = useState<TossPaymentResponse | null>(
+    null
+  );
   const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [planUpdateStatus, setPlanUpdateStatus] = useState<"pending" | "success" | "failed">("pending");
+  const [planUpdateStatus, setPlanUpdateStatus] = useState<
+    "pending" | "success" | "failed"
+  >("pending");
 
   const paymentKey = searchParams.get("paymentKey");
   const orderId = searchParams.get("orderId");
@@ -38,13 +50,13 @@ function PaymentSuccessContent() {
         const response = await fetch("/api/payment/verify", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             paymentKey,
             orderId,
-            amount: parseInt(amount)
-          })
+            amount: parseInt(amount),
+          }),
         });
 
         const result = await response.json();
@@ -60,14 +72,20 @@ function PaymentSuccessContent() {
 
             if (accessToken && memberId) {
               const planId = PLAN_ID_MAPPING[plan];
-              const updateResult = await updateUserPlan(parseInt(memberId), planId, accessToken);
+              const updateResult = await updateUserPlan(
+                parseInt(memberId),
+                planId,
+                accessToken
+              );
 
               if (updateResult.success) {
                 setPlanUpdateStatus("success");
                 console.log("요금제 업데이트 완료");
 
                 // 로컬 스토리지의 사용자 정보 업데이트 (옵션)
-                const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+                const userInfo = JSON.parse(
+                  localStorage.getItem("userInfo") || "{}"
+                );
                 userInfo.planId = planId;
                 localStorage.setItem("userInfo", JSON.stringify(userInfo));
               } else {
@@ -110,7 +128,9 @@ function PaymentSuccessContent() {
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error || "결제 정보를 불러올 수 없습니다."}</AlertDescription>
+          <AlertDescription>
+            {error || "결제 정보를 불러올 수 없습니다."}
+          </AlertDescription>
         </Alert>
         <div className="text-center mt-6">
           <Button onClick={() => router.push("/")} variant="outline">
@@ -127,15 +147,22 @@ function PaymentSuccessContent() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">결제가 완료되었습니다!</h1>
-        <p className="text-gray-600">{plan && `${plan.toUpperCase()} 플랜으로 업그레이드되었습니다.`}</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          결제가 완료되었습니다!
+        </h1>
+        <p className="text-gray-600">
+          {plan && `${plan.toUpperCase()} 플랜으로 업그레이드되었습니다.`}
+        </p>
       </div>
 
       {/* 요금제 업데이트 상태 표시 */}
       {planUpdateStatus === "failed" && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>결제는 성공했으나 요금제 적용에 문제가 발생했습니다. 고객센터로 문의해주세요.</AlertDescription>
+          <AlertDescription>
+            결제는 성공했으나 요금제 적용에 문제가 발생했습니다. 고객센터로
+            문의해주세요.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -155,11 +182,15 @@ function PaymentSuccessContent() {
             </div>
             <div>
               <p className="text-sm text-gray-600">결제 금액</p>
-              <p className="font-medium text-lg">₩{paymentData.totalAmount.toLocaleString()}</p>
+              <p className="font-medium text-lg">
+                ₩{paymentData.totalAmount.toLocaleString()}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">결제 시간</p>
-              <p className="font-medium">{new Date(paymentData.approvedAt).toLocaleString("ko-KR")}</p>
+              <p className="font-medium">
+                {new Date(paymentData.approvedAt).toLocaleString("ko-KR")}
+              </p>
             </div>
           </div>
 
@@ -173,7 +204,9 @@ function PaymentSuccessContent() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">결제 주기</p>
-                  <p className="font-medium">{cycle === "yearly" ? "연간" : "월간"}</p>
+                  <p className="font-medium">
+                    {cycle === "yearly" ? "연간" : "월간"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -186,7 +219,11 @@ function PaymentSuccessContent() {
           <Home className="mr-2 h-4 w-4" />
           서비스 이용하기
         </Button>
-        <Button variant="outline" onClick={() => router.push(`/receipt/${paymentData.orderId}`)} className="flex-1">
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/receipt/${paymentData.orderId}`)}
+          className="flex-1"
+        >
           <FileText className="mr-2 h-4 w-4" />
           영수증 보기
         </Button>

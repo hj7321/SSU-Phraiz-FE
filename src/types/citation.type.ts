@@ -7,6 +7,8 @@ export type SendCitationType = {
   citeId: number;
   citation: string;
   style: string;
+  folderId?: null | number;
+  historyId?: null | number;
 };
 
 export type CSLDate = {
@@ -46,4 +48,5 @@ export type ReadDetailCitationInfoResponseData =
     style: string;
     citation: string;
     url: string;
+    cslJson: CSL;
   };

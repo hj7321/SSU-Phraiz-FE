@@ -6,6 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { XCircle, RefreshCw, Home, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+// import { Metadata } from "next";
+
+// 메타데이터 쓰려면 서버 컴포넌트여야 함 ("use client"가 없어야 함)
+// export const metadata: Metadata = {
+//   title: "결제 실패",
+//   robots: { index: false, follow: false },
+//   alternates: { canonical: "/fail" },
+// };
 
 function PaymentFailContent() {
   const searchParams = useSearchParams();
@@ -55,7 +63,9 @@ function PaymentFailContent() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
           <XCircle className="h-8 w-8 text-red-600" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">결제에 실패했습니다</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          결제에 실패했습니다
+        </h1>
         <p className="text-gray-600">결제 처리 중 문제가 발생했습니다.</p>
       </div>
 
@@ -80,7 +90,9 @@ function PaymentFailContent() {
           {code && (
             <div>
               <p className="text-sm text-gray-600">오류 코드</p>
-              <p className="font-mono text-sm bg-gray-100 p-2 rounded">{code}</p>
+              <p className="font-mono text-sm bg-gray-100 p-2 rounded">
+                {code}
+              </p>
             </div>
           )}
           <div>
@@ -105,7 +117,9 @@ function PaymentFailContent() {
 
       <Card className="mt-6 bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-blue-800">결제가 안 될 때 확인사항</CardTitle>
+          <CardTitle className="text-blue-800">
+            결제가 안 될 때 확인사항
+          </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-blue-700 space-y-2">
           <p>• 카드 한도 및 잔액을 확인해주세요</p>
@@ -139,7 +153,8 @@ export default function PaymentFailPage() {
             </div>
           </div>
         </div>
-      }>
+      }
+    >
       <PaymentFailContent />
     </Suspense>
   );
