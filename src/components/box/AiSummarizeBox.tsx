@@ -12,6 +12,8 @@ import { useTokenUsage } from "@/hooks/useTokenUsage"; // 토큰 사용량 hook 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHistoryStore } from "@/stores/history.store";
+import { useLocalHistory } from "@/stores/localHistory.store";
+import { LocalHistoryNavigation } from "@/components/LocalHistoryNavigation";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 
@@ -175,9 +177,28 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
 };
 
 const AiSummarizeBox = () => {
+  // ========== Store & Router ==========
   const selectedHistory = useHistoryStore((state) => state.selectedHistory);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
 
+  // 로컬 히스토리 네비게이션
+  const { addSummarizeHistory, goToPreviousSummarize, goToNextSummarize, canGoBackSummarize, canGoForwardSummarize, getCurrentSummarize, summarizeHistories, summarizeIndex } = useLocalHistory();
+
+  const isLogin = useAuthStore((s) => s.isLogin);
+  const router = useRouter();
+  const { canUseFeature } = usePlanRestriction();
+  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
+  const queryClient = useQueryClient();
+
+  // ========== State (한 번만 선언) ==========
+  const [inputText, setInputText] = useState("");
+  const [outputText, setOutputText] = useState("");
+  const [activeMode, setActiveMode] = useState<SummarizeMode>("한줄 요약");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [questionText, setQuestionText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // ========== Hooks ==========
   useClearContent();
 
   useEffect(() => {
@@ -196,22 +217,6 @@ const AiSummarizeBox = () => {
     return () => window.removeEventListener("scroll", syncOffset);
   }, []);
 
-  // AI 요약 기능에 필요한 모든 상태와 로직
-  const [inputText, setInputText] = useState("");
-  const [outputText, setOutputText] = useState("");
-  const [activeMode, setActiveMode] = useState<SummarizeMode>("한줄 요약");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [questionText, setQuestionText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const isLogin = useAuthStore((s) => s.isLogin);
-  const router = useRouter();
-  const { canUseFeature } = usePlanRestriction();
-
-  // 토큰 사용량 관리 hook 추가
-  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
-  const queryClient = useQueryClient();
-
   useResetOnNewWork(() => {
     setInputText("");
     setOutputText("");
@@ -222,6 +227,24 @@ const AiSummarizeBox = () => {
     clearHistory();
   });
 
+  // 사이드바 히스토리 선택 시 (기존 동작 유지)
+  useEffect(() => {
+    if (selectedHistory?.content) {
+      setOutputText(selectedHistory.content);
+    }
+  }, [selectedHistory]);
+
+  // 로컬 히스토리 네비게이션 변경 시
+  useEffect(() => {
+    const currentLocal = getCurrentSummarize();
+    if (currentLocal) {
+      setInputText(currentLocal.inputText);
+      setOutputText(currentLocal.content);
+      setActiveMode(currentLocal.mode as SummarizeMode);
+    }
+  }, [summarizeIndex, getCurrentSummarize]);
+
+  // ========== API Call ==========
   const handleApiCall = async () => {
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
@@ -264,7 +287,14 @@ const AiSummarizeBox = () => {
       const response = await requestSummarize(apiMode, requestData);
       setOutputText(response.result);
 
-      //  토큰 처리
+      // 로컬 히스토리에 추가
+      addSummarizeHistory({
+        content: response.result,
+        inputText: inputText,
+        mode: activeMode
+      });
+
+      // 토큰 처리
       if (response.remainingToken !== undefined) {
         const tokensUsed = updateTokenUsage(response.remainingToken);
         showTokenAlert(response.remainingToken, true);
@@ -302,29 +332,39 @@ const AiSummarizeBox = () => {
     }
   };
 
+  // ========== Render ==========
   return (
     <div className="w-full flex flex-col h-full p-2 md:p-4 gap-2 md:gap-4">
       <header className="flex justify-between items-center px-[3px]">
         <h1 className="text-lg md:text-2xl font-bold text-gray-800">AI 요약</h1>
+
+        {/* 로컬 히스토리 네비게이션 */}
+        <LocalHistoryNavigation canGoBack={canGoBackSummarize()} canGoForward={canGoForwardSummarize()} onPrevious={goToPreviousSummarize} onNext={goToNextSummarize} currentIndex={summarizeIndex} totalCount={summarizeHistories.length} currentTimestamp={getCurrentSummarize()?.timestamp} />
       </header>
+
       <div className="px-[3px]">
         <ModeSelector activeMode={activeMode} setActiveMode={setActiveMode} targetAudience={targetAudience} setTargetAudience={setTargetAudience} questionText={questionText} setQuestionText={setQuestionText} />
       </div>
+
       <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
         <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
           <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="내용을 입력하세요." className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading}></textarea>
+
           <div className="flex justify-between items-center mt-2 md:mt-4">
             <button className="flex items-center gap-1 md:gap-[6px]">
               <Image src="/icons/upload.svg" alt="" width={22} height={22} />
               <p className="hover:font-nanum-bold text-xs md:text-sm">파일 업로드하기</p>
             </button>
+
             <button onClick={handleApiCall} className="py-1.5 px-4 md:py-2 md:px-6 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 font-semibold text-xs md:text-base" disabled={isLoading || !inputText.trim()}>
               {isLoading ? "요약 중..." : "요약하기"}
             </button>
           </div>
         </div>
+
         <div className="w-full h-1/2 md:h-full md:w-1/2 p-2 md:p-4 relative bg-gray-50">
           <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10 text-sm md:text-base">{isLoading ? "요약 생성 중..." : selectedHistory?.content || outputText || "여기에 요약 결과가 표시됩니다."}</div>
+
           {(selectedHistory?.content || outputText) && (
             <button onClick={() => navigator.clipboard.writeText(selectedHistory?.content || outputText)} className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full">
               <Copy className="h-4 w-4" />
