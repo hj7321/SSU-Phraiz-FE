@@ -19,6 +19,11 @@ interface LocalHistoryState {
 
   maxHistories: number;
 
+  isHistoryFullSummarize: () => boolean;
+  isHistoryFullParaphrase: () => boolean;
+  startNewSummarizeConversation: () => void;
+  startNewParaphraseConversation: () => void;
+
   // 요약 히스토리 액션
   addSummarizeHistory: (item: Omit<LocalHistoryItem, "id" | "timestamp" | "type">) => void;
   goToPreviousSummarize: () => void;
