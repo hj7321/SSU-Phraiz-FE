@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
 import { requestSummarize, SummarizeApiMode } from "@/apis/summarize.api";
@@ -175,14 +176,14 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
     </div>
   );
 };
-
 const AiSummarizeBox = () => {
+  const { toast } = useToast();
+
   // ========== Store & Router ==========
   const selectedHistory = useHistoryStore((state) => state.selectedHistory);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
 
-  // 로컬 히스토리 네비게이션
-  const { addSummarizeHistory, goToPreviousSummarize, goToNextSummarize, canGoBackSummarize, canGoForwardSummarize, getCurrentSummarize, summarizeHistories, summarizeIndex } = useLocalHistory();
+  const { addSummarizeHistory, goToPreviousSummarize, goToNextSummarize, canGoBackSummarize, canGoForwardSummarize, getCurrentSummarize, summarizeHistories, summarizeIndex, isHistoryFullSummarize, startNewSummarizeConversation } = useLocalHistory();
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const router = useRouter();
@@ -190,7 +191,7 @@ const AiSummarizeBox = () => {
   const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
   const queryClient = useQueryClient();
 
-  // ========== State (한 번만 선언) ==========
+  // ========== State ==========
   const [inputText, setInputText] = useState("");
   const [outputText, setOutputText] = useState("");
   const [activeMode, setActiveMode] = useState<SummarizeMode>("한줄 요약");
@@ -227,14 +228,12 @@ const AiSummarizeBox = () => {
     clearHistory();
   });
 
-  // 사이드바 히스토리 선택 시 (기존 동작 유지)
   useEffect(() => {
     if (selectedHistory?.content) {
       setOutputText(selectedHistory.content);
     }
   }, [selectedHistory]);
 
-  // 로컬 히스토리 네비게이션 변경 시
   useEffect(() => {
     const currentLocal = getCurrentSummarize();
     if (currentLocal) {
@@ -244,7 +243,7 @@ const AiSummarizeBox = () => {
     }
   }, [summarizeIndex, getCurrentSummarize]);
 
-  // ========== API Call ==========
+  // ========== Handlers ==========
   const handleApiCall = async () => {
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
@@ -252,7 +251,16 @@ const AiSummarizeBox = () => {
       return;
     }
 
-    // 질문 기반 요약과 타겟 요약만 권한 체크
+    if (isHistoryFullSummarize()) {
+      toast({
+        title: "히스토리 제한",
+        description: "최대 10개까지 저장할 수 있습니다. 새 대화를 시작해주세요.",
+        variant: "destructive",
+        duration: 4000
+      });
+      return;
+    }
+
     if (activeMode === "질문 기반 요약" && !canUseFeature("summarize", "questionBased")) {
       alert("질문 기반 요약은 Basic 플랜부터 이용 가능합니다.");
       return;
@@ -287,22 +295,18 @@ const AiSummarizeBox = () => {
       const response = await requestSummarize(apiMode, requestData);
       setOutputText(response.result);
 
-      // 로컬 히스토리에 추가
       addSummarizeHistory({
         content: response.result,
         inputText: inputText,
         mode: activeMode
       });
 
-      // 토큰 처리
       if (response.remainingToken !== undefined) {
         const tokensUsed = updateTokenUsage(response.remainingToken);
         showTokenAlert(response.remainingToken, true);
         console.log(`이번 요청에서 ${tokensUsed} 토큰 사용됨`);
       } else {
-        // fallback
         let tokensUsed = 0;
-
         if (response.usage?.total_tokens) {
           tokensUsed = response.usage.total_tokens;
         } else if (response.tokens_used) {
@@ -332,14 +336,39 @@ const AiSummarizeBox = () => {
     }
   };
 
+  const handleNewConversation = () => {
+    startNewSummarizeConversation();
+    setInputText("");
+    setOutputText("");
+    setActiveMode("한줄 요약");
+    setTargetAudience("");
+    setQuestionText("");
+
+    toast({
+      title: "새 대화 시작",
+      description: "히스토리가 초기화되었습니다.",
+      duration: 2000
+    });
+  };
+
+  const isHistoryFull = isHistoryFullSummarize();
+  const isButtonDisabled = isLoading || !inputText.trim() || isHistoryFull;
+
   // ========== Render ==========
   return (
     <div className="w-full flex flex-col h-full p-2 md:p-4 gap-2 md:gap-4">
       <header className="flex justify-between items-center px-[3px]">
         <h1 className="text-lg md:text-2xl font-bold text-gray-800">AI 요약</h1>
 
-        {/* 로컬 히스토리 네비게이션 */}
-        <LocalHistoryNavigation canGoBack={canGoBackSummarize()} canGoForward={canGoForwardSummarize()} onPrevious={goToPreviousSummarize} onNext={goToNextSummarize} currentIndex={summarizeIndex} totalCount={summarizeHistories.length} currentTimestamp={getCurrentSummarize()?.timestamp} />
+        <div className="flex items-center gap-2">
+          {summarizeHistories.length > 0 && (
+            <button onClick={handleNewConversation} className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+              새 대화
+            </button>
+          )}
+
+          <LocalHistoryNavigation canGoBack={canGoBackSummarize()} canGoForward={canGoForwardSummarize()} onPrevious={goToPreviousSummarize} onNext={goToNextSummarize} currentIndex={summarizeIndex} totalCount={summarizeHistories.length} currentTimestamp={getCurrentSummarize()?.timestamp} />
+        </div>
       </header>
 
       <div className="px-[3px]">
@@ -356,10 +385,19 @@ const AiSummarizeBox = () => {
               <p className="hover:font-nanum-bold text-xs md:text-sm">파일 업로드하기</p>
             </button>
 
-            <button onClick={handleApiCall} className="py-1.5 px-4 md:py-2 md:px-6 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 font-semibold text-xs md:text-base" disabled={isLoading || !inputText.trim()}>
-              {isLoading ? "요약 중..." : "요약하기"}
+            <button onClick={handleApiCall} className={clsx("py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all", isHistoryFull ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white")} disabled={isButtonDisabled} title={isHistoryFull ? "히스토리가 가득 찼습니다. 새 대화를 시작해주세요." : ""}>
+              {isHistoryFull ? "히스토리 가득참" : isLoading ? "요약 중..." : "요약하기"}
             </button>
           </div>
+
+          {isHistoryFull && (
+            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+              ⚠️ 히스토리가 가득 찼습니다.
+              <button onClick={handleNewConversation} className="ml-1 underline hover:text-yellow-900">
+                새 대화 시작하기
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="w-full h-1/2 md:h-full md:w-1/2 p-2 md:p-4 relative bg-gray-50">
