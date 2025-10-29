@@ -16,12 +16,10 @@ const Header = () => {
   const { mutate: logoutMutate } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logout,
-    onSuccess: (data) => {
-      console.log("✅ 로그아웃 성공", data);
+    onSuccess: () => {
       authLogout();
     },
     onError: (err) => {
-      console.error("❌ 로그아웃 실패: ", err.message);
       alert(err.message);
     },
   });

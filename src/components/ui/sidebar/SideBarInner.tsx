@@ -17,7 +17,7 @@ import { SERVICE_PATH } from "@/constants/servicePath";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFolder } from "@/apis/folder.api";
 import { useNewWorkStore } from "@/stores/newWork.store";
-import { useHistoryStore } from "@/stores/history.store";
+import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 import { useState } from "react";
 import CreateFolderDialog from "../dialog/CreateFolderDialog";
 import { useAuthStore } from "@/stores/auth.store";
@@ -65,7 +65,7 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
         openDialog();
         break;
       case "new-work":
-        useHistoryStore.getState().clearHistory?.();
+        useCiteHistoryStore.getState().clearCiteHistory?.();
         useNewWorkStore.getState().trigger();
         break;
       case "new-folder": {
@@ -78,7 +78,12 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
   };
 
   return (
-    <Sidebar side="right" variant="floating" collapsible="icon">
+    <Sidebar
+      side="right"
+      variant="floating"
+      collapsible="icon"
+      className="max-lg:w-[min(88vw,320px)]"
+    >
       {/*──────── 메뉴 (아이콘 + 라벨) ────────*/}
       <SidebarMenu className="mt-2">
         {(Object.keys(TABS) as TabKey[]).map((key) => {
@@ -92,7 +97,8 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
                 asChild
                 data-active={activeTab === key}
                 className={clsx(
-                  "w-full h-11 rounded-md px-3 transition",
+                  "w-full h-11 rounded-md transition",
+                  open ? "px-3" : "px-0",
                   "data-[active=true]:bg-bg-sidebar-accent data-[active=true]:font-medium",
                   !open && "justify-center"
                 )}
@@ -112,9 +118,11 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
                     disabled && "opacity-40 cursor-not-allowed"
                   )}
                 >
-                  <Icon className="size-5 shrink-0" />
+                  <Icon
+                    className={clsx("size-4 shrink-0", !open && "mx-auto")}
+                  />
                   {open && (
-                    <span className="ml-1 truncate leading-none">
+                    <span className="ml-1 text-[11px] sm:text-[12px] md:text-[14px] truncate leading-none">
                       {TABS[key].label}
                     </span>
                   )}
@@ -127,7 +135,7 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
 
       {/*──────── 탭 내용 ────────*/}
       {open && (
-        <SidebarContent className="">
+        <SidebarContent className="border-t-0 min-w-0">
           <SidebarPanel />
         </SidebarContent>
       )}

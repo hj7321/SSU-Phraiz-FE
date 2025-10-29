@@ -1,13 +1,20 @@
 // src/apis/paraphrase.api.ts
 import { api } from "./api";
 
-export type ParaphraseApiMode = "standard" | "academic" | "creative" | "fluency" | "experimental" | "custom";
+export type ParaphraseApiMode =
+  | "standard"
+  | "academic"
+  | "creative"
+  | "fluency"
+  | "experimental"
+  | "custom";
 
 interface ParaphraseRequest {
   text?: string;
   userRequestMode?: string;
   scale?: number;
-  file?: File;
+  folderId?: null | number;
+  historyId?: null | number;
 }
 export interface ParaphraseResponse {
   resultHistoryId: number;
@@ -27,14 +34,17 @@ export interface ParaphraseResponse {
   token_count?: number;
 }
 
-export const requestParaphrase = async (mode: ParaphraseApiMode, data: ParaphraseRequest | FormData): Promise<ParaphraseResponse> => {
+export const requestParaphrase = async (
+  mode: ParaphraseApiMode,
+  data: ParaphraseRequest
+): Promise<ParaphraseResponse> => {
   const url = `/paraphrase/paraphrasing/${mode}`;
 
   if (data instanceof FormData) {
     const response = await api.post<ParaphraseResponse>(url, data, {
       headers: {
-        "Content-Type": "multipart/form-data"
-      }
+        "Content-Type": "multipart/form-data",
+      },
     });
     return response.data;
   }

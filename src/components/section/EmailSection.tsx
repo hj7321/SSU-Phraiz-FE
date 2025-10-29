@@ -62,6 +62,9 @@ const EmailSection = forwardRef<HTMLInputElement, EmailSectionProps>(
           onKeyDown={onEmailKeyDown}
           autoComplete="email"
           inputMode="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
         {emailErrorMessage && (
           <small className="text-[11.5px] mt-[-3.5px] text-red-500">

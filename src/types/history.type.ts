@@ -20,10 +20,23 @@ export type HistoryName = {
   lastUpdate: string;
 };
 
-export type HistoryContent = {
+export type HistoryAIContent = {
+  resultHistoryId: number;
+  name: string;
+  originalText: string;
+  paraphrasedText?: string;
+  summarizedText?: string;
+  sequenceNumber: number;
+  remainingToken: number;
+};
+
+export type HistoryCiteContent = {
   id: number;
-  content: string;
+  url: string;
+  style: string;
+  citationText: string;
   lastUpdate: string;
+  sequenceNumber?: number;
 };
 
 export type HistoryWrapper = { histories: HistoryName[] };

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useLayoutEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Image, { StaticImageData } from "next/image";
 
 import Icon1 from "/public/icons/icon1.svg";
 import Icon2 from "/public/icons/icon2.svg";
@@ -15,9 +14,9 @@ import Icon6 from "/public/icons/icon6.svg";
 import Icon7 from "/public/icons/icon7.svg";
 
 const Main = () => {
-  const containerRef = useRef<HTMLElement | null>(null);
-  const h1Ref = useRef<HTMLHeadingElement | null>(null);
-  const h2Ref = useRef<HTMLHeadingElement | null>(null);
+  const containerRef = useRef<HTMLElement>(null);
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+  const h2Ref = useRef<HTMLHeadingElement>(null);
   const iconRefs = useRef<HTMLDivElement[]>([]);
 
   useLayoutEffect(() => {
@@ -48,10 +47,11 @@ const Main = () => {
           ease: "power3.out",
           stagger: 0.12,
         },
-        "<3"
+        "<+=3"
       );
 
       iconRefs.current.forEach((icon) => {
+        if (!icon) return;
         const dx = gsap.utils.random(25, 45);
         gsap.to(icon, {
           x: dx,
@@ -70,7 +70,11 @@ const Main = () => {
   }, []);
 
   /* ───────── 아이콘 JSX 헬퍼 ───────── */
-  const makeIcon = (src: StaticImageData, idx: number, className: string) => (
+  const makeIcon = (
+    Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
+    idx: number,
+    className: string
+  ) => (
     <div
       key={idx}
       ref={(el) => {
@@ -78,8 +82,9 @@ const Main = () => {
       }}
       className={`absolute ${className} pointer-events-none select-none`}
       style={{ willChange: "transform" }}
+      aria-hidden="true"
     >
-      <Image src={src} alt="" priority width={160} height={160} />
+      <Icon className="w-full h-full" preserveAspectRatio="xMidYMid meet" />
     </div>
   );
 
@@ -92,12 +97,12 @@ const Main = () => {
         <h1 ref={h1Ref} className="ml-[0px] xs:ml-[-80px]">
           누구나 전문가처럼 쓰는 시대,
         </h1>
-        <h1
+        <p
           ref={h2Ref}
           className="text-right mr-[0px] xs:mr-[-80px] mt-[0px] xs:mt-[-5px]"
         >
           Phraiz로.
-        </h1>
+        </p>
       </div>
       <Link
         href="/ai-paraphrase"
@@ -111,6 +116,7 @@ const Main = () => {
         block text-white font-nanum-bold
         transition-transform duration-300
         group-hover:-translate-y-full     /* 위로 완전히 나감 */
+        group-focus-visible:-translate-y-full
       "
           >
             바로 시작하기
@@ -124,6 +130,7 @@ const Main = () => {
         transition-transform duration-300
         translate-y-full                 /* 처음엔 버튼 아래 */
         group-hover:translate-y-0        /* 중앙으로 올라옴 */
+        group-focus-visible:translate-y-0
       "
           >
             바로 시작하기

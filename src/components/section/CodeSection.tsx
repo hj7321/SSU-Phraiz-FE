@@ -65,6 +65,9 @@ const CodeSection = forwardRef<HTMLInputElement, CodeSectionProps>(
           ref={ref}
           onKeyDown={onCodeKeyDown}
           inputMode="numeric"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
         <div className="relative flex flex-col">
           <button

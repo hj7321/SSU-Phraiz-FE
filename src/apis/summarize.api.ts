@@ -1,12 +1,20 @@
 // src/apis/summarize.api.ts에 추가
 import { api } from "./api";
 
-export type SummarizeApiMode = "one-line" | "full" | "by-paragraph" | "key-points" | "question-based" | "targeted";
+export type SummarizeApiMode =
+  | "one-line"
+  | "full"
+  | "by-paragraph"
+  | "key-points"
+  | "question-based"
+  | "targeted";
 
 interface SummarizeRequest {
-  text?: string;
-  question?: string;
-  target?: string;
+  text: string;
+  question?: string; // 'question-based' 모드일 때
+  target?: string; // 'targeted' 모드일 때
+  folderId?: null | number;
+  historyId?: null | number;
 }
 
 export interface SummarizeResponse {
@@ -27,14 +35,17 @@ export interface SummarizeResponse {
 }
 
 // 기존 텍스트 요약 API
-export const requestSummarize = async (mode: SummarizeApiMode, data: SummarizeRequest | FormData): Promise<SummarizeResponse> => {
+export const requestSummarize = async (
+  mode: SummarizeApiMode,
+  data: SummarizeRequest | FormData
+): Promise<SummarizeResponse> => {
   const url = `/summary/summarize/${mode}`;
 
   if (data instanceof FormData) {
     const response = await api.post<SummarizeResponse>(url, data, {
       headers: {
-        "Content-Type": "multipart/form-data"
-      }
+        "Content-Type": "multipart/form-data",
+      },
     });
     return response.data;
   }
@@ -44,7 +55,12 @@ export const requestSummarize = async (mode: SummarizeApiMode, data: SummarizeRe
 };
 
 // 파일 업로드 전용 API
-export const requestSummarizeWithFile = async (file: File, mode: SummarizeApiMode, question?: string, target?: string): Promise<SummarizeResponse> => {
+export const requestSummarizeWithFile = async (
+  file: File,
+  mode: SummarizeApiMode,
+  question?: string,
+  target?: string
+): Promise<SummarizeResponse> => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("mode", mode);
@@ -56,10 +72,14 @@ export const requestSummarizeWithFile = async (file: File, mode: SummarizeApiMod
     formData.append("target", target);
   }
 
-  const response = await api.post<SummarizeResponse>("/summary/file-upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data"
+  const response = await api.post<SummarizeResponse>(
+    "/summary/file-upload",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     }
-  });
+  );
   return response.data;
 };

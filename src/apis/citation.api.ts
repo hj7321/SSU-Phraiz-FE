@@ -7,6 +7,7 @@ import {
   SendUrlType,
 } from "@/types/citation.type";
 import { SuccessResponseData } from "@/types/common.type";
+import { HistoryAndFolderId } from "@/types/history.type";
 
 // 인용문을 생성할 정보가 담긴 URL 보내기
 export const sendUrl = async ({
@@ -38,14 +39,21 @@ export const sendCitation = async ({
   citeId,
   citation,
   style,
-}: SendCitationType): Promise<SuccessResponseData> => {
+  folderId,
+  historyId,
+}: SendCitationType): Promise<SuccessResponseData & HistoryAndFolderId> => {
   const path = "/cite/getCitation";
   try {
-    const response = await api.post<SuccessResponseData>(path, {
-      citeId: citeId,
-      citation: citation,
-      style: style,
-    });
+    const response = await api.post<SuccessResponseData & HistoryAndFolderId>(
+      path,
+      {
+        citeId,
+        citation,
+        style,
+        folderId,
+        historyId,
+      }
+    );
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

@@ -23,7 +23,6 @@ const ResetPwForm = () => {
       alert("입력하신 이메일로 비밀번호 재설정 링크가 전송되었습니다.");
     },
     onError: (err) => {
-      console.error("❌ 비밀번호 재설정 링크 전송 실패: ", err.message);
       alert(err.message);
     },
   });
@@ -66,6 +65,9 @@ const ResetPwForm = () => {
           isInvalid={isEmailInvalid}
           autoComplete="email"
           inputMode="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
         {emailErrorMessage && (
           <small className="text-[11.5px] mt-[-4.5px] text-red-500">

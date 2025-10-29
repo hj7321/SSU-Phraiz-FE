@@ -22,7 +22,6 @@ const FindIdForm = () => {
       alert("입력하신 이메일로 아이디가 전송되었습니다.");
     },
     onError: (err) => {
-      console.error("❌ 아이디 전송 실패: ", err.message);
       alert(err.message);
     },
   });
@@ -45,6 +44,9 @@ const FindIdForm = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           isInvalid={isEmailInvalid}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
         {isEmailInvalid && (
           <small className="text-[11.5px] mt-[-4.5px] text-red-500">
