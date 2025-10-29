@@ -3,91 +3,149 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 export const BASE_URL = "https://api.phraiz.com/api";
 
+// 비인증(공개) 경로
+const PUBLIC_PATHS = [
+  "/signUp",
+  "/login",
+  "/emails",
+  "/checkId",
+  "/findId",
+  "/findPwd",
+  "/resetPwd",
+  "/oauth",
+  "/oauth2",
+  "/members/reissue",
+];
+
+const getPathname = (cfg: InternalAxiosRequestConfig) => {
+  try {
+    return new URL(cfg.url!, cfg.baseURL || BASE_URL).pathname;
+  } catch {
+    return cfg.url || "/";
+  }
+};
+const isPublicRoute = (cfg: InternalAxiosRequestConfig) =>
+  PUBLIC_PATHS.some((p) => getPathname(cfg).startsWith(p));
+const isReissueRequest = (cfg: InternalAxiosRequestConfig) =>
+  getPathname(cfg).startsWith("/members/reissue");
+const isOnLoginPage = () =>
+  typeof window !== "undefined" &&
+  window.location.pathname.startsWith("/login");
+
+/** 안전 숫자 변환 (NaN이면 fallback) */
+const toNumberOr = (v: string | number, fallback = 0) => {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
 export const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json"
-  }
+  headers: { "Content-Type": "application/json" },
 });
 
-// 요청 인터셉터: 토큰 자동 부착
-// 요청 인터셉터는 axios가 서버로 요청을 보내기 직전에 실행됨
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().accessToken;
+    const publicRoute = isPublicRoute(config);
 
-    const noAuthNeeded = ["/signUp", "/login", "/emails", "/checkId", "/findId", "/findPwd", "/resetPwd", "/oauth", "/oauth2", "/members/reissue"];
-
-    // URL 파싱해서 pathname만 비교
-    const fullUrl = new URL(config.url!, config.baseURL || BASE_URL);
-    const isPublicRoute = noAuthNeeded.some((path) => fullUrl.pathname.startsWith(path));
-
-    // headers가 없을 경우 초기화
     config.headers = config.headers || {};
-
-    if (token && !isPublicRoute) {
-      config.headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
-      console.log("✅ 요청에 토큰 붙임:", config.headers.Authorization);
+    if (token && !publicRoute) {
+      config.headers.Authorization = token.startsWith("Bearer ")
+        ? token
+        : `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// 응답 인터셉터: 토큰 만료 → 자동 재발급
-// 응답 인터셉터는 서버로부터 응답을 받은 직후, .then()이나 .catch()로 넘어가기 직전에 실행됨
-api.interceptors.response.use(
-  (response) => response, // 응답이 성공한 경우는 그대로 응답 반환
+type ReissueResponse = {
+  accessToken: string;
+  id: string;
+  planId: string | number;
+};
+type NormalizedReissue = {
+  accessToken: string;
+  id: string;
+  planId: number;
+};
 
-  // 응답이 실패한 경우(에러일 때) 처리
+/* 동시 401 대응용 리프레시 락 */
+let refreshPromise: Promise<NormalizedReissue> | null = null;
+
+api.interceptors.response.use(
+  (response) => response,
   async (error: AxiosError) => {
-    // 실패한 원래 요청을 가져오고, _retry라는 커스텀 플래그 추가 (재시도 여부 확인용)
-    // error.config : Axios가 자동으로 넣어주는 실패한 요청의 설정 객체
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
+    const status = error.response?.status;
 
-    // 401 Unauthorized + 아직 재시도 안 한 요청일 때만 수행
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; // 중복 재시도를 막기 위해 플래그 설정
+    if (!originalRequest) return Promise.reject(error);
+    if (status !== 401) return Promise.reject(error);
 
-      try {
-        // 1. refresh-token 요청: httpOnly 쿠키로 보내기 때문에 withCredentials: true 설정
-        // POST 구조: axios.post(url, data, config)
-        // 인터셉터가 없는 순수한 axios 인스턴스 (무한루프 방지)
-        const res = await axios.post(
-          `${BASE_URL}/members/reissue`,
-          {}, // 요청 바디는 비움
-          { withCredentials: true } // 쿠키 자동 첨부
-        );
-
-        // 2. 서버가 새 accessToken 반환 → Zustand에 저장
-        const { accessToken, id, planId } = res.data;
-        console.log("🔑 재발급된 accessToken:", accessToken);
-        useAuthStore.getState().login(accessToken, id, planId);
-
-        // 3. 원래 실패한 요청의 Authorization 헤더를 새 토큰으로 덮어쓰기
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = accessToken;
-
-        // 4. 원래 요청 재시도 → 새 토큰으로 요청 재전송
-        // api(...)는 내부적으로 axios.request(...)와 같음
-        // 즉, config를 통째로 넘기면 axios가 그것에 맞게 다시 요청을 보냄
-        return api(originalRequest);
-      } catch (refreshError) {
-        // 5. 리프레시 토큰도 만료 or 서버 오류 → 강제 로그아웃
-        console.error("❌ refresh 실패:", refreshError);
-        useAuthStore.getState().logout();
-        alert("세션이 만료되었습니다. 다시 로그인해주세요.");
-        window.location.href = "/login";
-
-        // 에러를 그대로 밖으로 던짐 → 이후 catch에서 처리 가능
-        return Promise.reject(refreshError);
-      }
+    // 공개 경로(로그인 등)에서의 401은 그냥 에러로 전달 (세션 만료 alert 금지)
+    if (isPublicRoute(originalRequest)) {
+      return Promise.reject(error);
     }
 
-    // 위 조건에 해당하지 않으면 일반 에러로 그대로 처리
-    return Promise.reject(error);
+    // 재발급 요청 자체이거나 이미 재시도한 요청이면 중단
+    if (isReissueRequest(originalRequest) || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // 토큰이 아예 없으면 리프레시 불가
+    const currentToken = useAuthStore.getState().accessToken;
+    if (!currentToken) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      // 하나의 네트워크 호출만 수행하도록 락 사용
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post<ReissueResponse>(
+            `${BASE_URL}/members/reissue`,
+            {},
+            { withCredentials: true }
+          )
+          .then((res) => {
+            const d = res.data;
+            return {
+              accessToken: d.accessToken,
+              id: d.id,
+              planId: toNumberOr(d.planId, 0), // 숫자로 정규화
+            };
+          });
+      }
+
+      const { accessToken, id, planId } = await refreshPromise;
+
+      // 상태 갱신
+      useAuthStore.getState().login(accessToken, id, planId);
+
+      // 실패했던 원 요청의 Authorization 헤더 갱신 후 재시도
+      originalRequest.headers = originalRequest.headers || {};
+      originalRequest.headers.Authorization = accessToken.startsWith("Bearer ")
+        ? accessToken
+        : `Bearer ${accessToken}`;
+
+      return api(originalRequest);
+    } catch (refreshError) {
+      useAuthStore.getState().logout();
+
+      // 로그인 페이지에서 중복 얼럿/리다이렉트 방지
+      if (!isOnLoginPage()) {
+        alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+        window.location.href = "/login";
+      }
+
+      return Promise.reject(refreshError);
+    } finally {
+      refreshPromise = null; // 다음 401을 위해 락 해제
+    }
   }
 );

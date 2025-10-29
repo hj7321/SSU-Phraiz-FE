@@ -1,30 +1,54 @@
+// src/apis/paraphrase.api.ts
 import { api } from "./api";
-export type ParaphraseApiMode = "standard" | "academic" | "creative" | "fluency" | "experimental" | "custom";
 
-// 파라미터 타입 정의
+export type ParaphraseApiMode =
+  | "standard"
+  | "academic"
+  | "creative"
+  | "fluency"
+  | "experimental"
+  | "custom";
+
 interface ParaphraseRequest {
-  text: string;
+  text?: string;
   userRequestMode?: string;
+  scale?: number;
+  folderId?: null | number;
+  historyId?: null | number;
 }
+export interface ParaphraseResponse {
+  resultHistoryId: number;
+  name: string;
+  originalText: string; // 필수값
+  paraphrasedText: string; // result → paraphrasedText
+  sequenceNumber: number; // 화살표 네비게이션용
+  remainingToken: number;
 
-// api 응답 데이터타입 정의
-interface ParaphraseResponse {
-  result: string;
-
-  // 토큰 사용량 정보 (optional로 추가)
+  // 토큰 필드 (fallback용)
   usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
   };
-
-  // 다른 가능한 토큰 필드명들도 대비
   tokens_used?: number;
   token_count?: number;
 }
 
-export const requestParaphrase = async (mode: ParaphraseApiMode, data: ParaphraseRequest): Promise<ParaphraseResponse> => {
+export const requestParaphrase = async (
+  mode: ParaphraseApiMode,
+  data: ParaphraseRequest
+): Promise<ParaphraseResponse> => {
   const url = `/paraphrase/paraphrasing/${mode}`;
+
+  if (data instanceof FormData) {
+    const response = await api.post<ParaphraseResponse>(url, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  }
+
   const response = await api.post<ParaphraseResponse>(url, data);
   return response.data;
 };

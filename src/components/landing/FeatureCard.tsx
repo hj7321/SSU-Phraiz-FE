@@ -1,9 +1,7 @@
-"use client";
-
 import { ServiceFeature } from "@/constants/serviceLink";
 import clsx from "clsx";
 import Image from "next/image";
-import Link from "next/link";
+import HoverPrefetchLink from "../link/HoverPrefetchLink";
 
 interface FeatureCardProps {
   feature: ServiceFeature;
@@ -13,7 +11,7 @@ interface FeatureCardProps {
 
 const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
   return (
-    <Link
+    <HoverPrefetchLink
       href={href}
       className={clsx(
         "relative w-[270px] h-[160px] sm:w-[290px] sm:h-[180px] md:w-[350px] md:h-[240px] rounded-[16px] border border-[#a294f9] bg-gradient-to-r from-white to-main/30 flex flex-col items-center justify-center text-center overflow-hidden cursor-pointer group"
@@ -24,7 +22,9 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
           absolute inset-0 z-20
           bg-[linear-gradient(to_top,_#7752fe_0%,_#c1b2ff_30%,_transparent_60%)]
           translate-y-full group-hover:translate-y-0
-          transition-transform duration-500 ease-out
+           motion-reduce:translate-y-0  
+          transition-transform duration-500 ease-out will-change-transform
+           motion-reduce:transition-none  
         "
       />
       {/* CTA 문구 */}
@@ -33,6 +33,7 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
           absolute bottom-[10px] z-20 flex items-center justify-center
           font-nanum-bold md:text-[20px] text-[17px] text-white
           opacity-0 group-hover:opacity-100
+           motion-reduce:opacity-100 motion-reduce:transition-none
           transition-opacity duration-300
         "
       >
@@ -61,13 +62,13 @@ const FeatureCard = ({ feature, href, ctaText }: FeatureCardProps) => {
         ></h3>
         <p
           data-fade
-          className="text-[13px] md:text-[15px] lg:text-[16px] group-hover:opacity-50"
+          className="text-[13px] md:text-[15px] lg:text-[16px] group-hover:opacity-50 motion-reduce:opacity-100 motion-reduce:transition-none"
           dangerouslySetInnerHTML={{
             __html: `${feature.description}`,
           }}
         ></p>
       </div>
-    </Link>
+    </HoverPrefetchLink>
   );
 };
 

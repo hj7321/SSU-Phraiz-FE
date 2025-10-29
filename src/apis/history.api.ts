@@ -1,7 +1,9 @@
 import { Service } from "@/types/common.type";
 import {
   FolderIdWithPageAndSize,
+  HistoryAIContent,
   HistoryAndFolderId,
+  HistoryCiteContent,
   HistoryId,
   HistoryList,
 } from "@/types/history.type";
@@ -142,11 +144,26 @@ export const deleteHistory = async ({
 };
 
 // 히스토리 최신 내용 조회
-export const readLatestHistory = async ({
+export function readLatestHistory(args: {
+  service: "paraphrase" | "summary";
+  historyId: number;
+  sequenceNumber?: number;
+}): Promise<HistoryAIContent>;
+export function readLatestHistory(args: {
+  service: "cite";
+  historyId: number;
+  sequenceNumber?: number;
+}): Promise<HistoryCiteContent>;
+export async function readLatestHistory({
   service,
   historyId,
-}: Service & HistoryId) => {
-  const path = `/${service}/histories/${historyId}/latest`;
+  sequenceNumber,
+}: Service & HistoryId & { sequenceNumber?: number }): Promise<
+  HistoryAIContent | HistoryCiteContent
+> {
+  const qs =
+    sequenceNumber !== undefined ? `?sequenceNumber=${sequenceNumber}` : "";
+  const path = `/${service}/histories/${historyId}${qs}`;
   try {
     const response = await api.get(path);
     return response.data;
@@ -164,4 +181,4 @@ export const readLatestHistory = async ({
     }
     throw error;
   }
-};
+}

@@ -83,6 +83,9 @@ const CreateFolderDialog = ({
           }}
           onKeyDown={onKeyDown}
           disabled={pending}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
         {err && <p className="text-red-500 text-xs mt-1">{err}</p>}
 

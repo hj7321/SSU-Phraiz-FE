@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
 import { usePlanRestriction } from "./usePlanRestriction";
+import { PRICING_PLAN } from "@/constants/pricingPlan";
 
-// 플랜별 월 토큰 제한 (Record 타입으로 변경)
-const PLAN_TOKEN_LIMITS: Record<number, number> = {
-  0: 100000, // Free: 100,000 토큰
-  1: 2900000, // Basic: 2,900,000 토큰
-  2: 6800000, // Standard: 6,800,000 토큰
-  3: -1 // Pro: 무제한 (공정 사용 정책)
-};
+// PRICING_PLAN을 기반으로 동적 토큰 제한 생성
+const PLAN_TOKEN_LIMITS: Record<number, number> = {};
+
+PRICING_PLAN.forEach((plan, index) => {
+  if (plan.monthTokenLimit === "무제한") {
+    PLAN_TOKEN_LIMITS[index] = -1; // 무제한
+  } else {
+    // "100,000" → 100000 변환
+    PLAN_TOKEN_LIMITS[index] = parseInt(plan.monthTokenLimit.replace(/,/g, ""), 10);
+  }
+});
 
 interface TokenUsage {
   used: number;
@@ -19,19 +24,20 @@ interface TokenUsage {
 interface UseTokenUsageReturn {
   tokenUsage: TokenUsage;
   addTokenUsage: (tokens: number) => void;
+  updateTokenUsage: (remainingToken: number) => number;
   resetMonthlyUsage: () => void;
-  showTokenAlert: (tokensUsed: number) => void;
+  showTokenAlert: (remainingTokenOrUsed: number, isRemainingToken?: boolean) => void; // 🔥 수정
 }
 
 export const useTokenUsage = (): UseTokenUsageReturn => {
-  const { currentPlan } = usePlanRestriction();
+  const { currentPlan, planName } = usePlanRestriction();
   const [monthlyTokensUsed, setMonthlyTokensUsed] = useState<number>(0);
 
   // localStorage에서 월별 토큰 사용량 로드
   useEffect(() => {
     const loadTokenUsage = () => {
       try {
-        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM 형태
+        const currentMonth = new Date().toISOString().slice(0, 7);
         const storageKey = `tokenUsage_${currentMonth}`;
         const savedUsage = localStorage.getItem(storageKey);
 
@@ -46,12 +52,39 @@ export const useTokenUsage = (): UseTokenUsageReturn => {
     loadTokenUsage();
   }, []);
 
-  // 토큰 사용량 추가
+  // 새로 추가: remainingToken 기반 토큰 사용량 업데이트
+  const updateTokenUsage = (remainingToken: number): number => {
+    const limit = PLAN_TOKEN_LIMITS[currentPlan];
+
+    if (limit === -1) {
+      // Pro 플랜 (무제한)의 경우
+      return 0; // 사용량을 정확히 알 수 없으므로 0 반환
+    }
+
+    // 총 사용한 토큰 = 플랜 제한 - 남은 토큰
+    const totalUsedTokens = limit - remainingToken;
+    // 이번 요청에서 사용한 토큰 = 새로운 총 사용량 - 이전 사용량
+    const tokensUsedThisRequest = totalUsedTokens - monthlyTokensUsed;
+
+    // 상태 및 localStorage 업데이트
+    setMonthlyTokensUsed(totalUsedTokens);
+
+    try {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const storageKey = `tokenUsage_${currentMonth}`;
+      localStorage.setItem(storageKey, totalUsedTokens.toString());
+    } catch (error) {
+      console.error("토큰 사용량 저장 실패:", error);
+    }
+
+    return Math.max(0, tokensUsedThisRequest);
+  };
+
+  // 토큰 사용량 추가 (호환성)
   const addTokenUsage = (tokens: number) => {
     const newUsage = monthlyTokensUsed + tokens;
     setMonthlyTokensUsed(newUsage);
 
-    // localStorage에 저장
     try {
       const currentMonth = new Date().toISOString().slice(0, 7);
       const storageKey = `tokenUsage_${currentMonth}`;
@@ -61,7 +94,7 @@ export const useTokenUsage = (): UseTokenUsageReturn => {
     }
   };
 
-  // 월별 사용량 리셋 (새 달이 되었을 때)
+  // 월별 사용량 리셋
   const resetMonthlyUsage = () => {
     setMonthlyTokensUsed(0);
     try {
@@ -73,23 +106,36 @@ export const useTokenUsage = (): UseTokenUsageReturn => {
     }
   };
 
-  // 토큰 사용량 alert 표시
-  const showTokenAlert = (tokensUsed: number) => {
-    const newTotal = monthlyTokensUsed + tokensUsed;
-    const limit = PLAN_TOKEN_LIMITS[currentPlan]; // 이제 에러 없음
+  // remainingToken과 tokensUsed 모두 지원
+  const showTokenAlert = (remainingTokenOrUsed: number, isRemainingToken: boolean = false) => {
+    const limit = PLAN_TOKEN_LIMITS[currentPlan];
 
     if (limit === -1) {
       // Pro 플랜 (무제한)
-      alert(`🚀 이번 요청에서 ${tokensUsed.toLocaleString()} 토큰을 사용했습니다.\n이번 달 총 사용량: ${newTotal.toLocaleString()} 토큰\n(Pro 플랜: 무제한 사용 가능)`);
+      const tokensUsed = isRemainingToken ? updateTokenUsage(remainingTokenOrUsed) : remainingTokenOrUsed;
+      alert(`🚀 이번 요청에서 ${tokensUsed > 0 ? tokensUsed.toLocaleString() + " " : ""}토큰을 사용했습니다.\n💎 현재 플랜: ${planName} (무제한 사용 가능)`);
     } else {
-      const remaining = Math.max(0, limit - newTotal);
-      const percentage = Math.round((newTotal / limit) * 100);
+      let totalUsedTokens, remainingTokens, tokensUsed;
+
+      if (isRemainingToken) {
+        // remainingToken이 주어진 경우
+        remainingTokens = remainingTokenOrUsed;
+        totalUsedTokens = limit - remainingTokens;
+        tokensUsed = totalUsedTokens - monthlyTokensUsed;
+      } else {
+        // tokensUsed가 주어진 경우
+        tokensUsed = remainingTokenOrUsed;
+        totalUsedTokens = monthlyTokensUsed + tokensUsed;
+        remainingTokens = limit - totalUsedTokens;
+      }
+
+      const percentage = Math.round((totalUsedTokens / limit) * 100);
 
       let message = `🔢 이번 요청에서 ${tokensUsed.toLocaleString()} 토큰을 사용했습니다.\n`;
-      message += `📊 이번 달 토큰 사용량: ${newTotal.toLocaleString()} / ${limit.toLocaleString()}\n`;
-      message += `⚡ 남은 토큰: ${remaining.toLocaleString()} (${100 - percentage}%)`;
+      message += `📊 이번 달 토큰 사용량: ${totalUsedTokens.toLocaleString()} / ${limit.toLocaleString()}\n`;
+      message += `⚡ 남은 토큰: ${Math.max(0, remainingTokens).toLocaleString()} (${Math.max(0, 100 - percentage)}%)\n`;
+      message += `💎 현재 플랜: ${planName}`;
 
-      // 사용량에 따른 경고 메시지
       if (percentage >= 90) {
         message += `\n⚠️ 토큰 사용량이 90%를 초과했습니다!`;
       } else if (percentage >= 80) {
@@ -112,6 +158,7 @@ export const useTokenUsage = (): UseTokenUsageReturn => {
   return {
     tokenUsage,
     addTokenUsage,
+    updateTokenUsage,
     resetMonthlyUsage,
     showTokenAlert
   };

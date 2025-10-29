@@ -1,10 +1,10 @@
-import { useHistoryStore } from "@/stores/history.store";
+import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 const useClearContent = () => {
   const pathname = usePathname();
-  const clearHistory = useHistoryStore((s) => s.clearHistory);
+  const clearHistory = useCiteHistoryStore((s) => s.clearCiteHistory);
 
   // 이 페이지가 "마운트될 때"도 비우고
   useEffect(() => {
