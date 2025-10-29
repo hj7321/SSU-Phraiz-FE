@@ -1,4 +1,6 @@
+// src/apis/paraphrase.api.ts
 import { api } from "./api";
+
 export type ParaphraseApiMode =
   | "standard"
   | "academic"
@@ -7,19 +9,19 @@ export type ParaphraseApiMode =
   | "experimental"
   | "custom";
 
-// 파라미터 타입 정의
 interface ParaphraseRequest {
-  text: string;
+  text?: string;
   userRequestMode?: string;
   scale?: number;
   folderId?: null | number;
   historyId?: null | number;
 }
-
 export interface ParaphraseResponse {
-  result: string;
   resultHistoryId: number;
   name: string;
+  originalText: string; // 필수값
+  paraphrasedText: string; // result → paraphrasedText
+  sequenceNumber: number; // 화살표 네비게이션용
   remainingToken: number;
 
   // 토큰 필드 (fallback용)
@@ -37,6 +39,16 @@ export const requestParaphrase = async (
   data: ParaphraseRequest
 ): Promise<ParaphraseResponse> => {
   const url = `/paraphrase/paraphrasing/${mode}`;
+
+  if (data instanceof FormData) {
+    const response = await api.post<ParaphraseResponse>(url, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  }
+
   const response = await api.post<ParaphraseResponse>(url, data);
   return response.data;
 };

@@ -1,9 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { FileUpload } from "@/components/FileUpload";
+import { toast, useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
-import { requestSummarize, SummarizeApiMode } from "@/apis/summarize.api";
+import {
+  requestSummarize,
+  requestSummarizeWithFile,
+  SummarizeApiMode,
+} from "@/apis/summarize.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
@@ -16,6 +22,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocalHistory } from "@/stores/localHistory.store";
+import { LocalHistoryNavigation } from "@/components/LocalHistoryNavigation";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useAiHistoryStore } from "@/stores/aiHistory.store";
@@ -313,6 +321,35 @@ const AiSummarizeBox = () => {
   const selectedHistory = useAiHistoryStore((state) => state.selectedAiHistory);
   const clearHistory = useAiHistoryStore((state) => state.clearAiHistory);
 
+  const {
+    addSummarizeHistory,
+    goToPreviousSummarize,
+    goToNextSummarize,
+    canGoBackSummarize,
+    canGoForwardSummarize,
+    getCurrentSummarize,
+    summarizeHistories,
+    summarizeIndex,
+    isHistoryFullSummarize,
+    startNewSummarizeConversation,
+  } = useLocalHistory();
+
+  const isLogin = useAuthStore((s) => s.isLogin);
+  const router = useRouter();
+  const { canUseFeature } = usePlanRestriction();
+  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
+  const queryClient = useQueryClient();
+
+  // ========== State ==========
+  const [inputText, setInputText] = useState("");
+  const [outputText, setOutputText] = useState("");
+  const [activeMode, setActiveMode] = useState<SummarizeMode>("한줄 요약");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [questionText, setQuestionText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  // ========== Hooks ==========
   useClearContent();
 
   useEffect(() => {
@@ -334,22 +371,6 @@ const AiSummarizeBox = () => {
     return () => window.removeEventListener("scroll", syncOffset);
   }, []);
 
-  // AI 요약 기능에 필요한 모든 상태와 로직
-  const [inputText, setInputText] = useState("");
-  const [outputText, setOutputText] = useState("");
-  const [activeMode, setActiveMode] = useState<SummarizeMode>("한줄 요약");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [questionText, setQuestionText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const isLogin = useAuthStore((s) => s.isLogin);
-  const router = useRouter();
-  const { canUseFeature } = usePlanRestriction();
-
-  // 토큰 사용량 관리 hook 추가
-  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
-  const queryClient = useQueryClient();
-
   useResetOnNewWork(() => {
     setInputText("");
     setOutputText("");
@@ -357,9 +378,26 @@ const AiSummarizeBox = () => {
     setTargetAudience("");
     setQuestionText("");
     setIsLoading(false);
+    setUploadedFile(null);
     clearHistory();
   });
 
+  useEffect(() => {
+    if (selectedHistory?.summarizedText) {
+      setOutputText(selectedHistory.summarizedText);
+    }
+  }, [selectedHistory]);
+
+  useEffect(() => {
+    const currentLocal = getCurrentSummarize();
+    if (currentLocal) {
+      setInputText(currentLocal.inputText);
+      setOutputText(currentLocal.content);
+      setActiveMode(currentLocal.mode as SummarizeMode);
+    }
+  }, [summarizeIndex, getCurrentSummarize]);
+
+  // ========== Handlers ==========
   const handleApiCall = async () => {
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
@@ -367,7 +405,17 @@ const AiSummarizeBox = () => {
       return;
     }
 
-    // 질문 기반 요약과 타겟 요약만 권한 체크
+    if (isHistoryFullSummarize()) {
+      toast({
+        title: "히스토리 제한",
+        description:
+          "최대 10개까지 저장할 수 있습니다. 새 대화를 시작해주세요.",
+        variant: "destructive",
+        duration: 4000,
+      });
+      return;
+    }
+
     if (
       activeMode === "질문 기반 요약" &&
       !canUseFeature("summarize", "questionBased")
@@ -380,7 +428,12 @@ const AiSummarizeBox = () => {
       return;
     }
 
-    if (!inputText.trim()) return;
+    // 🔥 수정: 파일이 있으면 텍스트 입력 무시
+    if (!inputText.trim() && !uploadedFile) {
+      alert("텍스트를 입력하거나 파일을 업로드해주세요.");
+      return;
+    }
+
     setIsLoading(true);
     setOutputText("");
     clearHistory();
@@ -395,25 +448,42 @@ const AiSummarizeBox = () => {
     };
     const apiMode = modeMap[activeMode];
 
-    const requestData = {
-      text: inputText,
-      question: activeMode === "질문 기반 요약" ? questionText : undefined,
-      target: activeMode === "타겟 요약" ? targetAudience : undefined,
-    };
-
     try {
-      const response = await requestSummarize(apiMode, requestData);
-      setOutputText(response.result);
+      let response;
 
-      //  토큰 처리
+      if (uploadedFile) {
+        // 파일 업로드: 텍스트 제외, question과 target만 전달
+        response = await requestSummarizeWithFile(
+          uploadedFile,
+          apiMode,
+          activeMode === "질문 기반 요약" ? questionText : undefined,
+          activeMode === "타겟 요약" ? targetAudience : undefined
+        );
+      } else {
+        // 텍스트만
+        const requestData = {
+          text: inputText,
+          question: activeMode === "질문 기반 요약" ? questionText : undefined,
+          target: activeMode === "타겟 요약" ? targetAudience : undefined,
+        };
+        response = await requestSummarize(apiMode, requestData);
+      }
+
+      setOutputText(response.summarizedText);
+
+      addSummarizeHistory({
+        content: response.summarizedText,
+        inputText: uploadedFile ? `[파일: ${uploadedFile.name}]` : inputText,
+        mode: activeMode,
+      });
+
+      // 토큰 처리
       if (response.remainingToken !== undefined) {
         const tokensUsed = updateTokenUsage(response.remainingToken);
         showTokenAlert(response.remainingToken, true);
         console.log(`이번 요청에서 ${tokensUsed} 토큰 사용됨`);
       } else {
-        // fallback
         let tokensUsed = 0;
-
         if (response.usage?.total_tokens) {
           tokensUsed = response.usage.total_tokens;
         } else if (response.tokens_used) {
@@ -422,7 +492,9 @@ const AiSummarizeBox = () => {
           tokensUsed = response.token_count;
         } else {
           const inputTokens = Math.ceil(inputText.length / 4);
-          const outputTokens = Math.ceil((response.result?.length || 0) / 4);
+          const outputTokens = Math.ceil(
+            (response.summarizedText?.length || 0) / 4
+          );
           tokensUsed = inputTokens + outputTokens;
         }
 
@@ -445,12 +517,55 @@ const AiSummarizeBox = () => {
       setIsLoading(false);
     }
   };
+  const handleNewConversation = () => {
+    startNewSummarizeConversation();
+    setInputText("");
+    setOutputText("");
+    setActiveMode("한줄 요약");
+    setTargetAudience("");
+    setQuestionText("");
+    setUploadedFile(null);
 
+    toast({
+      title: "새 대화 시작",
+      description: "히스토리가 초기화되었습니다.",
+      duration: 2000,
+    });
+  };
+
+  const isHistoryFull = isHistoryFullSummarize();
+  // 텍스트나 파일 중 하나라도 있으면 활성화
+  const isButtonDisabled =
+    isLoading || (!inputText.trim() && !uploadedFile) || isHistoryFull;
+
+  // ========== Render ==========
   return (
     <div className="w-full flex flex-col h-full p-2 md:p-4 gap-2 md:gap-4">
       <header className="flex justify-between items-center px-[3px]">
         <h1 className="text-lg md:text-2xl font-bold text-gray-800">AI 요약</h1>
+
+        <div className="flex items-center gap-2">
+          {summarizeHistories.length > 0 && (
+            <button
+              onClick={handleNewConversation}
+              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              새 대화
+            </button>
+          )}
+
+          <LocalHistoryNavigation
+            canGoBack={canGoBackSummarize()}
+            canGoForward={canGoForwardSummarize()}
+            onPrevious={goToPreviousSummarize}
+            onNext={goToNextSummarize}
+            currentIndex={summarizeIndex}
+            totalCount={summarizeHistories.length}
+            currentTimestamp={getCurrentSummarize()?.timestamp}
+          />
+        </div>
       </header>
+
       <div className="px-[3px]">
         <ModeSelector
           activeMode={activeMode}
@@ -461,6 +576,7 @@ const AiSummarizeBox = () => {
           setQuestionText={setQuestionText}
         />
       </div>
+
       <div
         className={clsx(
           "flex flex-col md:flex-row",
@@ -471,26 +587,57 @@ const AiSummarizeBox = () => {
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="내용을 입력하세요."
+            placeholder={
+              uploadedFile
+                ? "파일이 업로드되었습니다. 파일 내용만 요약됩니다."
+                : "내용을 입력하세요."
+            }
             className="flex-1 w-full resize-none outline-none text-sm md:text-base"
-            disabled={isLoading}
-          ></textarea>
+            disabled={isLoading || !!uploadedFile}
+          ></textarea>{" "}
           <div className="flex justify-between items-center mt-2 md:mt-4">
-            <button className="flex items-center gap-1 md:gap-[6px]">
-              <Image src="/icons/upload.svg" alt="" width={22} height={22} />
-              <p className="hover:font-nanum-bold text-xs md:text-sm">
-                파일 업로드하기
-              </p>
-            </button>
+            {/* FileUpload 컴포넌트만 사용 */}
+            <FileUpload
+              onFileSelect={setUploadedFile}
+              maxSizeMB={2}
+              disabled={isLoading}
+            />
+
             <button
               onClick={handleApiCall}
-              className="py-1.5 px-4 md:py-2 md:px-6 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 font-semibold text-xs md:text-base"
-              disabled={isLoading || !inputText.trim()}
+              className={clsx(
+                "py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all",
+                isHistoryFull
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-purple-600 hover:bg-purple-700 text-white"
+              )}
+              disabled={isButtonDisabled}
+              title={
+                isHistoryFull
+                  ? "히스토리가 가득 찼습니다. 새 대화를 시작해주세요."
+                  : ""
+              }
             >
-              {isLoading ? "요약 중..." : "요약하기"}
+              {isHistoryFull
+                ? "히스토리 가득참"
+                : isLoading
+                ? "요약 중..."
+                : "요약하기"}
             </button>
           </div>
+          {isHistoryFull && (
+            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+              ⚠️ 히스토리가 가득 찼습니다.
+              <button
+                onClick={handleNewConversation}
+                className="ml-1 underline hover:text-yellow-900"
+              >
+                새 대화 시작하기
+              </button>
+            </div>
+          )}
         </div>
+
         <div className="w-full h-1/2 md:h-full md:w-1/2 p-2 md:p-4 relative bg-gray-50">
           <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10 text-sm md:text-base">
             {isLoading
@@ -499,6 +646,7 @@ const AiSummarizeBox = () => {
                 outputText ||
                 "여기에 요약 결과가 표시됩니다."}
           </div>
+
           {(selectedHistory?.summarizedText || outputText) && (
             <button
               onClick={() =>
