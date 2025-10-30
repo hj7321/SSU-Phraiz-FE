@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/find-id",
+    url: "https://www.phraiz.com/find-id",
     title: "Phraiz",
     description: "아이디 찾기",
     images: ["/opengraph/find-id.jpg"],

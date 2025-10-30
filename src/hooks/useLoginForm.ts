@@ -70,7 +70,7 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
     const origin = window.location.origin;
     const redirectUrl = encodeURIComponent(`${origin}/login/oauth`);
     // const redirectUrl = encodeURIComponent(
-    //   `https://ssu-phraiz-fe.vercel.app/login/oauth`
+    //   `https://www.phraiz.com/login/oauth`
     // );
 
     // 백엔드의 소셜 로그인 인증 시작 URL
