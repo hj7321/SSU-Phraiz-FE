@@ -178,12 +178,10 @@ const useSignupForm = (): SignupFormState & SignupFormActions => {
   } = useMutation({
     mutationKey: ["sendEmail", email],
     mutationFn: sendEmail,
-    onSuccess: (data) => {
-      console.log("✅ 인증번호 전송 성공", data);
+    onSuccess: () => {
       alert("입력하신 이메일로 인증번호가 전송되었습니다.");
     },
     onError: (err) => {
-      console.error("❌ 인증번호 전송 실패: ", err.message);
       alert(err.message);
     },
   });
@@ -197,12 +195,10 @@ const useSignupForm = (): SignupFormState & SignupFormActions => {
   } = useMutation({
     mutationKey: ["checkEmailNumber", emailNum],
     mutationFn: checkEmailNumber,
-    onSuccess: (response) => {
-      console.log("✅ 인증번호 일치", response);
+    onSuccess: () => {
       alert("이메일 인증이 완료되었습니다.");
     },
     onError: (err) => {
-      console.error("❌ 인증번호 불일치: ", err.message);
       alert(err.message);
     },
   });
@@ -217,12 +213,10 @@ const useSignupForm = (): SignupFormState & SignupFormActions => {
   } = useMutation({
     mutationKey: ["checkIdDuplicated", id],
     mutationFn: checkIdDuplicated,
-    onSuccess: (response) => {
-      console.log("✅ 아이디 중복 확인 성공", response);
+    onSuccess: () => {
       alert("사용 가능한 아이디입니다.");
     },
     onError: (err) => {
-      console.error("❌ 아이디 중복 확인 실패: ", err.message);
       alert(err.message);
     },
   });
@@ -236,13 +230,18 @@ const useSignupForm = (): SignupFormState & SignupFormActions => {
   } = useMutation({
     mutationKey: ["signup", id],
     mutationFn: signup,
-    onSuccess: (response) => {
-      console.log("✅ 회원가입 완료", response);
+    onSuccess: () => {
+      // ✅ GTM 이벤트 푸시
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "signup_complete",
+        feature: "auth",
+        method: "email",
+      });
       alert("회원가입이 성공적으로 완료되었습니다.");
       router.push("/login"); // 회원가입 성공 시 로그인 페이지로 이동
     },
     onError: (err) => {
-      console.error("❌ 회원가입 실패: ", err.message);
       alert(err.message);
     },
   });
