@@ -375,6 +375,14 @@ const AiParaphraseBox = () => {
       return;
     }
 
+    // ✅ GTM 이벤트 푸시 (API 호출 직전)
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "paraphrase_start",
+      feature: "paraphrasing",
+      paraphrase_mode: activeMode, // 현재 선택된 모드
+    });
+
     setIsLoading(true);
     setOutputText("");
     clearHistory();
@@ -591,11 +599,18 @@ const AiParaphraseBox = () => {
 
           {(selectedHistory?.paraphrasedText || outputText) && (
             <button
-              onClick={() =>
+              onClick={() => {
                 navigator.clipboard.writeText(
                   selectedHistory?.paraphrasedText || outputText
-                )
-              }
+                );
+                // ✅ GTM 이벤트 푸시
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                  event: "copy_result",
+                  feature: "copy",
+                  service: "paraphrase",
+                });
+              }}
               className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full"
             >
               <Copy className="h-4 w-4" />

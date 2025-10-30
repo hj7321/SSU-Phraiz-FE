@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { FileUpload } from "@/components/FileUpload";
-import { toast, useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
 import {
@@ -434,6 +434,14 @@ const AiSummarizeBox = () => {
       return;
     }
 
+    // ✅ GTM 이벤트 푸시 (API 호출 직전)
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "summary_start",
+      feature: "summarization",
+      summary_mode: activeMode, // 현재 선택된 모드
+    });
+
     setIsLoading(true);
     setOutputText("");
     clearHistory();
@@ -649,11 +657,18 @@ const AiSummarizeBox = () => {
 
           {(selectedHistory?.summarizedText || outputText) && (
             <button
-              onClick={() =>
+              onClick={() => {
                 navigator.clipboard.writeText(
                   selectedHistory?.summarizedText || outputText
-                )
-              }
+                );
+                // ✅ GTM 이벤트 푸시
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                  event: "copy_result",
+                  feature: "copy",
+                  service: "summary",
+                });
+              }}
               className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full"
             >
               <Copy className="h-4 w-4" />

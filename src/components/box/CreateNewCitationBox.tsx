@@ -21,6 +21,7 @@ import { useCitationStore } from "@/stores/citation.store";
 import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useHistorySessionStore } from "@/stores/historySession.store";
+import { Sparkles } from "lucide-react";
 
 const CreateNewCitationBox = () => {
   const [urlValue, setUrlValue] = useState<string>("");
@@ -116,6 +117,14 @@ const CreateNewCitationBox = () => {
       });
       console.log(response);
 
+      // ✅ GTM 이벤트 푸시 (API 호출 직전)
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "cite_start",
+        feature: "citation",
+        cite_style: selectedForm,
+      });
+
       // TODO: 여기에서 response.historyId를 currentSessionId에 저장해야 함
       const hid = Number(response.historyId);
       if (!citeSessionId) {
@@ -163,7 +172,7 @@ const CreateNewCitationBox = () => {
   return (
     <div className="p-[16px] flex flex-col gap-[10px] md:gap-[15px] w-full">
       <div className="flex flex-col gap-[2px] md:gap-[5px]">
-        <h1 className="text-[14px] sm:text-[16px] md:text-[18px]">
+        <h1 className="text-gray-700 text-[12px] sm:text-[14px] md:text-[16px]">
           URL 또는 DOI를 입력하세요
         </h1>
         <Input
@@ -177,7 +186,7 @@ const CreateNewCitationBox = () => {
         />
       </div>
       <div className="flex flex-col gap-[2px] md:gap-[5px]">
-        <h1 className="text-[14px] sm:text-[16px] md:text-[18px]">
+        <h1 className="text-gray-700 text-[12px] sm:text-[14px] md:text-[16px]">
           인용 형식을 선택하세요
         </h1>
         <SelectScrollable
@@ -190,13 +199,14 @@ const CreateNewCitationBox = () => {
           onClick={handleCreateCitation}
           disabled={isSubmitDisabled}
           className={clsx(
-            "text-white py-[6px] px-[10px] md:py-[10px] md:px-[16px] rounded-[6px] text-[10px] sm:text-[13px] md:text-[16px]",
+            "flex items-center text-white py-[6px] px-[10px] md:py-[10px] md:px-[16px] rounded-[6px] text-[10px] sm:text-[13px] md:text-[15px]",
             isSubmitDisabled
               ? "bg-main/40 cursor-not-allowed"
               : "bg-main/70 hover:bg-main"
           )}
           aria-disabled={isSubmitDisabled}
         >
+          <Sparkles className="mr-2 h-4 w-4" />
           {isSendingUrl ? "인용 생성 중..." : "인용 생성하기"}
         </button>
       </div>

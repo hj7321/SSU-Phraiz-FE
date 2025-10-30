@@ -8,6 +8,7 @@ import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useNewWorkStore } from "@/stores/newWork.store";
 import ResultScreen from "../screen/ResultScreen";
+import CitationHistory from "../history/CitationHistory";
 
 const HEADER_H = 72; // px
 
@@ -18,6 +19,7 @@ const ContentBox = () => {
   const newCitation = useCitationStore((s) => s.newCitation);
   const setNewCitation = useCitationStore((s) => s.setNewCitation);
   const selectedHistory = useCiteHistoryStore((s) => s.selectedCiteHistory);
+  console.log(selectedHistory);
   const clearHistory = useCiteHistoryStore((s) => s.clearCiteHistory);
 
   const newWorkVersion = useNewWorkStore((s) => s.version);
@@ -44,6 +46,13 @@ const ContentBox = () => {
       "";
     if (!text) return;
     navigator.clipboard.writeText(text);
+    // ✅ GTM 이벤트 푸시
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "copy_result",
+      feature: "copy",
+      service: "cite",
+    });
   }, [selectedHistory?.citationText, isCreatingNewCitation, newCitation]);
 
   useClearContent();
@@ -83,20 +92,22 @@ const ContentBox = () => {
           인용 생성
         </h1>
       </header>
-
-      <div className="flex flex-col rounded-md shadow-md overflow-y-auto border my-[10px] h-[75vh] w-full">
-        {/* 왼쪽 영역 */}
-        <CreateNewCitationBox key={newWorkVersion} />
-        {/* 오른쪽 영역 */}
-        <ResultScreen
-          text={displayText}
-          onCopy={handleCopy}
-          showCopy={hasCopyText}
-        />
-      </div>
-      {/* <div className="flex flex-col">
-        <CitationHistory />
-      </div> */}
+      {selectedHistory ? (
+        <div className="flex flex-col">
+          <CitationHistory />
+        </div>
+      ) : (
+        <div className="flex flex-col rounded-md shadow-md overflow-y-auto border my-[10px] h-[75vh] w-full">
+          {/* 왼쪽 영역 */}
+          <CreateNewCitationBox key={newWorkVersion} />
+          {/* 오른쪽 영역 */}
+          <ResultScreen
+            text={displayText}
+            onCopy={handleCopy}
+            showCopy={hasCopyText}
+          />
+        </div>
+      )}
     </section>
   );
 };

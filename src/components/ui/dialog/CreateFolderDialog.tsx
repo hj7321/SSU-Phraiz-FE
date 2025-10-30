@@ -47,6 +47,13 @@ const CreateFolderDialog = ({
     try {
       setPending(true);
       await onSubmit(trimmed);
+      // ✅ GTM 이벤트 푸시
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "folder_create",
+        feature: "folder",
+        folder_name: trimmed,
+      });
       onOpenChange(false);
     } catch (e: unknown) {
       if (e instanceof Error) {

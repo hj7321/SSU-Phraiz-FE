@@ -27,11 +27,20 @@ const OAuthRedirectPageContent = () => {
     retry: 1,
     onSuccess: (data) => {
       login(data.accessToken, data.id, data.planId ?? 1);
+
+      // ✅ GTM 이벤트 푸시
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "login_success",
+        feature: "auth",
+        method: "social",
+        user_id: data.id,
+      });
+
       alert(`${data.id}님, 안녕하세요!`);
       router.replace("/");
     },
     onError: (err) => {
-      console.error("❌ 소셜 로그인 토큰 발급 실패", err);
       alert(`소셜 로그인에 실패했습니다: ${err.message || "알 수 없는 오류"}`);
       router.replace("/login");
     },
@@ -51,7 +60,6 @@ const OAuthRedirectPageContent = () => {
 
     // 'code'가 없는 경우 (로그인 취소, 오류 발생 등)
     if (!code) {
-      console.error("소셜 로그인 'code'가 URL에 없습니다.");
       alert("소셜 로그인 과정에서 오류가 발생했거나 취소되었습니다.");
       router.replace("/login");
       return;

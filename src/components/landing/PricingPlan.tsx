@@ -13,50 +13,126 @@ const PricingPlan = () => {
   const pathname = usePathname();
 
   return (
-    <section className={clsx("h-[1700px] xs:h-[1600px] sm:h-[1000px] lg:h-[calc(100vh+30px)] w-full flex flex-col gap-[20px] justify-center items-center", pathname === "/" ? "bg-gradient-to-b from-main/60 to-main/20" : "pb-[120px] bg-gradient-to-b from-main to-main/20")}>
-      <h1 className="text-[26px] sm:text-[28px] md:text-[30px] lg:text-[34px] font-nanum-extrabold [filter:drop-shadow(4px_4px_4px_rgba(0,0,0,0.3))]">{pathname === "/" ? "Pricing Plan" : "플랜 업그레이드"}</h1>
-      <div className="relative flex flex-wrap justify-center gap-[20px]">
+    <section
+      className={clsx(
+        "min-h-screen w-full flex flex-col gap-12 justify-center items-center py-20 px-4",
+        pathname === "/"
+          ? "bg-gradient-to-b from-main/60 to-main/20"
+          : "pb-[120px] bg-gradient-to-b from-main to-main/20"
+      )}
+    >
+      <div className="text-center space-y-3">
+        <h1 className="text-[22px] xs:text-[30px] sm:text-[35px] md:text-[40px] lg:text-[50px]  font-nanum-extrabold [filter:drop-shadow(4px_4px_10px_rgba(0,0,0,0.2))] bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] bg-clip-text text-transparent mb-[-10px]">
+          {pathname === "/" ? "Pricing Plan" : "플랜 업그레이드"}
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          나에게 맞는 플랜을 선택하세요
+        </p>
+      </div>
+
+      <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full">
         {PRICING_PLAN.map((plan) => (
-          <div key={plan.name} className="flex flex-col gap-[10px] md:gap-[20px] rounded-[16px] bg-white h-[340px] w-[240px] sm:h-[350px] sm:w-[270px] md:h-[420px] md:w-[300px] p-[20px] [filter:drop-shadow(0px_0px_10px_rgba(0,0,0,0.3))] hover:cursor-pointer hover:[filter:drop-shadow(0px_0px_14px_rgba(0,0,0,0.6))] transition-transform duration-300 ease-in-out transform hover:scale-105">
-            <div>
-              <Image src={plan.icon} alt="" width={70} height={70} className="absolute right-[5px] top-[5px]" />
-              <h1 className="font-nanum-extrabold text-[22px] sm:text-[24px] md:text-[26px] lg:text-[30px]">{plan.name}</h1>
-              {plan.name === "Free" ? (
-                <h1 className="text-[14px] sm:text-[16px] md:text-[18px] lg:text-[20px]">
-                  <span className="font-nanum-bold">0</span>원
-                </h1>
-              ) : (
-                <div className="flex gap-[10px]">
-                  <p className="text-[14px] sm:text-[16px] md:text-[18px] lg:text-[20px]">
-                    월<span className="font-nanum-bold"> {plan.monthPrice}</span>원
-                  </p>
-                  <div className="border-[0.8px] md:border w-0 h-[13px] md:h-[17px] lg:h-[19px] mt-[3.5px] md:mt-[4.3px] lg:mt-[5.3px]"></div>
-                  <p className="text-[10px] sm:text-[12px] md:text-[14px] lg:text-[16px] mt-[2.5px] text-[#757575]">
-                    연<span className="font-nanum-bold"> {plan.yearPrice}</span>원
-                  </p>
-                </div>
-              )}
-              <h1 className="text-[12px] sm:text-[14px] md:text-[16px]">
-                월 토큰 한도: <span className="font-nanum-bold">{plan.monthTokenLimit}</span> {plan.name !== "Pro" && "토큰"}
-              </h1>
+          <div
+            key={plan.name}
+            className={clsx(
+              "group relative flex flex-col rounded-2xl bg-white border border-gray-200/60 overflow-hidden transition-all duration-300",
+              "hover:shadow-2xl hover:shadow-violet-500/20 hover:-translate-y-2 hover:border-violet-300"
+            )}
+          >
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
+
+            <div className="absolute -right-2 -top-2 opacity-90 group-hover:opacity-100 transition-opacity">
+              <Image
+                src={plan.icon || "/placeholder.svg"}
+                alt=""
+                width={80}
+                height={80}
+                className="drop-shadow-lg"
+              />
             </div>
-            <div className="h-[200px] md:h-[210px] flex flex-col gap-[3px]">
-              {Object.entries(plan.features).map(([key, value]) => (
-                <span key={value} className="flex items-start gap-[4px] sm:gap-[7px] text-[13px] sm:text-[14px] md:text-[16px]">
-                  <Image src="/icons/check_black.svg" alt="check" width={12} height={12} className="shrink-0 mt-[5px] w-[10px] h-[10px] md:w-[12px] md:h-[12px]" />
-                  <div>
-                    <p className="font-nanum-extrabold">{key}</p>
-                    <p
-                      dangerouslySetInnerHTML={{
-                        __html: `${value}`
-                      }}></p>
+
+            <div className="flex flex-col h-full p-6 pt-8">
+              {/* Header section */}
+              <div className="mb-6 space-y-2">
+                <h2 className="text-3xl font-extrabold text-gray-900">
+                  {plan.name}
+                </h2>
+
+                {plan.name === "Free" ? (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-gray-900">0</span>
+                    <span className="text-lg text-gray-600">원</span>
                   </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-sm text-gray-600">월</span>
+                      <span className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                        {plan.monthPrice}
+                      </span>
+                      <span className="text-lg text-gray-600">원</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>연 {plan.yearPrice}원</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-200">
+                  <span className="text-xs font-medium text-violet-700">
+                    월 토큰:{" "}
+                    <span className="font-bold">{plan.monthTokenLimit}</span>{" "}
+                    {plan.name !== "Pro" && "토큰"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-4 mb-6">
+                {Object.entries(plan.features).map(([key, value]) => (
+                  <div key={value} className="flex items-start gap-3">
+                    <div className="shrink-0 mt-0.5 w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                      <Image
+                        src="/icons/check_black.svg"
+                        alt="check"
+                        width={12}
+                        height={12}
+                        className="brightness-0 invert"
+                      />
+                    </div>
+                    <div className="flex-1 text-sm">
+                      <p className="font-bold text-gray-900 mb-0.5">{key}</p>
+                      <p
+                        className="text-gray-600 leading-relaxed"
+                        dangerouslySetInnerHTML={{
+                          __html: `${value}`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Link
+                href={isLogin ? "/pay" : "/login"}
+                className={clsx(
+                  "relative overflow-hidden text-center rounded-xl py-3.5 text-base font-bold transition-all duration-300",
+                  "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white",
+                  "hover:shadow-lg hover:shadow-violet-500/50 hover:scale-[1.02]",
+                  "active:scale-[0.98]",
+                  isLogin &&
+                    planTier === plan.name &&
+                    "ring-2 ring-violet-400 ring-offset-2"
+                )}
+              >
+                <span className="relative z-10">
+                  {isLogin && planTier === plan.name
+                    ? "나의 현재 플랜"
+                    : `${plan.name} 이용하기`}
                 </span>
-              ))}
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              </Link>
             </div>
-            <Link href={isLogin ? "/pay" : "/login"} className="text-center rounded-full bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] text-white py-[8px] md:py-[10px] text-[13px] sm:text-[15px] md:text-[17px] font-nanum-bold [filter:drop-shadow(0px_0px_4px_rgba(119,82,254,1))] hover:[filter:drop-shadow(0px_0px_8px_rgba(119,82,254,1))]">
-              {isLogin && planTier === plan.name ? "나의 현재 플랜" : `${plan.name} 이용하기`}
-            </Link>
           </div>
         ))}
       </div>
