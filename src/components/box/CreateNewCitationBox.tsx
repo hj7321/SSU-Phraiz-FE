@@ -103,7 +103,7 @@ const CreateNewCitationBox = () => {
       const data = await sendUrlAsync({ url: urlValue, session: sessionId });
 
       // 2) 인용문 생성
-      const result = generateCitation(data.csl, selectedForm!);
+      const result = await generateCitation(data.csl, selectedForm!);
       if (!result) return;
       setNewCitation(result);
 
