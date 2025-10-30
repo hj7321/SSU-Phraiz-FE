@@ -25,10 +25,6 @@ export const generateCitation = async (
   const key = style.toLowerCase();
   await ensureTemplateLoaded(key); // ✅ 필요 시 자동 로드
 
-  // 👇 변경 (이 줄만 바꾸면 됨)
-  console.log("✅ 현재 등록된 CSL 템플릿:", Object.keys(loadedStyles));
-  console.log("📘 사용 중인 스타일:", key);
-
   try {
     const citation = new Cite(cslItem).format("bibliography", {
       template: key,
