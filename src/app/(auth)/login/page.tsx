@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/login",
+    url: "https://www.phraiz.com/login",
     title: "Phraiz",
     description: "로그인",
     images: ["/opengraph/login.jpg"],

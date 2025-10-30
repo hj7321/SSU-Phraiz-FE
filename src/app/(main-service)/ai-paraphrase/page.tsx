@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/ai-paraphrase",
+    url: "https://www.phraiz.com/ai-paraphrase",
     title: "Phraiz",
     description: "AI 문장 변환",
-    images: ["/opengraph/ai-paraphrase.jpg"],
+    images: ["/opengraph/ai-paraphrase.png"],
   },
 };
 
