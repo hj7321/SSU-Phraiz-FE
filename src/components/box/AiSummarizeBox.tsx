@@ -10,11 +10,12 @@ import {
   requestSummarizeWithFile,
   SummarizeApiMode,
 } from "@/apis/summarize.api";
+import { readLatestHistory } from "@/apis/history.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
 import { usePlanRestriction } from "@/hooks/usePlanRestriction";
-import { useTokenUsage } from "@/hooks/useTokenUsage"; // 토큰 사용량 hook 추가
+import { useTokenUsage } from "@/hooks/useTokenUsage";
 import {
   Tooltip,
   TooltipContent,
@@ -22,8 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocalHistory } from "@/stores/localHistory.store";
-import { LocalHistoryNavigation } from "@/components/LocalHistoryNavigation";
+import { useWorkHistory } from "@/stores/workHistory.store";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useAiHistoryStore } from "@/stores/aiHistory.store";
@@ -318,26 +318,23 @@ const ModeSelector = ({
 };
 
 const AiSummarizeBox = () => {
+  // ========== Store & Router ==========
   const selectedHistory = useAiHistoryStore((state) => state.selectedAiHistory);
   const clearHistory = useAiHistoryStore((state) => state.clearAiHistory);
 
+  // workHistory 사용 (localHistory 제거)
   const {
-    addSummarizeHistory,
-    goToPreviousSummarize,
-    goToNextSummarize,
-    canGoBackSummarize,
-    canGoForwardSummarize,
-    getCurrentSummarize,
-    summarizeHistories,
-    summarizeIndex,
-    isHistoryFullSummarize,
-    startNewSummarizeConversation,
-  } = useLocalHistory();
+    currentSummarizeHistoryId,
+    currentSummarizeSequence,
+    updateSummarizeWork,
+    canSummarizeMore,
+    resetSummarizeWork,
+  } = useWorkHistory();
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const router = useRouter();
   const { canUseFeature } = usePlanRestriction();
-  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
+  const { updateTokenUsage, showTokenAlert } = useTokenUsage();
   const queryClient = useQueryClient();
 
   // ========== State ==========
@@ -348,6 +345,7 @@ const AiSummarizeBox = () => {
   const [questionText, setQuestionText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [currentSequence, setCurrentSequence] = useState(1);
 
   // ========== Hooks ==========
   useClearContent();
@@ -380,36 +378,83 @@ const AiSummarizeBox = () => {
     setIsLoading(false);
     setUploadedFile(null);
     clearHistory();
+    resetSummarizeWork();
   });
 
+  // 사이드바 히스토리 선택 시
   useEffect(() => {
     if (selectedHistory?.summarizedText) {
       setOutputText(selectedHistory.summarizedText);
+      setInputText(selectedHistory.originalText);
+
+      // 선택된 히스토리의 정보로 업데이트
+      if (selectedHistory.historyId && selectedHistory.sequenceNumber) {
+        updateSummarizeWork(
+          selectedHistory.historyId,
+          selectedHistory.sequenceNumber
+        );
+        setCurrentSequence(selectedHistory.sequenceNumber);
+      }
     }
   }, [selectedHistory]);
 
+  // 컴포넌트 마운트 시 최신 히스토리 로드
   useEffect(() => {
-    const currentLocal = getCurrentSummarize();
-    if (currentLocal) {
-      setInputText(currentLocal.inputText);
-      setOutputText(currentLocal.content);
-      setActiveMode(currentLocal.mode as SummarizeMode);
+    if (currentSummarizeHistoryId && isLogin) {
+      loadLatestHistory();
     }
-  }, [summarizeIndex, getCurrentSummarize]);
+  }, [currentSummarizeHistoryId, isLogin]);
+
+  // 최신 히스토리 내용 불러오기
+  const loadLatestHistory = async () => {
+    if (!currentSummarizeHistoryId) return;
+
+    try {
+      const latestContent = await readLatestHistory({
+        service: "summary",
+        historyId: currentSummarizeHistoryId,
+      });
+
+      setInputText(latestContent.originalText);
+      setOutputText(latestContent.summarizedText || "");
+      setCurrentSequence(latestContent.sequenceNumber);
+
+      // sequence 동기화
+      if (latestContent.sequenceNumber !== currentSummarizeSequence) {
+        updateSummarizeWork(
+          latestContent.historyId,
+          latestContent.sequenceNumber
+        ); // resultHistoryId → historyId
+      }
+
+      console.log(
+        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
+      );
+    } catch (error) {
+      console.error("히스토리 조회 실패:", error);
+    }
+  };
 
   // ========== Handlers ==========
   const handleApiCall = async () => {
+    console.log("🔍 handleApiCall 시작");
+    console.log("📊 현재 Zustand 상태:", {
+      currentSummarizeHistoryId,
+      currentSummarizeSequence,
+    });
+
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
       router.push("/login");
       return;
     }
 
-    if (isHistoryFullSummarize()) {
+    // 현재 historyId에서 10개 도달 확인
+    if (!canSummarizeMore()) {
       toast({
-        title: "히스토리 제한",
+        title: "요약 제한",
         description:
-          "최대 10개까지 저장할 수 있습니다. 새 대화를 시작해주세요.",
+          "이 작업에서 최대 10개까지만 요약할 수 있습니다. 새 대화를 시작해주세요.",
         variant: "destructive",
         duration: 4000,
       });
@@ -428,7 +473,6 @@ const AiSummarizeBox = () => {
       return;
     }
 
-    // 🔥 수정: 파일이 있으면 텍스트 입력 무시
     if (!inputText.trim() && !uploadedFile) {
       alert("텍스트를 입력하거나 파일을 업로드해주세요.");
       return;
@@ -460,56 +504,67 @@ const AiSummarizeBox = () => {
       let response;
 
       if (uploadedFile) {
-        // 파일 업로드: 텍스트 제외, question과 target만 전달
+        const historyIdForFile = currentSummarizeHistoryId || undefined;
+        console.log("📤 API로 보낼 데이터 (파일):", {
+          file: uploadedFile,
+          mode: apiMode,
+          question: activeMode === "질문 기반 요약" ? questionText : undefined,
+          target: activeMode === "타겟 요약" ? targetAudience : undefined,
+          historyId: historyIdForFile,
+        });
         response = await requestSummarizeWithFile(
           uploadedFile,
           apiMode,
           activeMode === "질문 기반 요약" ? questionText : undefined,
-          activeMode === "타겟 요약" ? targetAudience : undefined
+          activeMode === "타겟 요약" ? targetAudience : undefined,
+          historyIdForFile
         );
       } else {
-        // 텍스트만
         const requestData = {
           text: inputText,
           question: activeMode === "질문 기반 요약" ? questionText : undefined,
           target: activeMode === "타겟 요약" ? targetAudience : undefined,
+          historyId: currentSummarizeHistoryId,
         };
+        console.log("📤 API로 보낼 데이터:", requestData);
         response = await requestSummarize(apiMode, requestData);
       }
 
-      setOutputText(response.summarizedText);
+      // 응답 처리
+      const { historyId, sequenceNumber, summarizedText, remainingToken } =
+        response;
+      console.log("📥 API 응답:", { historyId, sequenceNumber });
 
-      addSummarizeHistory({
-        content: response.summarizedText,
-        inputText: uploadedFile ? `[파일: ${uploadedFile.name}]` : inputText,
-        mode: activeMode,
+      setOutputText(summarizedText);
+      setCurrentSequence(sequenceNumber);
+
+      // 현재 작업 정보 업데이트
+      console.log("🔄 updateSummarizeWork 호출 전:", {
+        historyId,
+        sequenceNumber,
       });
+      updateSummarizeWork(historyId, sequenceNumber);
+      console.log("🔄 updateSummarizeWork 호출 후");
+
+      console.log(
+        `✅ 요약 완료: historyId=${historyId}, sequence=${sequenceNumber}`
+      );
 
       // 토큰 처리
-      if (response.remainingToken !== undefined) {
-        const tokensUsed = updateTokenUsage(response.remainingToken);
-        showTokenAlert(response.remainingToken, true);
-        console.log(`이번 요청에서 ${tokensUsed} 토큰 사용됨`);
-      } else {
-        let tokensUsed = 0;
-        if (response.usage?.total_tokens) {
-          tokensUsed = response.usage.total_tokens;
-        } else if (response.tokens_used) {
-          tokensUsed = response.tokens_used;
-        } else if (response.token_count) {
-          tokensUsed = response.token_count;
-        } else {
-          const inputTokens = Math.ceil(inputText.length / 4);
-          const outputTokens = Math.ceil(
-            (response.summarizedText?.length || 0) / 4
-          );
-          tokensUsed = inputTokens + outputTokens;
-        }
+      if (remainingToken !== undefined) {
+        updateTokenUsage(remainingToken);
+        showTokenAlert(remainingToken, true);
+      }
 
-        if (tokensUsed > 0) {
-          addTokenUsage(tokensUsed);
-          showTokenAlert(tokensUsed, false);
-        }
+      // 10개 도달 시 안내 메시지
+      if (sequenceNumber >= 10) {
+        toast({
+          title: "요약 완료",
+          description:
+            "이 작업에서 최대 요약 횟수에 도달했습니다. 새 대화를 시작해주세요.",
+          variant: "default",
+          duration: 3000,
+        });
       }
 
       queryClient.invalidateQueries({
@@ -525,26 +580,85 @@ const AiSummarizeBox = () => {
       setIsLoading(false);
     }
   };
+
   const handleNewConversation = () => {
-    startNewSummarizeConversation();
+    // 작업 히스토리 초기화
+    resetSummarizeWork();
     setInputText("");
     setOutputText("");
     setActiveMode("한줄 요약");
     setTargetAudience("");
     setQuestionText("");
     setUploadedFile(null);
+    setCurrentSequence(1);
+
+    console.log("🔄 새 대화 시작 - historyId 초기화됨");
 
     toast({
       title: "새 대화 시작",
-      description: "히스토리가 초기화되었습니다.",
+      description: "새로운 작업이 시작됩니다.",
       duration: 2000,
     });
   };
 
-  const isHistoryFull = isHistoryFullSummarize();
-  // 텍스트나 파일 중 하나라도 있으면 활성화
+  // 🔥 이전 히스토리 보기
+  const handlePrevSequence = async () => {
+    if (currentSequence <= 1 || !currentSummarizeHistoryId) return;
+
+    try {
+      const content = await readLatestHistory({
+        service: "summary",
+        historyId: currentSummarizeHistoryId,
+        sequenceNumber: currentSequence - 1,
+      });
+
+      setInputText(content.originalText);
+      setOutputText(content.summarizedText || "");
+      setCurrentSequence(currentSequence - 1);
+    } catch (error) {
+      console.error("이전 히스토리 조회 실패:", error);
+      toast({
+        title: "오류",
+        description: "이전 히스토리를 불러올 수 없습니다.",
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
+  };
+
+  // 🔥 다음 히스토리 보기
+  const handleNextSequence = async () => {
+    if (
+      currentSequence >= currentSummarizeSequence ||
+      !currentSummarizeHistoryId
+    )
+      return;
+
+    try {
+      const content = await readLatestHistory({
+        service: "summary",
+        historyId: currentSummarizeHistoryId,
+        sequenceNumber: currentSequence + 1,
+      });
+
+      setInputText(content.originalText);
+      setOutputText(content.summarizedText || "");
+      setCurrentSequence(currentSequence + 1);
+    } catch (error) {
+      console.error("다음 히스토리 조회 실패:", error);
+      toast({
+        title: "오류",
+        description: "다음 히스토리를 불러올 수 없습니다.",
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
+  };
+
+  // 버튼 비활성화 조건
+  const cannotSummarizeMore = !canSummarizeMore();
   const isButtonDisabled =
-    isLoading || (!inputText.trim() && !uploadedFile) || isHistoryFull;
+    isLoading || (!inputText.trim() && !uploadedFile) || cannotSummarizeMore;
 
   // ========== Render ==========
   return (
@@ -553,24 +667,37 @@ const AiSummarizeBox = () => {
         <h1 className="text-lg md:text-2xl font-bold text-gray-800">AI 요약</h1>
 
         <div className="flex items-center gap-2">
-          {summarizeHistories.length > 0 && (
-            <button
-              onClick={handleNewConversation}
-              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              새 대화
-            </button>
-          )}
+          {/* 현재 작업 중인 historyId가 있을 때만 표시 */}
+          {currentSummarizeHistoryId && (
+            <>
+              {/* 🔥 화살표 네비게이션 추가 */}
+              {currentSummarizeSequence > 1 && (
+                <div className="flex items-center gap-1 bg-gray-50 px-2 py-1.5 rounded-lg border">
+                  <button
+                    onClick={handlePrevSequence}
+                    disabled={currentSequence <= 1}
+                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="이전"
+                  >
+                    ←
+                  </button>
 
-          <LocalHistoryNavigation
-            canGoBack={canGoBackSummarize()}
-            canGoForward={canGoForwardSummarize()}
-            onPrevious={goToPreviousSummarize}
-            onNext={goToNextSummarize}
-            currentIndex={summarizeIndex}
-            totalCount={summarizeHistories.length}
-            currentTimestamp={getCurrentSummarize()?.timestamp}
-          />
+                  <span className="text-sm font-mono px-2">
+                    {currentSequence} / {currentSummarizeSequence}
+                  </span>
+
+                  <button
+                    onClick={handleNextSequence}
+                    disabled={currentSequence >= currentSummarizeSequence}
+                    className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="다음"
+                  >
+                    →
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </header>
 
@@ -602,9 +729,9 @@ const AiSummarizeBox = () => {
             }
             className="flex-1 w-full resize-none outline-none text-sm md:text-base"
             disabled={isLoading || !!uploadedFile}
-          ></textarea>{" "}
+          ></textarea>
+
           <div className="flex justify-between items-center mt-2 md:mt-4">
-            {/* FileUpload 컴포넌트만 사용 */}
             <FileUpload
               onFileSelect={setUploadedFile}
               maxSizeMB={2}
@@ -615,27 +742,29 @@ const AiSummarizeBox = () => {
               onClick={handleApiCall}
               className={clsx(
                 "py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all",
-                isHistoryFull
+                cannotSummarizeMore
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-purple-600 hover:bg-purple-700 text-white"
               )}
               disabled={isButtonDisabled}
               title={
-                isHistoryFull
-                  ? "히스토리가 가득 찼습니다. 새 대화를 시작해주세요."
+                cannotSummarizeMore
+                  ? "이 작업에서 최대 10개까지 요약할 수 있습니다"
                   : ""
               }
             >
-              {isHistoryFull
-                ? "히스토리 가득참"
+              {cannotSummarizeMore
+                ? "요약 제한 도달"
                 : isLoading
                 ? "요약 중..."
                 : "요약하기"}
             </button>
           </div>
-          {isHistoryFull && (
+
+          {/* 10개 도달 경고 */}
+          {cannotSummarizeMore && (
             <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-              ⚠️ 히스토리가 가득 찼습니다.
+              ⚠️ 이 작업에서 최대 요약 횟수에 도달했습니다.
               <button
                 onClick={handleNewConversation}
                 className="ml-1 underline hover:text-yellow-900"
