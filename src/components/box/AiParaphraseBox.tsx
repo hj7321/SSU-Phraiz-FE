@@ -1,47 +1,29 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { FileUpload } from "@/components/FileUpload";
 import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
 import { requestParaphrase, ParaphraseApiMode } from "@/apis/paraphrase.api";
+import { readLatestHistory } from "@/apis/history.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
-import { useLocalHistory } from "@/stores/localHistory.store";
-import { LocalHistoryNavigation } from "@/components/LocalHistoryNavigation";
+import { useWorkHistory } from "@/stores/workHistory.store";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { usePlanRestriction } from "@/hooks/usePlanRestriction";
 import { useTokenUsage } from "@/hooks/useTokenUsage";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAiHistoryStore } from "@/stores/aiHistory.store";
 
 const HEADER_H = 72; // px
 
 // 모드 선택 버튼 타입 정의
-type ParaphraseMode =
-  | "표준"
-  | "학술적"
-  | "창의적"
-  | "유창성"
-  | "문학적"
-  | "사용자 지정";
+type ParaphraseMode = "표준" | "학술적" | "창의적" | "유창성" | "문학적" | "사용자 지정";
 
-const ToneBlendSlider = ({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-}) => {
+const ToneBlendSlider = ({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
   return (
     <div className="w-full bg-blue-50 rounded-lg border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
@@ -54,15 +36,7 @@ const ToneBlendSlider = ({
       </div>
       <div className="relative mb-2">
         <div className="h-1.5 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 rounded-full"></div>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className="absolute top-0 left-0 w-full h-1.5 bg-transparent appearance-none cursor-pointer slider-thumb"
-          style={{ background: "transparent" }}
-        />
+        <input type="range" min="0" max="100" value={value} onChange={(e) => onChange(parseInt(e.target.value))} className="absolute top-0 left-0 w-full h-1.5 bg-transparent appearance-none cursor-pointer slider-thumb" style={{ background: "transparent" }} />
       </div>
       <div className="flex justify-between text-xs text-gray-500">
         <span className="hidden sm:inline">기본적으로 적용</span>
@@ -75,28 +49,8 @@ const ToneBlendSlider = ({
 };
 
 // 모드 선택 버튼 UI 컴포넌트
-const ModeSelector = ({
-  activeMode,
-  setActiveMode,
-  customStyle,
-  setCustomStyle,
-  creativityLevel,
-  setCreativityLevel,
-}: {
-  activeMode: ParaphraseMode;
-  setActiveMode: (mode: ParaphraseMode) => void;
-  customStyle: string;
-  setCustomStyle: (style: string) => void;
-  creativityLevel: number;
-  setCreativityLevel: (level: number) => void;
-}) => {
-  const modes: ParaphraseMode[] = [
-    "표준",
-    "학술적",
-    "창의적",
-    "유창성",
-    "문학적",
-  ];
+const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, creativityLevel, setCreativityLevel }: { activeMode: ParaphraseMode; setActiveMode: (mode: ParaphraseMode) => void; customStyle: string; setCustomStyle: (style: string) => void; creativityLevel: number; setCreativityLevel: (level: number) => void }) => {
+  const modes: ParaphraseMode[] = ["표준", "학술적", "창의적", "유창성", "문학적"];
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const customButtonRef = useRef<HTMLButtonElement>(null);
@@ -106,12 +60,7 @@ const ModeSelector = ({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node) &&
-        customButtonRef.current &&
-        !customButtonRef.current.contains(event.target as Node)
-      ) {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
         setIsPopoverOpen(false);
       }
     }
@@ -134,28 +83,16 @@ const ModeSelector = ({
     }
   };
 
-  const baseButtonClass =
-    "h-9 md:h-11 text-[11px] md:text-sm whitespace-nowrap rounded-full font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
-  const inactiveClass =
-    "bg-purple-100 border border-purple-600/30 hover:bg-purple-200/60";
-  const activeClass =
-    "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
-  const disabledClass =
-    "bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed opacity-50";
+  const baseButtonClass = "h-9 md:h-11 text-[11px] md:text-sm whitespace-nowrap rounded-full font-medium transition-all flex items-center justify-center shadow-md shadow-neutral-900/20";
+  const inactiveClass = "bg-purple-100 border border-purple-600/30 hover:bg-purple-200/60";
+  const activeClass = "bg-purple-200 border border-purple-600/30 ring-1 ring-purple-300";
+  const disabledClass = "bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed opacity-50";
 
   return (
     <div className="w-full">
       <div className="flex w-full gap-2 md:gap-3">
         {modes.map((mode) => (
-          <button
-            key={mode}
-            onClick={() => handleModeClick(mode)}
-            className={clsx(
-              "flex-1",
-              baseButtonClass,
-              activeMode === mode ? activeClass : inactiveClass
-            )}
-          >
+          <button key={mode} onClick={() => handleModeClick(mode)} className={clsx("flex-1", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
             {mode}
           </button>
         ))}
@@ -165,50 +102,16 @@ const ModeSelector = ({
           {canUseFeature("paraphrasing", "custom") ? (
             // Basic 이상 사용자
             <>
-              <button
-                ref={customButtonRef}
-                onClick={handleCustomClick}
-                className={clsx(
-                  "w-full",
-                  baseButtonClass,
-                  "relative gap-2",
-                  activeMode === "사용자 지정" ? activeClass : inactiveClass
-                )}
-              >
+              <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "사용자 지정" ? activeClass : inactiveClass)}>
                 사용자 지정
-                <Image
-                  src="/icons/프리미엄2.svg"
-                  alt=""
-                  width={0}
-                  height={0}
-                  className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]"
-                />
+                <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
               </button>
               {isPopoverOpen && (
-                <div
-                  ref={popoverRef}
-                  className={clsx(
-                    "absolute top-full mt-4 z-50 p-0.5",
-                    "w-[90vw] max-w-[320px] lg:w-80",
-                    "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto"
-                  )}
-                >
+                <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-50 p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
                   <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                    <div
-                      className={clsx(
-                        "absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45",
-                        "left-[calc(100%-30px)] lg:left-1/2"
-                      )}
-                    ></div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      원하는 문장 스타일을 입력하세요. (50자 이내)
-                    </p>
-                    <textarea
-                      value={customStyle}
-                      onChange={(e) => setCustomStyle(e.target.value)}
-                      maxLength={50}
-                      className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    />
+                    <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                    <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
+                    <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
                   </div>
                 </div>
               )}
@@ -218,30 +121,13 @@ const ModeSelector = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    disabled
-                    className={clsx(
-                      "w-full",
-                      baseButtonClass,
-                      "relative gap-2",
-                      disabledClass
-                    )}
-                  >
+                  <button disabled className={clsx("w-full", baseButtonClass, "relative gap-2", disabledClass)}>
                     사용자 지정
-                    <Image
-                      src="/icons/프리미엄2.svg"
-                      alt=""
-                      width={0}
-                      height={0}
-                      className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]"
-                    />
+                    <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    {getRequiredPlanName("paraphrasing", "custom")} 플랜부터
-                    사용 가능합니다
-                  </p>
+                  <p>{getRequiredPlanName("paraphrasing", "custom")} 플랜부터 사용 가능합니다</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -251,39 +137,25 @@ const ModeSelector = ({
 
       {/* Tone Blend Slider 표시 */}
       <div className="mt-3">
-        <ToneBlendSlider
-          value={creativityLevel}
-          onChange={setCreativityLevel}
-        />
+        <ToneBlendSlider value={creativityLevel} onChange={setCreativityLevel} />
       </div>
     </div>
   );
 };
 
 const AiParaphraseBox = () => {
+  // ========== Store & Router ==========
   const selectedHistory = useAiHistoryStore((state) => state.selectedAiHistory);
   const clearHistory = useAiHistoryStore((state) => state.clearAiHistory);
   const { toast } = useToast();
 
-  // ========== Store & Router ==========
-
-  const {
-    addParaphraseHistory,
-    goToPreviousParaphrase,
-    goToNextParaphrase,
-    canGoBackParaphrase,
-    canGoForwardParaphrase,
-    getCurrentParaphrase,
-    paraphraseHistories,
-    paraphraseIndex,
-    isHistoryFullParaphrase,
-    startNewParaphraseConversation,
-  } = useLocalHistory();
+  // 🔥 workHistory 사용 (localHistory 제거)
+  const { currentParaphraseHistoryId, currentParaphraseSequence, updateParaphraseWork, canParaphraseMore, resetParaphraseWork } = useWorkHistory();
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const router = useRouter();
   const { canUseFeature } = usePlanRestriction();
-  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
+  const { updateTokenUsage, showTokenAlert } = useTokenUsage();
   const queryClient = useQueryClient();
 
   // ========== State ==========
@@ -293,7 +165,7 @@ const AiParaphraseBox = () => {
   const [customStyle, setCustomStyle] = useState("");
   const [creativityLevel, setCreativityLevel] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [currentSequence, setCurrentSequence] = useState(1);
 
   // ========== Hooks ==========
   useClearContent();
@@ -305,10 +177,7 @@ const AiParaphraseBox = () => {
       ticking = true;
       requestAnimationFrame(() => {
         const offset = Math.max(HEADER_H - window.scrollY, 0);
-        document.documentElement.style.setProperty(
-          "--header-offset",
-          `${offset}px`
-        );
+        document.documentElement.style.setProperty("--header-offset", `${offset}px`);
         ticking = false;
       });
     };
@@ -323,24 +192,54 @@ const AiParaphraseBox = () => {
     setActiveMode("표준");
     setCustomStyle("");
     setIsLoading(false);
-    setUploadedFile(null);
     clearHistory();
+    resetParaphraseWork();
   });
 
+  // 사이드바 히스토리 선택 시
   useEffect(() => {
     if (selectedHistory?.paraphrasedText) {
       setOutputText(selectedHistory.paraphrasedText);
+      setInputText(selectedHistory.originalText);
+
+      // 선택된 히스토리의 정보로 업데이트
+      if (selectedHistory.historyId && selectedHistory.sequenceNumber) {
+        updateParaphraseWork(selectedHistory.historyId, selectedHistory.sequenceNumber);
+        setCurrentSequence(selectedHistory.sequenceNumber);
+      }
     }
   }, [selectedHistory]);
 
+  // 컴포넌트 마운트 시 최신 히스토리 로드
   useEffect(() => {
-    const currentLocal = getCurrentParaphrase();
-    if (currentLocal) {
-      setInputText(currentLocal.inputText);
-      setOutputText(currentLocal.content);
-      setActiveMode(currentLocal.mode as ParaphraseMode);
+    if (currentParaphraseHistoryId && isLogin) {
+      loadLatestHistory();
     }
-  }, [paraphraseIndex, getCurrentParaphrase]);
+  }, [currentParaphraseHistoryId, isLogin]);
+
+  // 최신 히스토리 내용 불러오기
+  const loadLatestHistory = async () => {
+    if (!currentParaphraseHistoryId) return;
+
+    try {
+      const latestContent = await readLatestHistory({
+        service: "paraphrase",
+        historyId: currentParaphraseHistoryId
+      });
+
+      setInputText(latestContent.originalText);
+      setOutputText(latestContent.paraphrasedText || "");
+      setCurrentSequence(latestContent.sequenceNumber);
+
+      if (latestContent.sequenceNumber !== currentParaphraseSequence) {
+        updateParaphraseWork(latestContent.historyId, latestContent.sequenceNumber);
+      }
+
+      console.log(`✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`);
+    } catch (error) {
+      console.error("히스토리 조회 실패:", error);
+    }
+  };
 
   // ========== Handlers ==========
   const handleApiCall = async () => {
@@ -350,28 +249,24 @@ const AiParaphraseBox = () => {
       return;
     }
 
-    if (isHistoryFullParaphrase()) {
+    // 현재 historyId에서 10개 도달 확인
+    if (!canParaphraseMore()) {
       toast({
-        title: "히스토리 제한",
-        description:
-          "최대 10개까지 저장할 수 있습니다. 새 대화를 시작해주세요.",
+        title: "변환 제한",
+        description: "이 작업에서 최대 10개까지만 변환할 수 있습니다. 새 대화를 시작해주세요.",
         variant: "destructive",
-        duration: 4000,
+        duration: 4000
       });
       return;
     }
 
-    if (
-      activeMode === "사용자 지정" &&
-      !canUseFeature("paraphrasing", "custom")
-    ) {
+    if (activeMode === "사용자 지정" && !canUseFeature("paraphrasing", "custom")) {
       alert("사용자 지정 모드는 Basic 플랜부터 이용 가능합니다.");
       return;
     }
 
-    // 입력 검증
-    if (!inputText.trim() && !uploadedFile) {
-      alert("텍스트를 입력하거나 파일을 업로드해주세요.");
+    if (!inputText.trim()) {
+      alert("텍스트를 입력해주세요.");
       return;
     }
 
@@ -385,70 +280,52 @@ const AiParaphraseBox = () => {
       창의적: "creative",
       유창성: "fluency",
       문학적: "experimental",
-      "사용자 지정": "custom",
+      "사용자 지정": "custom"
     };
     const apiMode = modeMap[activeMode];
 
-    // creativityLevel을 scale로 변환 (0-100 → 0-1)
     const requestData = {
       text: inputText,
       userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined,
-      scale: creativityLevel, // 0-100을 0-1로 변환
+      scale: creativityLevel / 100,
+      historyId: currentParaphraseHistoryId // 스토어의 historyId를 추가
     };
 
     try {
-      let response;
+      const response = await requestParaphrase(apiMode, requestData);
 
-      // 파일이 있으면 FormData 사용
+      // 응답 처리
+      const { historyId, sequenceNumber, paraphrasedText, remainingToken } = response;
 
-      // 기존 방식
-      const requestData = {
-        text: inputText,
-        userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined,
-        scale: creativityLevel / 100,
-      };
-      response = await requestParaphrase(apiMode, requestData);
+      setOutputText(paraphrasedText);
+      setCurrentSequence(sequenceNumber);
 
-      setOutputText(response.paraphrasedText);
+      // 현재 작업 정보 업데이트
+      updateParaphraseWork(historyId, sequenceNumber);
 
-      addParaphraseHistory({
-        content: response.paraphrasedText,
-        inputText: uploadedFile ? `[파일: ${uploadedFile.name}]` : inputText,
-        mode: activeMode,
-      });
+      console.log(`✅ 변환 완료: historyId=${historyId}, sequence=${sequenceNumber}`);
 
       // 토큰 처리
-      if (response.remainingToken !== undefined) {
-        const tokensUsed = updateTokenUsage(response.remainingToken);
-        showTokenAlert(response.remainingToken, true);
-        console.log(`이번 요청에서 ${tokensUsed} 토큰 사용됨`);
-      } else {
-        let tokensUsed = 0;
-        if (response.usage?.total_tokens) {
-          tokensUsed = response.usage.total_tokens;
-        } else if (response.tokens_used) {
-          tokensUsed = response.tokens_used;
-        } else if (response.token_count) {
-          tokensUsed = response.token_count;
-        } else {
-          const inputTokens = Math.ceil(inputText.length / 4);
-          const outputTokens = Math.ceil(
-            (response.paraphrasedText?.length || 0) / 4
-          );
-          tokensUsed = inputTokens + outputTokens;
-        }
+      if (remainingToken !== undefined) {
+        updateTokenUsage(remainingToken);
+        showTokenAlert(remainingToken, true);
+      }
 
-        if (tokensUsed > 0) {
-          addTokenUsage(tokensUsed);
-          showTokenAlert(tokensUsed, false);
-        }
+      // 10개 도달 시 안내 메시지
+      if (sequenceNumber >= 10) {
+        toast({
+          title: "변환 완료",
+          description: "이 작업에서 최대 변환 횟수에 도달했습니다. 새 대화를 시작해주세요.",
+          variant: "default",
+          duration: 3000
+        });
       }
 
       queryClient.invalidateQueries({
-        queryKey: ["sidebar-history", "paraphrase"],
+        queryKey: ["sidebar-history", "paraphrase"]
       });
       await queryClient.refetchQueries({
-        queryKey: ["sidebar-history", "paraphrase"],
+        queryKey: ["sidebar-history", "paraphrase"]
       });
     } catch (error) {
       console.error("API 요청 오류:", error);
@@ -458,146 +335,108 @@ const AiParaphraseBox = () => {
     }
   };
 
-  const handleNewConversation = () => {
-    startNewParaphraseConversation();
-    setInputText("");
-    setOutputText("");
-    setActiveMode("표준");
-    setCustomStyle("");
-    setUploadedFile(null);
+  // 이전 히스토리 보기
+  const handlePrevSequence = async () => {
+    if (currentSequence <= 1 || !currentParaphraseHistoryId) return;
 
-    toast({
-      title: "새 대화 시작",
-      description: "히스토리가 초기화되었습니다.",
-      duration: 2000,
-    });
+    try {
+      const content = await readLatestHistory({
+        service: "paraphrase",
+        historyId: currentParaphraseHistoryId,
+        sequenceNumber: currentSequence - 1
+      });
+
+      setInputText(content.originalText);
+      setOutputText(content.paraphrasedText || "");
+      setCurrentSequence(currentSequence - 1);
+    } catch (error) {
+      console.error("이전 히스토리 조회 실패:", error);
+      toast({
+        title: "오류",
+        description: "이전 히스토리를 불러올 수 없습니다.",
+        variant: "destructive",
+        duration: 2000
+      });
+    }
   };
 
-  const isHistoryFull = isHistoryFullParaphrase();
-  const isButtonDisabled =
-    isLoading || (!inputText.trim() && !uploadedFile) || isHistoryFull;
+  // 다음 히스토리 보기
+  const handleNextSequence = async () => {
+    if (currentSequence >= currentParaphraseSequence || !currentParaphraseHistoryId) return;
+
+    try {
+      const content = await readLatestHistory({
+        service: "paraphrase",
+        historyId: currentParaphraseHistoryId,
+        sequenceNumber: currentSequence + 1
+      });
+
+      setInputText(content.originalText);
+      setOutputText(content.paraphrasedText || "");
+      setCurrentSequence(currentSequence + 1);
+    } catch (error) {
+      console.error("다음 히스토리 조회 실패:", error);
+      toast({
+        title: "오류",
+        description: "다음 히스토리를 불러올 수 없습니다.",
+        variant: "destructive",
+        duration: 2000
+      });
+    }
+  };
+
+  // 버튼 비활성화 조건
+  const cannotParaphraseMore = !canParaphraseMore();
+  const isButtonDisabled = isLoading || !inputText.trim() || cannotParaphraseMore;
 
   // ========== Render ==========
   return (
     <div className="w-full flex flex-col h-full p-2 md:p-4 gap-2 md:gap-4">
       <header className="flex justify-between items-center px-[3px]">
-        <h1 className="text-lg md:text-2xl font-bold text-gray-800">
-          AI 문장 변환
-        </h1>
+        <h1 className="text-lg md:text-2xl font-bold text-gray-800">AI 문장 변환</h1>
 
         <div className="flex items-center gap-2">
-          {paraphraseHistories.length > 0 && (
-            <button
-              onClick={handleNewConversation}
-              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              새 대화
-            </button>
-          )}
+          {currentParaphraseHistoryId && currentParaphraseSequence > 1 && (
+            <div className="flex items-center gap-1 bg-gray-50 px-2 py-1.5 rounded-lg border">
+              <button onClick={handlePrevSequence} disabled={currentSequence <= 1} className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="이전">
+                ←
+              </button>
 
-          <LocalHistoryNavigation
-            canGoBack={canGoBackParaphrase()}
-            canGoForward={canGoForwardParaphrase()}
-            onPrevious={goToPreviousParaphrase}
-            onNext={goToNextParaphrase}
-            currentIndex={paraphraseIndex}
-            totalCount={paraphraseHistories.length}
-            currentTimestamp={getCurrentParaphrase()?.timestamp}
-          />
-        </div>
-      </header>
+              <span className="text-sm font-mono px-2">
+                {currentSequence} / {currentParaphraseSequence}
+              </span>
 
-      <div className="px-[3px]">
-        <ModeSelector
-          activeMode={activeMode}
-          setActiveMode={setActiveMode}
-          customStyle={customStyle}
-          setCustomStyle={setCustomStyle}
-          creativityLevel={creativityLevel}
-          setCreativityLevel={setCreativityLevel}
-        />
-      </div>
-
-      <div
-        className={clsx(
-          "flex flex-col md:flex-row",
-          "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white"
-        )}
-      >
-        <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={
-              uploadedFile
-                ? "파일이 업로드되었습니다. 추가 텍스트를 입력하거나 바로 변환하세요."
-                : "내용을 입력하세요."
-            }
-            className="flex-1 w-full resize-none outline-none text-sm md:text-base"
-            disabled={isLoading}
-          ></textarea>
-
-          <div className="flex justify-between items-center mt-2 md:mt-4">
-            <FileUpload
-              onFileSelect={setUploadedFile}
-              maxSizeMB={2}
-              disabled={isLoading}
-            />
-
-            <button
-              onClick={handleApiCall}
-              className={clsx(
-                "py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all",
-                isHistoryFull
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-purple-600 hover:bg-purple-700 text-white"
-              )}
-              disabled={isButtonDisabled}
-              title={
-                isHistoryFull
-                  ? "히스토리가 가득 찼습니다. 새 대화를 시작해주세요."
-                  : ""
-              }
-            >
-              {isHistoryFull
-                ? "히스토리 가득참"
-                : isLoading
-                ? "변환 중..."
-                : "변환하기"}
-            </button>
-          </div>
-
-          {isHistoryFull && (
-            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-              ⚠️ 히스토리가 가득 찼습니다.
-              <button
-                onClick={handleNewConversation}
-                className="ml-1 underline hover:text-yellow-900"
-              >
-                새 대화 시작하기
+              <button onClick={handleNextSequence} disabled={currentSequence >= currentParaphraseSequence} className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed" title="다음">
+                →
               </button>
             </div>
           )}
         </div>
+      </header>
 
-        <div className="w-full h-1/2 md:h-full md:w-1/2 p-2 md:p-4 relative bg-gray-50">
-          <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10 text-sm md:text-base">
-            {isLoading
-              ? "결과 생성 중..."
-              : selectedHistory?.paraphrasedText ||
-                outputText ||
-                "여기에 변환 결과가 표시됩니다."}
+      <div className="px-[3px]">
+        <ModeSelector activeMode={activeMode} setActiveMode={setActiveMode} customStyle={customStyle} setCustomStyle={setCustomStyle} creativityLevel={creativityLevel} setCreativityLevel={setCreativityLevel} />
+      </div>
+
+      <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
+        <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
+          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="내용을 입력하세요." className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading}></textarea>
+
+          <div className="flex justify-end items-center mt-2 md:mt-4">
+            <button onClick={handleApiCall} className={clsx("py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all", cannotParaphraseMore ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white")} disabled={isButtonDisabled} title={cannotParaphraseMore ? "이 작업에서 최대 10개까지 변환할 수 있습니다" : ""}>
+              {cannotParaphraseMore ? "변환 제한 도달" : isLoading ? "변환 중..." : "변환하기"}
+            </button>
           </div>
 
+          {/* 10개 도달 경고 */}
+          {cannotParaphraseMore && <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">⚠️ 이 작업에서 최대 변환 횟수에 도달했습니다. 사이드바에서 새 작업을 시작해주세요.</div>}
+        </div>
+
+        <div className="w-full h-1/2 md:h-full md:w-1/2 p-2 md:p-4 relative bg-gray-50">
+          <div className="w-full h-full whitespace-pre-wrap text-gray-800 pr-10 text-sm md:text-base">{isLoading ? "결과 생성 중..." : selectedHistory?.paraphrasedText || outputText || "여기에 변환 결과가 표시됩니다."}</div>
+
           {(selectedHistory?.paraphrasedText || outputText) && (
-            <button
-              onClick={() =>
-                navigator.clipboard.writeText(
-                  selectedHistory?.paraphrasedText || outputText
-                )
-              }
-              className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full"
-            >
+            <button onClick={() => navigator.clipboard.writeText(selectedHistory?.paraphrasedText || outputText)} className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full">
               <Copy className="h-4 w-4" />
             </button>
           )}

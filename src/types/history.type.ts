@@ -21,11 +21,11 @@ export type HistoryName = {
 };
 
 export type HistoryAIContent = {
-  resultHistoryId: number;
+  historyId: number;
   name: string;
   originalText: string;
-  paraphrasedText?: string;
   summarizedText?: string;
+  paraphrasedText?: string;
   sequenceNumber: number;
   remainingToken: number;
 };
