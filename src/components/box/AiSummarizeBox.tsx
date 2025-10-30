@@ -396,7 +396,7 @@ const AiSummarizeBox = () => {
         setCurrentSequence(selectedHistory.sequenceNumber);
       }
     }
-  }, [selectedHistory]);
+  }, [selectedHistory, updateSummarizeWork]);
 
   // 컴포넌트 마운트 시 최신 히스토리 로드
   useEffect(() => {
