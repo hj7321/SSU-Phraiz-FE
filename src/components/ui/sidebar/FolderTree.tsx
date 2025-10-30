@@ -57,8 +57,8 @@ const FolderTree = () => {
 
   return (
     <div className="text-sm">
-      {/* 폴더 */}
-      <ul className="space-y-1">
+      {/* 폴더 목록 */}
+      <ul className="space-y-[2px] pb-2">
         {folders.map((f) => (
           <TreeNode
             key={f.id}
@@ -70,8 +70,9 @@ const FolderTree = () => {
           />
         ))}
       </ul>
-      {/* 폴더에 속하지 않은 히스토리 */}
-      <ul className="space-y-1">
+
+      {/* 히스토리 목록 (간격 좁게) */}
+      <ul className="space-y-[1px]">
         {Histories.map((h) => (
           <TreeNode
             key={h.id}
@@ -84,7 +85,7 @@ const FolderTree = () => {
         ))}
       </ul>
 
-      {/* ✅ 이동 모달: 트리에 1개만 두기 */}
+      {/* 이동 모달 */}
       <MoveHistoryDialog
         open={moveTarget !== null}
         onOpenChange={(o) => !o && setMoveTarget(null)}
@@ -92,7 +93,7 @@ const FolderTree = () => {
         historyId={moveTarget ?? 0}
       />
 
-      {/* ✅ 삭제 확인 모달: 트리에 1개만 두기 */}
+      {/* 삭제 확인 모달 */}
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={(o) => !o && setDeleteTarget(null)}

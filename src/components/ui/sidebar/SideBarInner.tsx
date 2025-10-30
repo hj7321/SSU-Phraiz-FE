@@ -36,7 +36,9 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
   const service = matched ? matched.service : undefined;
 
   const planTier = useAuthStore((s) => s.planTier);
+  const isLogin = useAuthStore((s) => s.isLogin);
   const isFree = planTier === "Free";
+  const folderDisabled = !isLogin || isFree; // ✅ 로그인X 또는 Free 플랜이면 비활성화
 
   const queryClient = useQueryClient();
 
@@ -49,10 +51,10 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
   });
 
   const handleSelect = async (k: TabKey) => {
-    if (k === "new-folder" && isFree) return;
+    if (k === "new-folder" && folderDisabled) return; // ✅ 비활성화 조건 추가
 
     switch (k) {
-      case "usage-history": {
+      case "usage-history":
         if (open) {
           setOpen(false);
           setActiveTab(null);
@@ -60,19 +62,22 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
         }
         setOpen(true);
         break;
-      }
       case "history-search":
         openDialog();
         break;
       case "new-work":
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "new_work_start",
+          feature: "workspace",
+        });
         useCiteHistoryStore.getState().clearCiteHistory?.();
         useNewWorkStore.getState().trigger();
         break;
-      case "new-folder": {
+      case "new-folder":
         if (!service) return;
         setFolderModalOpen(true);
         break;
-      }
     }
     setActiveTab(k);
   };
@@ -84,12 +89,10 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
       collapsible="icon"
       className="max-lg:w-[min(88vw,320px)]"
     >
-      {/*──────── 메뉴 (아이콘 + 라벨) ────────*/}
       <SidebarMenu className="mt-2">
         {(Object.keys(TABS) as TabKey[]).map((key) => {
           const Icon = TABS[key].icon;
-
-          const disabled = key === "new-folder" && isFree;
+          const disabled = key === "new-folder" && folderDisabled; // ✅ 변경
 
           return (
             <SidebarMenuItem key={key}>
@@ -103,7 +106,6 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
                   !open && "justify-center"
                 )}
               >
-                {/* ⬇️ div를 루트로 사용 (button 금지) */}
                 <div
                   role="button"
                   tabIndex={disabled ? -1 : 0}
@@ -133,7 +135,6 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
         })}
       </SidebarMenu>
 
-      {/*──────── 탭 내용 ────────*/}
       {open && (
         <SidebarContent className="border-t-0 min-w-0">
           <SidebarPanel />
