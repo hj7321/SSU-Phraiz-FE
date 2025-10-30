@@ -28,6 +28,12 @@ const MobileNavBar = () => {
       closeNavbar();
     },
     onSuccess: () => {
+      // ✅ GTM 이벤트 푸시
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "logout_click",
+        feature: "auth",
+      });
       authLogout();
     },
     onError: (err) => {

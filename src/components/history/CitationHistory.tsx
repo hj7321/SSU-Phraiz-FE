@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback } from "react";
-import { Copy } from "lucide-react";
+import { Copy, Link as LinkIcon } from "lucide-react";
 import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 
 const CitationHistory = () => {
@@ -11,40 +11,54 @@ const CitationHistory = () => {
     const text = selectedHistory?.citationText ?? "";
     if (!text) return;
     navigator.clipboard.writeText(text);
+    // ✅ GTM 이벤트 푸시
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "copy_result",
+      feature: "copy",
+      service: "cite",
+    });
   }, [selectedHistory?.citationText]);
 
+  if (!selectedHistory) return null;
+
   return (
-    <div className="p-[16px] flex flex-col rounded-md shadow-md border my-[10px] w-full gap-[10px] md:gap-[15px]">
-      <div className="grid grid-cols-[auto,1fr] items-baseline gap-[2px] md:gap-[5px]">
-        <h1 className="text-[12px] sm:text-[14px] md:text-[16px] font-nanum-extrabold">
-          URL / DOI:
-        </h1>
-        <div className="min-w-0 break-all leading-5 text-[12px] sm:text-[14px] md:text-[16px]">
-          {selectedHistory?.url}
+    <div className="w-full bg-white border border-gray-200 rounded-md shadow-md p-6 flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-[10px]">
+          <h3 className="font-semibold text-gray-700">생성된 인용문</h3>
+          <span className="px-3 py-1 text-sm font-semibold bg-indigo-100 text-indigo-600 rounded-lg">
+            {selectedHistory?.style?.toUpperCase() ?? "APA"}
+          </span>
         </div>
-      </div>
-      <div className="grid grid-cols-[auto,1fr] items-baseline gap-[2px] md:gap-[5px]">
-        <h1 className="text-[12px] sm:text-[14px] md:text-[16px] font-nanum-extrabold">
-          인용 형식:
-        </h1>
-        <div className="text-[12px] sm:text-[14px] md:text-[16px]">
-          {selectedHistory?.style}
-        </div>
-      </div>
-      <div className="grid grid-cols-[auto,1fr] items-baseline gap-[2px] md:gap-[5px]">
-        <h1 className="text-[12px] sm:text-[14px] md:text-[16px] font-nanum-extrabold">
-          생성된 인용문:
-        </h1>
-        <div className="min-w-0 break-words leading-5 text-[12px] sm:text-[14px] md:text-[16px]">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-800 leading-relaxed">
           {selectedHistory?.citationText}
-          <button
-            onClick={handleCopy}
-            className="inline-flex items-center align-middle ml-2 p-1 rounded hover:bg-black/5"
-            aria-label="결과 복사"
-            title="복사"
-          >
-            <Copy className="h-4 w-4 shrink-0" />
-          </button>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="mt-2 flex items-center justify-center gap-2 w-full border border-gray-300 rounded-lg py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+        >
+          <Copy className="h-4 w-4" />
+          인용문 복사
+        </button>
+      </div>
+
+      <hr className="border-gray-200" />
+
+      <div className="flex flex-col gap-3">
+        <h3 className="font-semibold text-gray-700">출처 정보</h3>
+        <div className="flex flex-col gap-1 text-sm text-gray-800">
+          <div className="flex items-start gap-1">
+            <LinkIcon className="h-4 w-4 text-gray-500 mt-[2px]" />
+            <a
+              href={selectedHistory?.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 hover:underline break-all"
+            >
+              {selectedHistory?.url}
+            </a>
+          </div>
         </div>
       </div>
     </div>

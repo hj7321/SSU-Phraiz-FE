@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { FileUpload } from "@/components/FileUpload";
 import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
 import { requestParaphrase, ParaphraseApiMode } from "@/apis/paraphrase.api";
+import { readLatestHistory } from "@/apis/history.api";
 import Image from "next/image";
 import { useAuthStore } from "@/stores/auth.store";
 import { useRouter } from "next/navigation";
-import { useLocalHistory } from "@/stores/localHistory.store";
-import { LocalHistoryNavigation } from "@/components/LocalHistoryNavigation";
+import { useWorkHistory } from "@/stores/workHistory.store";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { usePlanRestriction } from "@/hooks/usePlanRestriction";
@@ -261,29 +260,24 @@ const ModeSelector = ({
 };
 
 const AiParaphraseBox = () => {
+  // ========== Store & Router ==========
   const selectedHistory = useAiHistoryStore((state) => state.selectedAiHistory);
   const clearHistory = useAiHistoryStore((state) => state.clearAiHistory);
   const { toast } = useToast();
 
-  // ========== Store & Router ==========
-
+  // 🔥 workHistory 사용 (localHistory 제거)
   const {
-    addParaphraseHistory,
-    goToPreviousParaphrase,
-    goToNextParaphrase,
-    canGoBackParaphrase,
-    canGoForwardParaphrase,
-    getCurrentParaphrase,
-    paraphraseHistories,
-    paraphraseIndex,
-    isHistoryFullParaphrase,
-    startNewParaphraseConversation,
-  } = useLocalHistory();
+    currentParaphraseHistoryId,
+    currentParaphraseSequence,
+    updateParaphraseWork,
+    canParaphraseMore,
+    resetParaphraseWork,
+  } = useWorkHistory();
 
   const isLogin = useAuthStore((s) => s.isLogin);
   const router = useRouter();
   const { canUseFeature } = usePlanRestriction();
-  const { addTokenUsage, showTokenAlert, updateTokenUsage } = useTokenUsage();
+  const { updateTokenUsage, showTokenAlert } = useTokenUsage();
   const queryClient = useQueryClient();
 
   // ========== State ==========
@@ -293,7 +287,7 @@ const AiParaphraseBox = () => {
   const [customStyle, setCustomStyle] = useState("");
   const [creativityLevel, setCreativityLevel] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [currentSequence, setCurrentSequence] = useState(1);
 
   // ========== Hooks ==========
   useClearContent();
@@ -323,24 +317,62 @@ const AiParaphraseBox = () => {
     setActiveMode("표준");
     setCustomStyle("");
     setIsLoading(false);
-    setUploadedFile(null);
     clearHistory();
+    resetParaphraseWork();
   });
 
+  // 사이드바 히스토리 선택 시
   useEffect(() => {
     if (selectedHistory?.paraphrasedText) {
       setOutputText(selectedHistory.paraphrasedText);
+      setInputText(selectedHistory.originalText);
+
+      // 선택된 히스토리의 정보로 업데이트
+      if (selectedHistory.historyId && selectedHistory.sequenceNumber) {
+        updateParaphraseWork(
+          selectedHistory.historyId,
+          selectedHistory.sequenceNumber
+        );
+        setCurrentSequence(selectedHistory.sequenceNumber);
+      }
     }
   }, [selectedHistory]);
 
+  // 컴포넌트 마운트 시 최신 히스토리 로드
   useEffect(() => {
-    const currentLocal = getCurrentParaphrase();
-    if (currentLocal) {
-      setInputText(currentLocal.inputText);
-      setOutputText(currentLocal.content);
-      setActiveMode(currentLocal.mode as ParaphraseMode);
+    if (currentParaphraseHistoryId && isLogin) {
+      loadLatestHistory();
     }
-  }, [paraphraseIndex, getCurrentParaphrase]);
+  }, [currentParaphraseHistoryId, isLogin]);
+
+  // 최신 히스토리 내용 불러오기
+  const loadLatestHistory = async () => {
+    if (!currentParaphraseHistoryId) return;
+
+    try {
+      const latestContent = await readLatestHistory({
+        service: "paraphrase",
+        historyId: currentParaphraseHistoryId,
+      });
+
+      setInputText(latestContent.originalText);
+      setOutputText(latestContent.paraphrasedText || "");
+      setCurrentSequence(latestContent.sequenceNumber);
+
+      if (latestContent.sequenceNumber !== currentParaphraseSequence) {
+        updateParaphraseWork(
+          latestContent.historyId,
+          latestContent.sequenceNumber
+        );
+      }
+
+      console.log(
+        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
+      );
+    } catch (error) {
+      console.error("히스토리 조회 실패:", error);
+    }
+  };
 
   // ========== Handlers ==========
   const handleApiCall = async () => {
@@ -350,11 +382,12 @@ const AiParaphraseBox = () => {
       return;
     }
 
-    if (isHistoryFullParaphrase()) {
+    // 현재 historyId에서 10개 도달 확인
+    if (!canParaphraseMore()) {
       toast({
-        title: "히스토리 제한",
+        title: "변환 제한",
         description:
-          "최대 10개까지 저장할 수 있습니다. 새 대화를 시작해주세요.",
+          "이 작업에서 최대 10개까지만 변환할 수 있습니다. 새 대화를 시작해주세요.",
         variant: "destructive",
         duration: 4000,
       });
@@ -369,11 +402,18 @@ const AiParaphraseBox = () => {
       return;
     }
 
-    // 입력 검증
-    if (!inputText.trim() && !uploadedFile) {
-      alert("텍스트를 입력하거나 파일을 업로드해주세요.");
+    if (!inputText.trim()) {
+      alert("텍스트를 입력해주세요.");
       return;
     }
+
+    // ✅ GTM 이벤트 푸시 (API 호출 직전)
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "paraphrase_start",
+      feature: "paraphrasing",
+      paraphrase_mode: activeMode, // 현재 선택된 모드
+    });
 
     setIsLoading(true);
     setOutputText("");
@@ -389,59 +429,45 @@ const AiParaphraseBox = () => {
     };
     const apiMode = modeMap[activeMode];
 
-    // creativityLevel을 scale로 변환 (0-100 → 0-1)
     const requestData = {
       text: inputText,
       userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined,
-      scale: creativityLevel, // 0-100을 0-1로 변환
+      scale: creativityLevel / 100,
+      historyId: currentParaphraseHistoryId, // 스토어의 historyId를 추가
     };
 
     try {
-      let response;
+      const response = await requestParaphrase(apiMode, requestData);
 
-      // 파일이 있으면 FormData 사용
+      // 응답 처리
+      const { historyId, sequenceNumber, paraphrasedText, remainingToken } =
+        response;
 
-      // 기존 방식
-      const requestData = {
-        text: inputText,
-        userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined,
-        scale: creativityLevel / 100,
-      };
-      response = await requestParaphrase(apiMode, requestData);
+      setOutputText(paraphrasedText);
+      setCurrentSequence(sequenceNumber);
 
-      setOutputText(response.paraphrasedText);
+      // 현재 작업 정보 업데이트
+      updateParaphraseWork(historyId, sequenceNumber);
 
-      addParaphraseHistory({
-        content: response.paraphrasedText,
-        inputText: uploadedFile ? `[파일: ${uploadedFile.name}]` : inputText,
-        mode: activeMode,
-      });
+      console.log(
+        `✅ 변환 완료: historyId=${historyId}, sequence=${sequenceNumber}`
+      );
 
       // 토큰 처리
-      if (response.remainingToken !== undefined) {
-        const tokensUsed = updateTokenUsage(response.remainingToken);
-        showTokenAlert(response.remainingToken, true);
-        console.log(`이번 요청에서 ${tokensUsed} 토큰 사용됨`);
-      } else {
-        let tokensUsed = 0;
-        if (response.usage?.total_tokens) {
-          tokensUsed = response.usage.total_tokens;
-        } else if (response.tokens_used) {
-          tokensUsed = response.tokens_used;
-        } else if (response.token_count) {
-          tokensUsed = response.token_count;
-        } else {
-          const inputTokens = Math.ceil(inputText.length / 4);
-          const outputTokens = Math.ceil(
-            (response.paraphrasedText?.length || 0) / 4
-          );
-          tokensUsed = inputTokens + outputTokens;
-        }
+      if (remainingToken !== undefined) {
+        updateTokenUsage(remainingToken);
+        showTokenAlert(remainingToken, true);
+      }
 
-        if (tokensUsed > 0) {
-          addTokenUsage(tokensUsed);
-          showTokenAlert(tokensUsed, false);
-        }
+      // 10개 도달 시 안내 메시지
+      if (sequenceNumber >= 10) {
+        toast({
+          title: "변환 완료",
+          description:
+            "이 작업에서 최대 변환 횟수에 도달했습니다. 새 대화를 시작해주세요.",
+          variant: "default",
+          duration: 3000,
+        });
       }
 
       queryClient.invalidateQueries({
@@ -458,24 +484,64 @@ const AiParaphraseBox = () => {
     }
   };
 
-  const handleNewConversation = () => {
-    startNewParaphraseConversation();
-    setInputText("");
-    setOutputText("");
-    setActiveMode("표준");
-    setCustomStyle("");
-    setUploadedFile(null);
+  // 이전 히스토리 보기
+  const handlePrevSequence = async () => {
+    if (currentSequence <= 1 || !currentParaphraseHistoryId) return;
 
-    toast({
-      title: "새 대화 시작",
-      description: "히스토리가 초기화되었습니다.",
-      duration: 2000,
-    });
+    try {
+      const content = await readLatestHistory({
+        service: "paraphrase",
+        historyId: currentParaphraseHistoryId,
+        sequenceNumber: currentSequence - 1,
+      });
+
+      setInputText(content.originalText);
+      setOutputText(content.paraphrasedText || "");
+      setCurrentSequence(currentSequence - 1);
+    } catch (error) {
+      console.error("이전 히스토리 조회 실패:", error);
+      toast({
+        title: "오류",
+        description: "이전 히스토리를 불러올 수 없습니다.",
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
   };
 
-  const isHistoryFull = isHistoryFullParaphrase();
+  // 다음 히스토리 보기
+  const handleNextSequence = async () => {
+    if (
+      currentSequence >= currentParaphraseSequence ||
+      !currentParaphraseHistoryId
+    )
+      return;
+
+    try {
+      const content = await readLatestHistory({
+        service: "paraphrase",
+        historyId: currentParaphraseHistoryId,
+        sequenceNumber: currentSequence + 1,
+      });
+
+      setInputText(content.originalText);
+      setOutputText(content.paraphrasedText || "");
+      setCurrentSequence(currentSequence + 1);
+    } catch (error) {
+      console.error("다음 히스토리 조회 실패:", error);
+      toast({
+        title: "오류",
+        description: "다음 히스토리를 불러올 수 없습니다.",
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
+  };
+
+  // 버튼 비활성화 조건
+  const cannotParaphraseMore = !canParaphraseMore();
   const isButtonDisabled =
-    isLoading || (!inputText.trim() && !uploadedFile) || isHistoryFull;
+    isLoading || !inputText.trim() || cannotParaphraseMore;
 
   // ========== Render ==========
   return (
@@ -486,24 +552,31 @@ const AiParaphraseBox = () => {
         </h1>
 
         <div className="flex items-center gap-2">
-          {paraphraseHistories.length > 0 && (
-            <button
-              onClick={handleNewConversation}
-              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              새 대화
-            </button>
-          )}
+          {currentParaphraseHistoryId && currentParaphraseSequence > 1 && (
+            <div className="flex items-center gap-1 bg-gray-50 px-2 py-1.5 rounded-lg border">
+              <button
+                onClick={handlePrevSequence}
+                disabled={currentSequence <= 1}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                title="이전"
+              >
+                ←
+              </button>
 
-          <LocalHistoryNavigation
-            canGoBack={canGoBackParaphrase()}
-            canGoForward={canGoForwardParaphrase()}
-            onPrevious={goToPreviousParaphrase}
-            onNext={goToNextParaphrase}
-            currentIndex={paraphraseIndex}
-            totalCount={paraphraseHistories.length}
-            currentTimestamp={getCurrentParaphrase()?.timestamp}
-          />
+              <span className="text-sm font-mono px-2">
+                {currentSequence} / {currentParaphraseSequence}
+              </span>
+
+              <button
+                onClick={handleNextSequence}
+                disabled={currentSequence >= currentParaphraseSequence}
+                className="p-1 hover:bg-gray-200 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                title="다음"
+              >
+                →
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -528,54 +601,40 @@ const AiParaphraseBox = () => {
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={
-              uploadedFile
-                ? "파일이 업로드되었습니다. 추가 텍스트를 입력하거나 바로 변환하세요."
-                : "내용을 입력하세요."
-            }
+            placeholder="내용을 입력하세요."
             className="flex-1 w-full resize-none outline-none text-sm md:text-base"
             disabled={isLoading}
           ></textarea>
 
-          <div className="flex justify-between items-center mt-2 md:mt-4">
-            <FileUpload
-              onFileSelect={setUploadedFile}
-              maxSizeMB={2}
-              disabled={isLoading}
-            />
-
+          <div className="flex justify-end items-center mt-2 md:mt-4">
             <button
               onClick={handleApiCall}
               className={clsx(
                 "py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all",
-                isHistoryFull
+                cannotParaphraseMore
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-purple-600 hover:bg-purple-700 text-white"
               )}
               disabled={isButtonDisabled}
               title={
-                isHistoryFull
-                  ? "히스토리가 가득 찼습니다. 새 대화를 시작해주세요."
+                cannotParaphraseMore
+                  ? "이 작업에서 최대 10개까지 변환할 수 있습니다"
                   : ""
               }
             >
-              {isHistoryFull
-                ? "히스토리 가득참"
+              {cannotParaphraseMore
+                ? "변환 제한 도달"
                 : isLoading
                 ? "변환 중..."
                 : "변환하기"}
             </button>
           </div>
 
-          {isHistoryFull && (
+          {/* 10개 도달 경고 */}
+          {cannotParaphraseMore && (
             <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-              ⚠️ 히스토리가 가득 찼습니다.
-              <button
-                onClick={handleNewConversation}
-                className="ml-1 underline hover:text-yellow-900"
-              >
-                새 대화 시작하기
-              </button>
+              ⚠️ 이 작업에서 최대 변환 횟수에 도달했습니다. 사이드바에서 새
+              작업을 시작해주세요.
             </div>
           )}
         </div>
@@ -591,11 +650,18 @@ const AiParaphraseBox = () => {
 
           {(selectedHistory?.paraphrasedText || outputText) && (
             <button
-              onClick={() =>
+              onClick={() => {
                 navigator.clipboard.writeText(
                   selectedHistory?.paraphrasedText || outputText
-                )
-              }
+                );
+                // ✅ GTM 이벤트 푸시
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                  event: "copy_result",
+                  feature: "copy",
+                  service: "paraphrase",
+                });
+              }}
               className="absolute top-3 right-3 p-2 text-gray-500 hover:bg-gray-200 rounded-full"
             >
               <Copy className="h-4 w-4" />

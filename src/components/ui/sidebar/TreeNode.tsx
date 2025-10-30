@@ -41,7 +41,6 @@ const TreeNode = ({
   node,
   onRequestDelete,
   onRequestMove,
-  compact = false,
   depth = 0,
 }: TreeNodeProps) => {
   const isFolder = Array.isArray(node.children);
@@ -147,9 +146,25 @@ const TreeNode = ({
 
     if (data.kind === "cite") {
       setSelectedCiteHistory(data.data);
+      // ✅ GTM 이벤트 푸시
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "history_item_click",
+        feature: "history",
+        service: data.kind,
+        history_id: data.data.id,
+      });
       clearAi();
     } else {
       setSelectedAiHistory(data.data);
+      // ✅ GTM 이벤트 푸시
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "history_item_click",
+        feature: "history",
+        service: data.kind,
+        history_id: data.data.resultHistoryId,
+      });
       clearCite();
     }
   };
@@ -222,69 +237,65 @@ const TreeNode = ({
 
   return (
     <li>
-      {/* 행 전체가 hover 트리거가 되도록 group + relative */}
+      {/* 행 전체 클릭 가능 */}
       <div
         className={clsx(
-          "group relative flex w-full min-w-0 items-center gap-2 px-1 py-1 rounded hover:bg-accent/40 cursor-pointer",
-          compact ? "gap-1 px-1 py-[3px] text-[13px]" : "gap-2 px-1 py-1",
-          depth > 0 && "pl-1"
+          "group relative flex w-full items-center justify-between min-w-0 rounded-md transition-all cursor-pointer",
+          "px-2 py-[6px] hover:bg-[#f6f3ff] hover:text-[#6c55f6]",
+          openChild && isFolder
+            ? "bg-[#f5f3ff]/70 text-[#6c55f6]"
+            : "text-gray-700",
+          depth > 0 && "pl-4"
         )}
         onClick={handleClickLine}
         role="button"
         aria-expanded={isFolder ? openChild : undefined}
       >
-        <span className="shrink-0">{isFolder ? "📂" : "📄"}</span>
+        {/* 왼쪽 아이콘 + 이름 */}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {isFolder ? (
+            <span className="text-[#a294f9]">{openChild ? "📂" : "📁"}</span>
+          ) : (
+            <span className="text-gray-400">📄</span>
+          )}
 
-        {isEditing ? (
-          <input
-            ref={inputRef}
-            autoFocus
-            className="flex-1 min-w-0 bg-transparent outline-none border-b border-muted-foreground/30 text-sm py-[1px]"
-            value={tempName}
-            onChange={(e) => setTempName(e.target.value)}
-            // onBlur={() => finishEdit("blur")}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") finishEdit("submit");
-              if (e.key === "Escape") {
-                setTempName(node.name);
-                setIsEditing(false);
-              }
-            }}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-          />
-        ) : (
-          // 제목 영역이 남은 공간을 모두 차지 → hover 누락 지대 제거
-          <span className="flex-1 min-w-0 truncate">
-            {node.name}
-            {isFolder && (
-              <span className="ml-1 text-[11px] text-muted-foreground">
-                ({folderCount})
-              </span>
-            )}
-          </span>
-        )}
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") finishEdit("submit");
+                if (e.key === "Escape") {
+                  setTempName(node.name);
+                  setIsEditing(false);
+                }
+              }}
+              className="flex-1 min-w-0 bg-transparent border-b border-[#a294f9]/40 focus:border-[#a294f9] outline-none text-sm py-[2px]"
+            />
+          ) : (
+            <span className="flex-1 truncate text-sm font-medium">
+              {node.name}
+              {isFolder && (
+                <span className="ml-1 text-[11px] text-gray-400 font-normal">
+                  ({folderCount})
+                </span>
+              )}
+            </span>
+          )}
+        </div>
 
-        {/* ▼ 절대 위치: 히트박스 항상 유지, 시각만 희미→선명 전환 */}
+        {/* 우측 메뉴 버튼 */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className={clsx(
-              "absolute right-1 top-1/2 -translate-y-1/2 z-10 p-1 rounded",
-              "opacity-50 transition-opacity",
-              "group-hover:opacity-100 group-focus-within:opacity-100 hover:opacity-100 focus:opacity-100"
-            )}
             onClick={(e) => e.stopPropagation()}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100"
             aria-label="열기"
           >
-            <EllipsisVertical className="w-4 h-4" />
+            <EllipsisVertical className="w-4 h-4 text-gray-500" />
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent
-            align="end"
-            onClick={(e) => e.stopPropagation()}
-            onCloseAutoFocus={(e) => e.preventDefault()} // 포커스 튐 방지
-          >
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
             <DropdownMenuItem onSelect={startEdit}>
               <Pencil className="w-4 h-4 mr-2" /> 이름 바꾸기
             </DropdownMenuItem>
@@ -298,8 +309,8 @@ const TreeNode = ({
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
               onSelect={onRequestDelete}
+              className="text-red-600 focus:text-red-600"
             >
               <Trash2 className="w-4 h-4 mr-2" /> 삭제
             </DropdownMenuItem>
@@ -307,20 +318,14 @@ const TreeNode = ({
         </DropdownMenu>
       </div>
 
+      {/* 하위 폴더/히스토리 */}
       {isFolder && openChild && (
         <ul
           className={clsx(
-            "mt-1 space-y-[2px] border-l border-accent/30",
-            // depth에 따라 들여쓰기
-            depth === 0 ? "ml-3 pl-2" : "ml-2 pl-2"
+            "mt-1 border-l border-[#E3E0FF] ml-3 space-y-[1px]", // ✅ 간격 줄임
+            depth === 0 ? "pl-2" : "pl-3"
           )}
         >
-          {/* 로딩 표시 */}
-          {/* {isFetchingHistoryInFolder && folderHistories.length === 0 && (
-            <li className="text-xs text-muted-foreground px-2 py-[2px]">...</li>
-          )} */}
-
-          {/* 히스토리 목록 (촘촘/자식 깊이 1로 전달) */}
           {folderHistories.map((h) => (
             <TreeNode
               key={h.id}
@@ -335,7 +340,7 @@ const TreeNode = ({
           {hasNextPage && (
             <li>
               <button
-                className="text-[12px] px-2 py-[3px] rounded hover:bg-accent/30"
+                className="text-[12px] text-[#6c55f6] px-2 py-[3px] rounded hover:bg-[#f3f0ff]"
                 onClick={(e) => {
                   e.stopPropagation();
                   fetchNextPage();
