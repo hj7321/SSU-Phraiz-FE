@@ -9,7 +9,13 @@ async function ensureTemplateLoaded(style: string) {
   const key = style.toLowerCase();
   if (loadedStyles[key]) return loadedStyles[key];
 
-  const res = await fetch(`/csl/${key}.csl`);
+  // ✅ 클라이언트/서버 환경 구분
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || "https://www.phraiz.com";
+
+  const res = await fetch(`${baseUrl}/csl/${key}.csl`);
   if (!res.ok) throw new Error(`❌ ${key}.csl 파일을 불러오지 못했습니다`);
   const xml = await res.text();
 
