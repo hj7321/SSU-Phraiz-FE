@@ -2,8 +2,6 @@ import Cite from "citation-js";
 import "@citation-js/plugin-csl";
 import { CSL } from "@/types/citation.type";
 
-const STYLES = ["mla", "apa", "chicago", "harvard", "vancouver"] as const;
-
 /** 한 번만 로드 후 캐싱 */
 const loadedStyles: Record<string, string> = {};
 
