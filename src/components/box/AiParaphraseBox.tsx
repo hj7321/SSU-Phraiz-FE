@@ -336,7 +336,7 @@ const AiParaphraseBox = () => {
         setCurrentSequence(selectedHistory.sequenceNumber);
       }
     }
-  }, [selectedHistory]);
+  }, [selectedHistory, updateParaphraseWork]);
 
   // 컴포넌트 마운트 시 최신 히스토리 로드
   useEffect(() => {
