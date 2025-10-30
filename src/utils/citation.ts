@@ -2,10 +2,38 @@ import Cite from "citation-js";
 import "@citation-js/plugin-csl";
 import { CSL } from "@/types/citation.type";
 
-export const generateCitation = (cslItem: CSL | string, style: string) => {
+const STYLES = ["mla", "apa", "chicago", "harvard", "vancouver"] as const;
+
+/** 한 번만 로드 후 캐싱 */
+const loadedStyles: Record<string, string> = {};
+
+async function ensureTemplateLoaded(style: string) {
+  const key = style.toLowerCase();
+  if (loadedStyles[key]) return loadedStyles[key];
+
+  const res = await fetch(`/csl/${key}.csl`);
+  if (!res.ok) throw new Error(`❌ ${key}.csl 파일을 불러오지 못했습니다`);
+  const xml = await res.text();
+
+  Cite.CSL.register.addTemplate(key, xml);
+  loadedStyles[key] = xml;
+  return xml;
+}
+
+export const generateCitation = async (
+  cslItem: CSL | string,
+  style: string
+) => {
+  const key = style.toLowerCase();
+  await ensureTemplateLoaded(key); // ✅ 필요 시 자동 로드
+
+  // 👇 변경 (이 줄만 바꾸면 됨)
+  console.log("✅ 현재 등록된 CSL 템플릿:", Object.keys(loadedStyles));
+  console.log("📘 사용 중인 스타일:", key);
+
   try {
     const citation = new Cite(cslItem).format("bibliography", {
-      template: style.toLowerCase(),
+      template: key,
       lang: "ko-KR",
       format: "text",
     });
