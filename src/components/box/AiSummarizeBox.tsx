@@ -18,6 +18,7 @@ import { useWorkHistory } from "@/stores/workHistory.store";
 import useClearContent from "@/hooks/useClearContent";
 import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useAiHistoryStore } from "@/stores/aiHistory.store";
+import { ChevronDown, MessageCircle } from "lucide-react";
 
 const HEADER_H = 72; // px
 
@@ -27,11 +28,13 @@ type SummarizeMode = "한줄 요약" | "전체 요약" | "문단별 요약" | "�
 // 모드 선택 버튼 UI 컴포넌트
 const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudience, questionText, setQuestionText }: { activeMode: SummarizeMode; setActiveMode: (mode: SummarizeMode) => void; targetAudience: string; setTargetAudience: (style: string) => void; questionText: string; setQuestionText: (text: string) => void }) => {
   const modes: SummarizeMode[] = ["한줄 요약", "전체 요약", "문단별 요약", "핵심 요약"];
+  const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
 
   // 타겟 요약 팝업 상태
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const customButtonRef = useRef<HTMLButtonElement>(null);
+  const modeDropdownRef = useRef<HTMLDivElement>(null);
 
   // 질문 기반 요약 팝업 상태
   const [isQuestionPopoverOpen, setIsQuestionPopoverOpen] = useState(false);
@@ -44,14 +47,23 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   // 외부 클릭 감지 (두 팝업 모두 처리)
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // 타겟 요약 팝업 닫기
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
-        setIsPopoverOpen(false);
+      // 질문 팝업 닫기
+      if (questionPopoverRef.current && !questionPopoverRef.current.contains(event.target as Node)) {
+        if (questionButtonRef.current && !questionButtonRef.current.contains(event.target as Node)) {
+          setIsQuestionPopoverOpen(false);
+        }
       }
 
-      // 질문 팝업 닫기
-      if (questionPopoverRef.current && !questionPopoverRef.current.contains(event.target as Node) && questionButtonRef.current && !questionButtonRef.current.contains(event.target as Node)) {
-        setIsQuestionPopoverOpen(false);
+      // 타겟 팝업 닫기 - 말풍선 버튼도 포함
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        if (customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
+          setIsPopoverOpen(false);
+        }
+      }
+
+      // 드롭다운 외부 클릭 감지
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
+        setIsModeDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -63,6 +75,7 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
     setActiveMode(mode);
     setIsPopoverOpen(false);
     setIsQuestionPopoverOpen(false);
+    setIsModeDropdownOpen(false);
   };
 
   const handleQuestionClick = () => {
@@ -91,87 +104,172 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   const disabledClass = "bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed opacity-50";
 
   return (
-    <div className="flex w-full gap-2 md:gap-3 relative">
-      {/* 기본 모드들은 모든 사용자가 사용 가능하므로 제한 없음 */}
-      {modes.map((mode) => (
-        <div key={mode} className="relative flex-1">
-          <button onClick={() => handleModeClick(mode)} className={clsx("w-full", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
-            {mode}
-          </button>
-        </div>
-      ))}
+    <div className="w-full">
+      {/* 데스크톱: 버튼들 (hidden on mobile) */}
+      <div className="hidden md:flex w-full gap-2 md:gap-3 relative">
+        {modes.map((mode) => (
+          <div key={mode} className="relative flex-1">
+            <button onClick={() => handleModeClick(mode)} className={clsx("w-full", baseButtonClass, activeMode === mode ? activeClass : inactiveClass)}>
+              {mode}
+            </button>
+          </div>
+        ))}
 
-      {/* 질문 기반 요약 버튼 - 요금제 제한 적용 */}
-      <div className="relative flex-1">
-        {canUseFeature("summarize", "questionBased") ? (
-          // Basic 이상 사용자: 기존 코드 그대로
-          <>
-            <button ref={questionButtonRef} onClick={handleQuestionClick} className={clsx("w-full", baseButtonClass, activeMode === "질문 기반 요약" ? activeClass : inactiveClass)}>
-              질문 기반 요약
+        {/* 질문 기반 요약 버튼 */}
+        <div className="relative flex-1">
+          {canUseFeature("summarize", "questionBased") ? (
+            <>
+              <button ref={questionButtonRef} onClick={handleQuestionClick} className={clsx("w-full", baseButtonClass, activeMode === "질문 기반 요약" ? activeClass : inactiveClass)}>
+                질문 기반 요약
+              </button>
+              {isQuestionPopoverOpen && (
+                <div ref={questionPopoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                  <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
+                    <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                    <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
+                    <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button disabled className={clsx("w-full", baseButtonClass, disabledClass)}>
+                    질문 기반 요약
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getRequiredPlanName("summarize", "questionBased")} 플랜부터 사용 가능합니다</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+
+        {/* 타겟 요약 버튼 */}
+        <div className="relative flex-1">
+          {canUseFeature("summarize", "targeted") ? (
+            <>
+              <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
+                타겟 요약
+                <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+              </button>
+              {isPopoverOpen && (
+                <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                  <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
+                    <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                    <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
+                    <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button disabled className={clsx("w-full", baseButtonClass, "relative gap-2", disabledClass)}>
+                    타겟 요약
+                    <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getRequiredPlanName("summarize", "targeted")} 플랜부터 사용 가능합니다</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      </div>
+
+      {/* 모바일: 드롭다운 + 팝업 */}
+      <div className="md:hidden flex items-center gap-1 overflow-visible">
+        {/* 드롭다운 */}
+        <div className="relative inline-block w-max" ref={modeDropdownRef}>
+          {" "}
+          <button onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)} className={clsx("px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2", "bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300")} style={{ minWidth: "140px" }}>
+            <span className="truncate">{activeMode}</span>
+            <ChevronDown size={16} className={clsx("transition-transform flex-shrink-0", isModeDropdownOpen && "rotate-180")} />
+          </button>
+          {isModeDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg z-50" style={{ width: "140px" }}>
+              {" "}
+              {/* 드롭다운도 같은 너비 */}
+              {modes.map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    handleModeClick(mode);
+                    setIsModeDropdownOpen(false);
+                  }}
+                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors", "hover:bg-purple-100", activeMode === mode && "bg-purple-100 font-semibold")}>
+                  {mode}
+                </button>
+              ))}
+              {canUseFeature("summarize", "questionBased") && (
+                <button
+                  onClick={() => {
+                    handleQuestionClick();
+                    setIsModeDropdownOpen(false);
+                  }}
+                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", "hover:bg-purple-100", activeMode === "질문 기반 요약" && "bg-purple-100 font-semibold")}>
+                  질문 기반 요약
+                </button>
+              )}
+              {canUseFeature("summarize", "targeted") && (
+                <button
+                  onClick={() => {
+                    handleCustomClick();
+                    setIsModeDropdownOpen(false);
+                  }}
+                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", "hover:bg-purple-100", activeMode === "타겟 요약" && "bg-purple-100 font-semibold")}>
+                  타겟 요약
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 🔥 말풍선 아이콘 (질문 기반 요약 또는 타겟 요약일 때만 표시) */}
+        {(activeMode === "질문 기반 요약" || activeMode === "타겟 요약") && (
+          <div className="relative overflow-visible">
+            <button
+              ref={customButtonRef}
+              onClick={() => {
+                if (activeMode === "질문 기반 요약") {
+                  setIsQuestionPopoverOpen(!isQuestionPopoverOpen);
+                } else if (activeMode === "타겟 요약") {
+                  setIsPopoverOpen(!isPopoverOpen);
+                }
+              }}
+              className={clsx("p-1.5 rounded-lg transition-colors", "bg-purple-100 hover:bg-purple-200 text-purple-600")}>
+              <MessageCircle size={16} />
             </button>
 
             {/* 질문 기반 요약 팝업 */}
-            {isQuestionPopoverOpen && (
-              <div ref={questionPopoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+            {isQuestionPopoverOpen && activeMode === "질문 기반 요약" && (
+              <div ref={questionPopoverRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                  <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
                   <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
-                  <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
                 </div>
               </div>
             )}
-          </>
-        ) : (
-          // Free 사용자: 툴팁과 함께 비활성화
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button disabled className={clsx("w-full", baseButtonClass, disabledClass)}>
-                  질문 기반 요약
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{getRequiredPlanName("summarize", "questionBased")} 플랜부터 사용 가능합니다</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
 
-      {/* 타겟 요약 버튼 - 요금제 제한 적용 */}
-      <div className="relative flex-1">
-        {canUseFeature("summarize", "targeted") ? (
-          // Basic 이상 사용자: 기존 코드 그대로
-          <>
-            <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
-              타겟 요약
-              <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
-            </button>
-            {isPopoverOpen && (
-              <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+            {/* 타겟 요약 팝업 */}
+            {isPopoverOpen && activeMode === "타겟 요약" && (
+              <div ref={popoverRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                  <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")}></div>
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
                   <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
-                  <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
                 </div>
               </div>
             )}
-          </>
-        ) : (
-          // Free 사용자: 툴팁과 함께 비활성화
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button disabled className={clsx("w-full", baseButtonClass, "relative gap-2", disabledClass)}>
-                  타겟 요약
-                  <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{getRequiredPlanName("summarize", "targeted")} 플랜부터 사용 가능합니다</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          </div>
         )}
       </div>
     </div>
