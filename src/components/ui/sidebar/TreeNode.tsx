@@ -163,7 +163,7 @@ const TreeNode = ({
         event: "history_item_click",
         feature: "history",
         service: data.kind,
-        history_id: data.data.resultHistoryId,
+        history_id: data.data.historyId,
       });
       clearCite();
     }
