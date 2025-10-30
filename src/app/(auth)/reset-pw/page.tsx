@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/reset-pw",
+    url: "https://www.phraiz.com/reset-pw",
     title: "Phraiz",
     description: "비밀번호 재설정하기",
     images: ["/opengraph/reset-pw.jpg"],

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/sign-up",
+    url: "https://www.phraiz.com/sign-up",
     title: "Phraiz",
     description: "회원가입",
     images: ["/opengraph/sign-up.jpg"],

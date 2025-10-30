@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/create-citation",
+    url: "https://www.phraiz.com/create-citation",
     title: "Phraiz",
     description: "인용 생성",
-    images: ["/opengraph/create-citation.jpg"],
+    images: ["/opengraph/create-citation.png"],
   },
 };
 
