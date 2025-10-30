@@ -9,7 +9,7 @@ import Analytics from "./Analytics";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ssu-phraiz-fe.vercel.app"),
+  metadataBase: new URL("https://www.phraiz.com"),
   title: { default: "Phraiz", template: "%s | Phraiz" },
   description:
     "문장 변환, 요약, 인용 생성을 지원하는 AI 기반 통합 글쓰기 웹사이트",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://ssu-phraiz-fe.vercel.app/",
+    url: "https://www.phraiz.com/",
     title: "Phraiz",
     description:
       "문장 변환, 문장 요약,인용 생성을 한 곳에서 — Phraiz에서 더 빠르게 글을 완성해 보세요.",
