@@ -2,7 +2,6 @@ import Cite from "citation-js";
 import "@citation-js/plugin-csl";
 import "citation-js/style/apa";
 import "citation-js/style/mla";
-import "citation-js/style/chicago";
 import { CSL } from "@/types/citation.type";
 
 export const generateCitation = (cslItem: CSL | string, style: string) => {
