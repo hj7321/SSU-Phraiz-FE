@@ -10,8 +10,8 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig = {
-  webpack(config) {
-    // 🔸 기존 SVG 설정 그대로 유지
+  webpack(config, { isServer }) {
+    // 🔸 기존 SVG 설정 유지
     config.module.rules.push({
       test: /\.svg$/i,
       issuer: /\.[jt]sx?$/,
@@ -30,6 +30,17 @@ const nextConfig = {
         },
       ],
     });
+
+    // ✅ citation-js 관련 Node 내장 모듈 fallback 추가
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        fs: false,
+        path: false,
+        os: false,
+      };
+    }
+
     return config;
   },
 };
