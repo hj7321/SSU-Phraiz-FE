@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import ContentBox from "@/components/box/ContentBox";
 import { Metadata } from "next";
 
