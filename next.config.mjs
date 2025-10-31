@@ -1,5 +1,3 @@
-export const runtime = "nodejs";
-
 import bundleAnalyzer from "@next/bundle-analyzer";
 
 /**
