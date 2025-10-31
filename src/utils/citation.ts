@@ -1,6 +1,25 @@
 // utils/citation.ts
 import { CSL } from "@/types/citation.type";
 
+/** citation-js의 최소 사용 타입 정의 */
+interface CitationJS {
+  new (input: CSL | CSL[] | string): {
+    format: (
+      type: "bibliography" | "citation",
+      options: {
+        template: string;
+        lang: string;
+        format: "text" | "html";
+      }
+    ) => string;
+  };
+  CSL: {
+    register: {
+      addTemplate: (name: string, xml: string) => void;
+    };
+  };
+}
+
 /** 로드된 CSL 스타일 캐시 */
 const loadedStyles: Record<string, string> = {};
 
@@ -8,8 +27,7 @@ const loadedStyles: Record<string, string> = {};
  * citation-js를 클라이언트 전용으로 동적 import
  * (SSR 번들에 citation-js 포함 방지)
  */
-async function loadCitationModules() {
-  // 이미 로드된 경우 재사용
+async function loadCitationModules(): Promise<{ Cite: CitationJS }> {
   if (typeof window === "undefined") {
     throw new Error("❌ citation-js는 클라이언트 환경에서만 동작합니다.");
   }
@@ -19,13 +37,17 @@ async function loadCitationModules() {
     import("@citation-js/plugin-csl"),
   ]);
 
-  return { Cite };
+  // 타입 단언
+  return { Cite: Cite as unknown as CitationJS };
 }
 
 /**
  * CSL 템플릿을 한 번만 불러오고 등록
  */
-async function ensureTemplateLoaded(Cite: any, style: string) {
+async function ensureTemplateLoaded(
+  Cite: CitationJS,
+  style: string
+): Promise<string> {
   const key = style.toLowerCase();
   if (loadedStyles[key]) return loadedStyles[key];
 
@@ -49,9 +71,9 @@ async function ensureTemplateLoaded(Cite: any, style: string) {
 export const generateCitation = async (
   cslItem: CSL | string,
   style: string
-) => {
+): Promise<string> => {
   try {
-    const { Cite } = await loadCitationModules(); // ✅ 클라이언트 전용 import
+    const { Cite } = await loadCitationModules();
     const key = style.toLowerCase();
 
     await ensureTemplateLoaded(Cite, key);
