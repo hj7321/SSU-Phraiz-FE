@@ -42,7 +42,7 @@ const MobileHeader = () => {
   return (
     <header
       data-mobile-header // ✅ 헤더 높이 동기화용
-      className="relative z-[10000] flex py-[10px] justify-center items-center bg-main"
+      className="relative z-[9000] flex py-[10px] justify-center items-center bg-main"
     >
       <button onClick={openNavbar} className="absolute left-[5%] top-[33%]">
         <Image src="/icons/menu.svg" alt="menu" width={25} height={25} />
