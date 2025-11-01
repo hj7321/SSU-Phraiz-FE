@@ -1,7 +1,7 @@
 import NavBar from "@/components/layout/NavBar";
 import SideBar from "@/components/layout/SideBar";
 import SearchDialog from "@/components/ui/dialog/SearchDialog";
-import ResponsiveSidebarProvider from "@/components/ui/sidebar/ResponsiveSidebarProvider";
+
 import SidebarSpacer from "@/components/ui/sidebar/SidebarSpacer";
 
 export default function NavBarLayout({
@@ -19,11 +19,9 @@ export default function NavBarLayout({
         <NavBar />
       </div>
 
-      <ResponsiveSidebarProvider>
-        <SidebarSpacer>{children}</SidebarSpacer>
-        <SideBar />
-        <SearchDialog />
-      </ResponsiveSidebarProvider>
+      <SidebarSpacer>{children}</SidebarSpacer>
+      <SideBar />
+      <SearchDialog />
     </div>
   );
 }

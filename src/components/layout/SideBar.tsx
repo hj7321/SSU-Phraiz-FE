@@ -1,37 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TabKey } from "../ui/sidebar/sidebar.tabs";
-import SideBarInner from "../ui/sidebar/SideBarInner";
-
-const HEADER_H = 72; // px
+import DesktopSideBar from "./DesktopSideBar";
+import MobileSideBar from "./MobileSideBar";
 
 const SideBar = () => {
-  const [activeTab, setActiveTab] = useState<TabKey | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    let ticking = false;
-
-    const syncOffset = () => {
-      if (ticking) return;
-      ticking = true;
-
-      requestAnimationFrame(() => {
-        const offset = Math.max(HEADER_H - window.scrollY, 0);
-        document.documentElement.style.setProperty(
-          "--header-offset",
-          `${offset}px`
-        );
-        ticking = false;
-      });
-    };
-
-    syncOffset(); // 첫 렌더에서 한 번
-    window.addEventListener("scroll", syncOffset, { passive: true });
-    return () => window.removeEventListener("scroll", syncOffset);
+    const check = () => setIsMobile(window.innerWidth <= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
-  return <SideBarInner activeTab={activeTab} setActiveTab={setActiveTab} />;
+  return isMobile ? <MobileSideBar /> : <DesktopSideBar />;
 };
 
 export default SideBar;
