@@ -7,6 +7,7 @@ import MobileHeader from "@/components/layout/MobileHeader";
 import MobileNavBar from "@/components/layout/MobileNavBar";
 import Analytics from "./Analytics";
 import { Suspense } from "react";
+import ResponsiveSidebarProvider from "@/components/ui/sidebar/ResponsiveSidebarProvider"; // ✅ 추가
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.phraiz.com"),
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     url: "https://www.phraiz.com/",
     title: "Phraiz",
     description:
-      "문장 변환, 문장 요약,인용 생성을 한 곳에서 — Phraiz에서 더 빠르게 글을 완성해 보세요.",
+      "문장 변환, 문장 요약, 인용 생성을 한 곳에서 — Phraiz에서 더 빠르게 글을 완성해 보세요.",
     images: ["/opengraph/main.jpg"],
   },
 };
@@ -35,7 +36,6 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        {/* ① GTM Head 스니펫 — afterInteractive 전략으로 렌더 블로킹 방지 */}
         <Script
           id="gtm-init"
           strategy="afterInteractive"
@@ -51,7 +51,6 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {/* ② GTM noscript 스니펫 — JS 꺼진 브라우저 대비 */}
         <noscript
           dangerouslySetInnerHTML={{
             __html: `
@@ -66,14 +65,17 @@ export default function RootLayout({
         </Suspense>
 
         <QueryProvider>
-          <div className="block relative lg:hidden">
-            <MobileHeader />
-            <MobileNavBar />
-          </div>
-          <div className="hidden lg:block">
-            <Header />
-          </div>
-          <main className="min-h-screen w-full">{children}</main>
+          {/* ✅ 여기서 감싸면 Header, NavBar, SideBar 모두 같은 Provider 사용 */}
+          <ResponsiveSidebarProvider>
+            <div className="block relative lg:hidden">
+              <MobileHeader />
+              <MobileNavBar />
+            </div>
+            <div className="hidden lg:block">
+              <Header />
+            </div>
+            <main className="min-h-screen w-full">{children}</main>
+          </ResponsiveSidebarProvider>
         </QueryProvider>
       </body>
     </html>

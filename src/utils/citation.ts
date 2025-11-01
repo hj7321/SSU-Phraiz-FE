@@ -1,50 +1,64 @@
 import { CSL } from "@/types/citation.type";
-import type { default as CitationJSType } from "citation-js";
 
-/** 한 번만 로드 후 캐싱 */
+/** citation-js 의 '형태'만 덕 타이핑으로 정의 (정적 의존성 제거) */
+type CitationJSType = {
+  new (input: CSL | string): {
+    format: (
+      mode: "bibliography",
+      opts: { template: string; lang: string; format: string }
+    ) => string;
+  };
+  CSL?: { register?: { addTemplate?: (k: string, xml: string) => void } };
+};
+
+/** 브라우저 전역 객체 확장 */
+declare global {
+  interface Window {
+    Cite?: CitationJSType;
+  }
+}
+
 const loadedStyles: Record<string, string> = {};
 
+/** citation-js 형태 확인용 타입가드 */
+function isCitationJs(x: unknown): x is CitationJSType {
+  return typeof x === "function";
+}
+
 /**
- * citation-js 모듈을 클라이언트 환경에서만 동적으로 불러옴
+ * citation-js를 CDN에서 클라이언트 런타임에만 로드
+ * - Webpack 정적 분석 회피를 위해 전역 eval + 문자열 dynamic import 사용
  */
-async function loadCitationJS(): Promise<{ Cite: typeof CitationJSType }> {
+async function loadCitationJSFromCDN(): Promise<{ Cite: CitationJSType }> {
   if (typeof window === "undefined") {
-    throw new Error("❌ citation-js는 브라우저 환경에서만 사용할 수 있습니다.");
+    throw new Error("❌ citation-js는 브라우저 환경에서만 동작합니다.");
   }
 
-  const [{ default: Cite }] = await Promise.all([
-    import("citation-js"),
-    import("@citation-js/plugin-csl"),
-  ]);
+  if (!window.Cite) {
+    const url = "https://esm.sh/citation-js@0.6.9?bundle";
+    const pluginUrl = "https://esm.sh/@citation-js/plugin-csl@0.6.9?bundle";
 
-  // ✅ Edge 환경일 때 DOMParser 없는 경우 방어
-  if (typeof DOMParser === "undefined") {
-    class SafeDOMParser {
-      parseFromString(str: string): Document {
-        const div = document.createElement("div");
-        div.innerHTML = str;
-        // document.implementation.createDocument로 가짜 Document 반환
-        const doc = document.implementation.createDocument(null, "root");
-        const root = doc.createElement("root");
-        root.innerHTML = div.innerHTML;
-        doc.appendChild(root);
-        return doc;
-      }
+    // 전역 eval 보장을 위해 (0, eval)(...) 형태 사용
+    const ns: unknown = await (0, eval)(`import("${url}")`);
+    const picked: unknown = (ns as { default?: unknown })?.default ?? ns;
+
+    if (!isCitationJs(picked)) {
+      throw new Error("❌ citation-js 모듈 로드 실패(형식 불일치)");
     }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore: DOMParser 타입 보강
-    (window as unknown as { DOMParser: typeof SafeDOMParser }).DOMParser =
-      SafeDOMParser;
+    window.Cite = picked;
+
+    // 플러그인은 부수효과만 필요
+    await (0, eval)(`import("${pluginUrl}")`);
   }
 
-  return { Cite };
+  return { Cite: window.Cite as CitationJSType };
 }
 
 /**
  * CSL 템플릿 로드 및 등록
  */
 async function ensureTemplateLoaded(
-  Cite: typeof CitationJSType,
+  Cite: CitationJSType,
   style: string
 ): Promise<string> {
   const key = style.toLowerCase();
@@ -59,7 +73,10 @@ async function ensureTemplateLoaded(
   if (!res.ok) throw new Error(`❌ ${key}.csl 파일을 불러오지 못했습니다.`);
 
   const xml = await res.text();
-  Cite.CSL.register.addTemplate(key, xml);
+
+  // 안전 접근(옵셔널 체이닝)
+  Cite.CSL?.register?.addTemplate?.(key, xml);
+
   loadedStyles[key] = xml;
   return xml;
 }
@@ -76,7 +93,7 @@ export async function generateCitation(
   }
 
   try {
-    const { Cite } = await loadCitationJS();
+    const { Cite } = await loadCitationJSFromCDN();
     const key = style.toLowerCase();
 
     await ensureTemplateLoaded(Cite, key);
