@@ -1,46 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
-import Cite from "citation-js";
-import "@citation-js/plugin-doi";
 
-async function fetchCrossref(doi: string) {
-  const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
-  const r = await fetch(url, { headers: { Accept: "application/json" } }); // 헤더 완화
-  if (r.status === 404) throw new Error("Crossref 404");
-  if (r.status === 406) {
-    // 406 → DOI Content-Negotiation 재시도
-    const r2 = await fetch(`https://doi.org/${doi}`, {
-      headers: { Accept: "application/vnd.citationstyles.csl+json;q=1.0" },
-    });
-    if (!r2.ok) throw new Error(`doi.org ${r2.status}`);
-    return await r2.json();
-  }
-  if (!r.ok) throw new Error(`Crossref ${r.status}`);
-  const { message } = await r.json();
-  return message; // CSL-JSON
+export const runtime = "edge"; // 선택: 에지 런타임
+export const dynamic = "force-dynamic"; // 캐시 방지
+
+function ensureDoi(s: string | null): string {
+  const v = (s ?? "").trim();
+  if (!v) throw new Error("Missing 'doi' query param");
+  return v;
+}
+
+async function fetchBibliography(doi: string, locale: "ko-KR" | "en-US") {
+  // DOI Content Negotiation: APA 서식 그대로 텍스트 반환
+  const r = await fetch(`https://doi.org/${encodeURIComponent(doi)}`, {
+    headers: { Accept: `text/x-bibliography; style=apa; locale=${locale}` },
+    redirect: "follow",
+    cache: "no-store",
+  });
+  if (!r.ok) throw new Error(`doi.org ${r.status}`);
+  return r.text();
 }
 
 export async function GET(req: NextRequest) {
-  const doi = req.nextUrl.searchParams.get("doi") ?? "";
   try {
-    const json = await fetchCrossref(doi);
-    const apa = new Cite(json).format("bibliography", {
-      template: "apa",
-      format: "text",
-    });
-    return NextResponse.json({ apa });
-  } catch (e: unknown) {
-    // e의 타입을 unknown으로 변경
-    console.error(e);
-    let errorMessage = "An unknown error occurred.";
+    const doi = ensureDoi(req.nextUrl.searchParams.get("doi"));
 
-    if (e instanceof Error) {
-      // Error 인스턴스인지 확인
-      errorMessage = e.message;
-    } else if (typeof e === "string") {
-      // 문자열 에러인 경우
-      errorMessage = e;
+    // 1차: 한국어 로케일
+    try {
+      const apa = await fetchBibliography(doi, "ko-KR");
+      return NextResponse.json({ apa });
+    } catch {
+      // 2차: 영문 로케일로 폴백
+      const apa = await fetchBibliography(doi, "en-US");
+      return NextResponse.json({ apa });
     }
-
-    return NextResponse.json({ error: errorMessage }, { status: 400 });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 }
