@@ -18,7 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFolder } from "@/apis/folder.api";
 import { useNewWorkStore } from "@/stores/newWork.store";
 import { useCiteHistoryStore } from "@/stores/citeHistory.store";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import CreateFolderDialog from "../dialog/CreateFolderDialog";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSidebarBridge } from "@/stores/sidebarBridge.store";
@@ -111,11 +111,6 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
   }, [open, isMobile, setOpen, bridge]);
-
-  const collapsibleProp = useMemo(
-    () => (isMobile ? undefined : ("icon" as const)),
-    [isMobile]
-  );
 
   return (
     <Sidebar

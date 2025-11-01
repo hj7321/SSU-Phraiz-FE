@@ -1,7 +1,15 @@
 import { CSL } from "@/types/citation.type";
 
-/** citation-js 타입만 별도 import (정적 의존성 제거용) */
-type CitationJSType = typeof import("citation-js");
+/** citation-js 의 '형태'만 덕 타이핑으로 정의 (정적 의존성 제거) */
+type CitationJSType = {
+  new (input: CSL | string): {
+    format: (
+      mode: "bibliography",
+      opts: { template: string; lang: string; format: string }
+    ) => string;
+  };
+  CSL?: { register?: { addTemplate?: (k: string, xml: string) => void } };
+};
 
 /** 브라우저 전역 객체 확장 */
 declare global {
@@ -12,8 +20,14 @@ declare global {
 
 const loadedStyles: Record<string, string> = {};
 
+/** citation-js 형태 확인용 타입가드 */
+function isCitationJs(x: unknown): x is CitationJSType {
+  return typeof x === "function";
+}
+
 /**
  * citation-js를 CDN에서 클라이언트 런타임에만 로드
+ * - Webpack 정적 분석 회피를 위해 전역 eval + 문자열 dynamic import 사용
  */
 async function loadCitationJSFromCDN(): Promise<{ Cite: CitationJSType }> {
   if (typeof window === "undefined") {
@@ -21,15 +35,20 @@ async function loadCitationJSFromCDN(): Promise<{ Cite: CitationJSType }> {
   }
 
   if (!window.Cite) {
-    // ✅ Webpack 정적 분석을 피하기 위해 문자열 import + eval 사용
     const url = "https://esm.sh/citation-js@0.6.9?bundle";
     const pluginUrl = "https://esm.sh/@citation-js/plugin-csl@0.6.9?bundle";
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const module = (await eval(`import("${url}")`)) as unknown;
-    window.Cite = module as CitationJSType;
+    // 전역 eval 보장을 위해 (0, eval)(...) 형태 사용
+    const ns: unknown = await (0, eval)(`import("${url}")`);
+    const picked: unknown = (ns as { default?: unknown })?.default ?? ns;
 
-    await eval(`import("${pluginUrl}")`);
+    if (!isCitationJs(picked)) {
+      throw new Error("❌ citation-js 모듈 로드 실패(형식 불일치)");
+    }
+    window.Cite = picked;
+
+    // 플러그인은 부수효과만 필요
+    await (0, eval)(`import("${pluginUrl}")`);
   }
 
   return { Cite: window.Cite as CitationJSType };
@@ -55,12 +74,8 @@ async function ensureTemplateLoaded(
 
   const xml = await res.text();
 
-  // citation-js 내부 타입에 CSL.register 정의가 없으므로 안전 캐스팅
-  (
-    Cite as unknown as {
-      CSL: { register: { addTemplate: (k: string, xml: string) => void } };
-    }
-  ).CSL.register.addTemplate(key, xml);
+  // 안전 접근(옵셔널 체이닝)
+  Cite.CSL?.register?.addTemplate?.(key, xml);
 
   loadedStyles[key] = xml;
   return xml;
@@ -83,14 +98,7 @@ export async function generateCitation(
 
     await ensureTemplateLoaded(Cite, key);
 
-    const CiteConstructor = Cite as unknown as new (input: CSL | string) => {
-      format: (
-        mode: "bibliography",
-        opts: { template: string; lang: string; format: string }
-      ) => string;
-    };
-
-    const citation = new CiteConstructor(cslItem).format("bibliography", {
+    const citation = new Cite(cslItem).format("bibliography", {
       template: key,
       lang: "ko-KR",
       format: "text",
