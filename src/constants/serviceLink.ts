@@ -74,8 +74,8 @@ export const SERVICE_LINK: ServiceLink[] = [
     icon: "/icons/인용_생성.svg",
     alt: "인용 생성",
     label: "인용 생성",
-    title: "인용 생성 (Citation & Format Converter)",
-    preTitle: "인용 생성<br />(Citation & Format Converter)",
+    title: "인용 생성 (Create Citation)",
+    preTitle: "인용 생성<br />(Create Citation)",
     ctaText: "인용 생성 기능 이용하러 가기",
     features: [
       {
