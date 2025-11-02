@@ -4,7 +4,6 @@ import { readLatestHistory } from "@/apis/history.api";
 import { SERVICE_PATH } from "@/constants/servicePath";
 import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 import { HistoryAIContent, HistoryCiteContent } from "@/types/history.type";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import { useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import { EllipsisVertical, MoveRight, Pencil, Trash2 } from "lucide-react";
@@ -22,6 +20,8 @@ import useEditFolderAndHistoryName from "@/hooks/useEditFolderAndHistoryName";
 import useFindHistoryInFolder from "@/hooks/useFindHistoryInFolder";
 import useFolderHistoryCount from "@/hooks/useFolderHistoryCount";
 import { useAiHistoryStore } from "@/stores/aiHistory.store";
+import { useSidebarStore } from "@/stores/sidebar.store";
+import { useSidebarBridge } from "@/stores/sidebarBridge.store";
 
 interface TreeNodeData {
   id: string | number;
@@ -75,8 +75,7 @@ const TreeNode = ({
 
   const {
     items: folderHistories,
-    total: folderTotalFromList, // (열렸을 때 목록 쪽 total)
-    // isFetchingHistoryInFolder,
+    total: folderTotalFromList,
     hasNextPage,
     fetchNextPage,
     refetchHistoryInFolder,
@@ -94,7 +93,6 @@ const TreeNode = ({
     | { kind: "cite"; data: HistoryCiteContent }
     | { kind: "ai"; service: "paraphrase" | "summary"; data: HistoryAIContent };
 
-  // 히스토리 라인 클릭 시 최신 내용 로드
   const { refetch } = useQuery<
     HistoryAIContent | HistoryCiteContent,
     Error,
@@ -109,7 +107,6 @@ const TreeNode = ({
           historyId: Number(node.id),
         });
       }
-      // paraphrase | summary
       return readLatestHistory({
         service: service as "paraphrase" | "summary",
         historyId: Number(node.id),
@@ -131,6 +128,21 @@ const TreeNode = ({
     },
   });
 
+  const isMobileViewport = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 1024px)").matches;
+
+  const closeSidebarPersist = useSidebarStore((s) => s.closeSidebar);
+  const closeSidebarBridge = useSidebarBridge((s) => s.close);
+  const closeSidebarIfMobile = () => {
+    if (isMobileViewport()) {
+      closeSidebarPersist();
+      closeSidebarBridge();
+    }
+  };
+
+  const alertShowRef = useRef<boolean>(false);
+
   const handleClickLine = async () => {
     if (isFolder) {
       setOpenChild((prev) => !prev);
@@ -142,11 +154,9 @@ const TreeNode = ({
     const { data } = await refetch();
     if (!data) return;
 
-    console.log(data);
-
     if (data.kind === "cite") {
       setSelectedCiteHistory(data.data);
-      // ✅ GTM 이벤트 푸시
+      // ✅ GTM 이벤트
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "history_item_click",
@@ -155,9 +165,10 @@ const TreeNode = ({
         history_id: data.data.id,
       });
       clearAi();
+      closeSidebarIfMobile();
     } else {
       setSelectedAiHistory(data.data);
-      // ✅ GTM 이벤트 푸시
+      // ✅ GTM 이벤트
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "history_item_click",
@@ -166,15 +177,13 @@ const TreeNode = ({
         history_id: data.data.historyId,
       });
       clearCite();
+      closeSidebarIfMobile();
     }
   };
-
-  const alertShowRef = useRef<boolean>(false);
 
   const startEdit = () => {
     setTempName(node.name);
     setIsEditing(true);
-
     requestAnimationFrame(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
@@ -214,13 +223,11 @@ const TreeNode = ({
       }
       setIsEditing(false);
     } catch (err) {
-      // 알림은 여기서 1회만
       alert(
         isFolder
           ? `폴더 이름 변경 실패: ${err}`
           : `히스토리 이름 변경 실패: ${err}`
       );
-      // 실패 시 편집 상태 유지 + 포커스 복원
       requestAnimationFrame(() => inputRef.current?.focus());
     } finally {
       savingRef.current = false;
@@ -322,7 +329,7 @@ const TreeNode = ({
       {isFolder && openChild && (
         <ul
           className={clsx(
-            "mt-1 border-l border-[#E3E0FF] ml-3 space-y-[1px]", // ✅ 간격 줄임
+            "mt-1 border-l border-[#E3E0FF] ml-3 space-y-[1px]",
             depth === 0 ? "pl-2" : "pl-3"
           )}
         >
