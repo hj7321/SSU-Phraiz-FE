@@ -75,18 +75,18 @@ const MobileNavBar = () => {
             </p>
           </Link>
         ) : (
-          <div className="flex ml-[7px] gap-[30px] text-white text-[16px]">
+          <div className="flex ml-[7px] gap-[30px] text-white text-[14px]">
             <Link
               onClick={closeNavbar}
               href="/login"
-              className="font-nanum-extrabold"
+              className="font-nanum-bold"
             >
               로그인
             </Link>
             <Link
               onClick={closeNavbar}
               href="/sign-up"
-              className="font-nanum-extrabold"
+              className="font-nanum-bold"
             >
               회원가입
             </Link>
@@ -115,7 +115,7 @@ const MobileNavBar = () => {
               />
               <p
                 className={clsx(
-                  "text-[18px] font-nanum-bold mt-[6px]",
+                  "font-nanum-extrabold mt-[6px]",
                   pathname === link.href &&
                     "font-nanum-extrabold [text-shadow:2px_2px_4px_rgba(0,0,0,0.25)]",
                   link.label === "AI 요약" && "ml-[4px]"

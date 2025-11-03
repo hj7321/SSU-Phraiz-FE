@@ -25,12 +25,12 @@ const PricingPlan = () => {
         <h1 className="text-[22px] xs:text-[30px] sm:text-[35px] md:text-[40px] lg:text-[50px]  font-nanum-extrabold [filter:drop-shadow(4px_4px_10px_rgba(0,0,0,0.2))] bg-gradient-to-r from-[#7752fe] via-[#828ffa] to-[#7752fe] bg-clip-text text-transparent mb-[-10px]">
           {pathname === "/" ? "Pricing Plan" : "플랜 업그레이드"}
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground text-[14px] sm:text-[15px] md:text-[16px] lg:text-[18px]">
           나에게 맞는 플랜을 선택하세요
         </p>
       </div>
 
-      <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full">
+      <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl ">
         {PRICING_PLAN.map((plan) => (
           <div
             key={plan.name}
