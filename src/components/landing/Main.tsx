@@ -93,7 +93,7 @@ const Main = () => {
       ref={containerRef}
       className="relative h-screen overflow-hidden flex flex-col items-center justify-center gap-[50px] bg-gradient-to-b from-main to-main/20"
     >
-      <div className="font-nanum-extrabold text-white text-[30px] xs:text-[36px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9000]">
+      <div className="font-nanum-extrabold text-white text-[30px] xs:text-[36px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9500]">
         <h1 ref={h1Ref} className="ml-[0px] xs:ml-[-80px]">
           누구나 전문가처럼 쓰는 시대,
         </h1>
