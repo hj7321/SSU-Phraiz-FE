@@ -1,4 +1,4 @@
-import { API_ORIGIN, BASE_URL } from "@/apis/api";
+import { API_ORIGIN } from "@/apis/api";
 import { selfLogin } from "@/apis/login.api";
 import { useAuthStore } from "@/stores/auth.store";
 import { useMutation } from "@tanstack/react-query";
