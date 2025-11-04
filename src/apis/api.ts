@@ -2,6 +2,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 export const BASE_URL = "https://api.phraiz.com/api";
+export const API_ORIGIN = "https://api.phraiz.com";
 
 // 비인증(공개) 경로
 const PUBLIC_PATHS = [
@@ -32,7 +33,7 @@ const isOnLoginPage = () =>
   typeof window !== "undefined" &&
   window.location.pathname.startsWith("/login");
 
-/** 안전 숫자 변환 (NaN이면 fallback) */
+// 안전 숫자 변환 (NaN이면 fallback)
 const toNumberOr = (v: string | number, fallback = 0) => {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   const n = Number(v);
@@ -71,8 +72,10 @@ type NormalizedReissue = {
   planId: number;
 };
 
-/* 동시 401 대응용 리프레시 락 */
+// 동시 401 대응용 리프레시 락
 let refreshPromise: Promise<NormalizedReissue> | null = null;
+
+const isBrowser = () => typeof window !== "undefined";
 
 api.interceptors.response.use(
   (response) => response,
@@ -138,7 +141,7 @@ api.interceptors.response.use(
       useAuthStore.getState().logout();
 
       // 로그인 페이지에서 중복 얼럿/리다이렉트 방지
-      if (!isOnLoginPage()) {
+      if (isBrowser() && !isOnLoginPage()) {
         alert("세션이 만료되었습니다. 다시 로그인해주세요.");
         window.location.href = "/login";
       }
