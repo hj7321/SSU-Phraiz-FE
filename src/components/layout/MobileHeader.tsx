@@ -44,24 +44,30 @@ const MobileHeader = () => {
       data-mobile-header // ✅ 헤더 높이 동기화용
       className="relative z-[9000] flex py-[10px] justify-center items-center bg-main"
     >
-      <button onClick={openNavbar} className="absolute left-[5%] top-[33%]">
-        <Image src="/icons/menu.svg" alt="menu" width={25} height={25} />
+      <button onClick={openNavbar} className="absolute left-[5%]">
+        <Image
+          src="/icons/menu.svg"
+          alt="menu"
+          width={20}
+          height={20}
+          className="w-[20px] h-[20px] sm:w-[22px] sm:h-[22px]"
+        />
       </button>
 
       <Link
         href="/"
-        className="font-ghanachoco text-[28px] text-white [text-shadow:2px_4px_4px_rgba(0,0,0,0.5)]"
+        className="font-ghanachoco text-[22px] sm:text-[24px] text-white [text-shadow:2px_4px_4px_rgba(0,0,0,0.5)]"
       >
         Phraiz
       </Link>
 
       {showHistoryIcon && (
         <button
-          onClick={toggle} // ✅ 열려있으면 닫히고, 닫혀있으면 열림
+          onClick={toggle} // 열려있으면 닫히고, 닫혀있으면 열림
           data-mobile-history-icon // (옵션) 필요 시 outside 클릭 구분용
-          className="absolute right-[5%] top-[33%] text-white"
+          className="absolute right-[5%] text-white"
         >
-          <LucideHistory className="w-[25px] h-[25px]" />
+          <LucideHistory className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px]" />
         </button>
       )}
     </header>

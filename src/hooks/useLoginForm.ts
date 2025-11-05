@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/apis/api";
+import { API_ORIGIN } from "@/apis/api";
 import { selfLogin } from "@/apis/login.api";
 import { useAuthStore } from "@/stores/auth.store";
 import { useMutation } from "@tanstack/react-query";
@@ -74,7 +74,7 @@ const useLoginForm = (): LoginFormState & LoginFormActions => {
     // );
 
     // 백엔드의 소셜 로그인 인증 시작 URL
-    const socialLoginUrl = `${BASE_URL}/oauth2/authorization/${provider}?redirectUrl=${redirectUrl}`;
+    const socialLoginUrl = `${API_ORIGIN}/oauth2/authorization/${provider}?redirectUrl=${redirectUrl}`;
 
     window.location.href = socialLoginUrl;
   };

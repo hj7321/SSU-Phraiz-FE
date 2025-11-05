@@ -11,7 +11,7 @@ interface ResultScreenProps {
 
 const ResultScreen = ({ text, onCopy, showCopy }: ResultScreenProps) => {
   return (
-    <div className="relative w-full p-[16px] pr-10 border-t whitespace-pre-wrap break-words">
+    <div className="relative text-[12px] sm:text-[14px] md:text-[16px] w-full p-[16px] pr-10 border-t whitespace-pre-wrap break-words">
       {text}
 
       {showCopy && (
