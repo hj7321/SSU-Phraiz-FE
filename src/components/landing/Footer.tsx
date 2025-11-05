@@ -3,10 +3,10 @@ import Link from "next/link";
 
 const Footer = () => {
   const developers = [
-    { name: "김현진", github: "https://github.com/hj7321" },
-    { name: "김희서", github: "https://github.com/hesseo" },
-    { name: "안선아", github: "https://github.com/asun1207" },
-    { name: "조은빈", github: "https://github.com/choeunbin03" },
+    { name: "김현진 (Front-end)", github: "https://github.com/hj7321" },
+    { name: "김희서 (Back-end)", github: "https://github.com/hesseo" },
+    { name: "안선아 (Front-end)", github: "https://github.com/asun1207" },
+    { name: "조은빈 (Back-end)", github: "https://github.com/choeunbin03" },
   ];
 
   const services = [
