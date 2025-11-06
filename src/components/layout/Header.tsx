@@ -40,7 +40,10 @@ const Header = () => {
       </Link>
       {isLogin ? (
         <div className="flex items-center gap-[15px]">
-          <Link href="/pricing-plan" className="flex items-center gap-[4px]">
+          <Link
+            href="/payment/pricing-plan"
+            className="flex items-center gap-[4px]"
+          >
             {planTier && (
               <Image
                 src={`/icons/grade_${planTier.toLowerCase()}.png`}
