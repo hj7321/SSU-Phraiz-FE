@@ -9,6 +9,7 @@ import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useNewWorkStore } from "@/stores/newWork.store";
 import ResultScreen from "../screen/ResultScreen";
 import CitationHistory from "../history/CitationHistory";
+import CitationGuide from "../guide/CitationGuide";
 
 const HEADER_H = 72; // px
 
@@ -19,7 +20,6 @@ const ContentBox = () => {
   const newCitation = useCitationStore((s) => s.newCitation);
   const setNewCitation = useCitationStore((s) => s.setNewCitation);
   const selectedHistory = useCiteHistoryStore((s) => s.selectedCiteHistory);
-  console.log(selectedHistory);
   const clearHistory = useCiteHistoryStore((s) => s.clearCiteHistory);
 
   const newWorkVersion = useNewWorkStore((s) => s.version);
@@ -46,7 +46,6 @@ const ContentBox = () => {
       "";
     if (!text) return;
     navigator.clipboard.writeText(text);
-    // ✅ GTM 이벤트 푸시
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
       event: "copy_result",
@@ -65,11 +64,9 @@ const ContentBox = () => {
 
   useEffect(() => {
     let ticking = false;
-
     const syncOffset = () => {
       if (ticking) return;
       ticking = true;
-
       requestAnimationFrame(() => {
         const offset = Math.max(HEADER_H - window.scrollY, 0);
         document.documentElement.style.setProperty(
@@ -79,8 +76,7 @@ const ContentBox = () => {
         ticking = false;
       });
     };
-
-    syncOffset(); // 첫 렌더에서 한 번
+    syncOffset();
     window.addEventListener("scroll", syncOffset, { passive: true });
     return () => window.removeEventListener("scroll", syncOffset);
   }, []);
@@ -91,7 +87,13 @@ const ContentBox = () => {
         <h1 className="text-[18px] xs:text-[20px] md:text-2xl font-bold text-gray-800">
           인용 생성
         </h1>
+
+        {/* 👉 헤더 우측 도움말 */}
+        <div className="ml-auto">
+          <CitationGuide />
+        </div>
       </header>
+
       {selectedHistory ? (
         <div className="flex flex-col">
           <CitationHistory />
