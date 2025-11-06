@@ -49,9 +49,9 @@ interface SignupFormActions {
   setPwCheck: (pwCheck: string) => void;
 
   // 사용자 이벤트를 처리하는 핸들러 함수들
-  handleSendEmail: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  handleVerifyEmailNum: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  handleCheckIdDuplicated: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  handleSendEmail: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+  handleVerifyEmailNum: (e?: React.MouseEvent<HTMLButtonElement>) => void;
+  handleCheckIdDuplicated: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   handleSignup: (e: React.FormEvent) => void;
 
   // 파생된 상태 또는 액션의 결과로 변화하는 상태들
@@ -353,15 +353,15 @@ const useSignupForm = (): SignupFormState & SignupFormActions => {
   };
 
   // 6-6. 이메일 인증 버튼 클릭 핸들러
-  const handleSendEmail = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // 폼 제출 방지
+  const handleSendEmail = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault(); // ← 안전 호출
     if (validateEmail(email) || !email) return;
     sendEmailMutate(email);
   };
 
   // 6-7. 인증번호 확인 버튼 클릭 핸들러
-  const handleVerifyEmailNum = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // 폼 제출 방지
+  const handleVerifyEmailNum = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
     if (!email || !emailNum) {
       alert("이메일과 인증번호를 모두 입력해주세요.");
       return;
@@ -370,11 +370,10 @@ const useSignupForm = (): SignupFormState & SignupFormActions => {
   };
 
   // 6-8. 아이디 중복 확인 버튼 클릭 핸들러
-  const handleCheckIdDuplicated = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); // 폼 제출 방지
+  const handleCheckIdDuplicated = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
     checkIdDuplicatedMutate(id);
   };
-
   // 6-9. 회원가입 폼 제출 핸들러
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();

@@ -59,7 +59,7 @@ const MobileNavBar = () => {
         {isLogin ? (
           <Link
             onClick={closeNavbar}
-            href="/pricing-plan"
+            href="/payment/pricing-plan"
             className="flex items-center gap-[4px]"
           >
             {planTier && (

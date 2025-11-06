@@ -272,6 +272,7 @@ const ModeSelector = ({
         {/* 드롭다운 */}
         <div className="relative inline-block w-max" ref={modeDropdownRef}>
           <button
+            data-tour="mode-buttons"
             onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)}
             className={clsx(
               "px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2",
