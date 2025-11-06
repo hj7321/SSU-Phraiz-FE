@@ -1,5 +1,5 @@
 import LandingSection from "@/components/landing/LandingSection";
-import Main from "@/components/landing/Main";
+import MainSection from "@/components/landing/MainSection";
 import PricingPlan from "@/components/landing/PricingPlan";
 import Footer from "@/components/landing/Footer";
 import { SERVICE_LINK } from "@/constants/serviceLink";
@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <>
       <div className="">
-        <Main />
+        <MainSection />
         {SERVICE_LINK.map((service, idx) => (
           <LandingSection key={service.id} data={service} idx={idx} />
         ))}
