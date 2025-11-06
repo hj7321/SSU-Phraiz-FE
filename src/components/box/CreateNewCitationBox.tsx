@@ -23,6 +23,13 @@ import useResetOnNewWork from "@/hooks/useResetOnNewWork";
 import { useHistorySessionStore } from "@/stores/historySession.store";
 import { Sparkles } from "lucide-react";
 
+/**
+ * ⛳️ 포인트
+ * - 라벨+인풋, 라벨+셀렉트, 버튼을 각각 하나의 "행"으로 감싸고(data-* row) 가이드가 그 행을 하이라이트합니다.
+ * - 원래 레이아웃/색상은 건드리지 않습니다. wrapper는 position만 가지는 상대 블록이라 폭/높이에 영향 없음.
+ * - 개별 요소에도 data-*를 추가해둬서 필요 시 가이드에서 union 타깃을 잡을 수도 있습니다.
+ */
+
 const CreateNewCitationBox = () => {
   const [urlValue, setUrlValue] = useState<string>("");
   const [selectedForm, setSelectedForm] = useState<string | undefined>(
@@ -115,9 +122,8 @@ const CreateNewCitationBox = () => {
         folderId: null,
         historyId: citeSessionId ?? null,
       });
-      console.log(response);
 
-      // ✅ GTM 이벤트 푸시 (API 호출 직전)
+      // ✅ GTM 이벤트
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "cite_start",
@@ -125,7 +131,7 @@ const CreateNewCitationBox = () => {
         cite_style: selectedForm,
       });
 
-      // TODO: 여기에서 response.historyId를 currentSessionId에 저장해야 함
+      // 세션 관리
       const hid = Number(response.historyId);
       if (!citeSessionId) {
         startNewSession("cite", hid);
@@ -133,7 +139,7 @@ const CreateNewCitationBox = () => {
         appendOneHistory("cite");
       }
 
-      // 4) 사이드바 업데이트
+      // 4) 사이드바 갱신
       startTransition(() => {
         queryClient.invalidateQueries({
           queryKey: ["sidebar-history", "cite"],
@@ -171,11 +177,19 @@ const CreateNewCitationBox = () => {
 
   return (
     <div className="p-[16px] flex flex-col gap-[10px] md:gap-[15px] w-full">
-      <div className="flex flex-col gap-[2px] md:gap-[5px]">
-        <h1 className="text-gray-700 text-[12px] sm:text-[14px] md:text-[16px]">
+      {/* === 1단계: URL/DOI 라벨 + 인풋 (행 래퍼) === */}
+      <div
+        data-cite-url-row
+        className="relative flex flex-col gap-[2px] md:gap-[5px]"
+      >
+        <h1
+          data-cite-url-label
+          className="text-gray-700 text-[12px] sm:text-[14px] md:text-[16px]"
+        >
           URL 또는 DOI를 입력하세요
         </h1>
         <Input
+          data-cite-url-input
           type="text"
           value={urlValue}
           onChange={handleChangeUrl}
@@ -185,17 +199,32 @@ const CreateNewCitationBox = () => {
           spellCheck={false}
         />
       </div>
-      <div className="flex flex-col gap-[2px] md:gap-[5px]">
-        <h1 className="text-gray-700 text-[12px] sm:text-[14px] md:text-[16px]">
+
+      {/* === 2단계: 인용 형식 라벨 + 셀렉트 (행 래퍼) === */}
+      <div
+        data-cite-style-row
+        className="relative flex flex-col gap-[2px] md:gap-[5px]"
+      >
+        <h1
+          data-cite-style-label
+          className="text-gray-700 text-[12px] sm:text-[14px] md:text-[16px]"
+        >
           인용 형식을 선택하세요
         </h1>
+        {/* SelectScrollable 내부까지 data-* 전달이 어려울 수 있으니 행 래퍼를 타깃으로 사용 */}
         <SelectScrollable
           selectedForm={selectedForm}
           setSelectedForm={setSelectedForm}
         />
       </div>
-      <div className="mt-[5px]">
+
+      {/* === 3단계: 버튼 (버튼만 딱 잡히도록 inline-block 래퍼) === */}
+      <div
+        data-cite-submit-row
+        className="relative mt-[5px] inline-block w-fit"
+      >
         <button
+          data-cite-submit-btn
           onClick={handleCreateCitation}
           disabled={isSubmitDisabled}
           className={clsx(
