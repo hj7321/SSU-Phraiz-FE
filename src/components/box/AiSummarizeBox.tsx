@@ -188,15 +188,14 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
       <div className="md:hidden flex items-center gap-1 overflow-visible">
         {/* 드롭다운 */}
         <div className="relative inline-block w-max" ref={modeDropdownRef}>
-          {" "}
           <button onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)} className={clsx("px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2", "bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300")} style={{ minWidth: "140px" }}>
             <span className="truncate">{activeMode}</span>
             <ChevronDown size={16} className={clsx("transition-transform flex-shrink-0", isModeDropdownOpen && "rotate-180")} />
           </button>
+
           {isModeDropdownOpen && (
             <div className="absolute top-full left-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg z-50" style={{ width: "140px" }}>
-              {" "}
-              {/* 드롭다운도 같은 너비 */}
+              {/* 기본 모드들 */}
               {modes.map((mode) => (
                 <button
                   key={mode}
@@ -208,31 +207,41 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
                   {mode}
                 </button>
               ))}
-              {canUseFeature("summarize", "questionBased") && (
-                <button
-                  onClick={() => {
+
+              {/* 질문 기반 요약*/}
+              <button
+                onClick={() => {
+                  if (canUseFeature("summarize", "questionBased")) {
                     handleQuestionClick();
                     setIsModeDropdownOpen(false);
-                  }}
-                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", "hover:bg-purple-100", activeMode === "질문 기반 요약" && "bg-purple-100 font-semibold")}>
-                  질문 기반 요약
-                </button>
-              )}
-              {canUseFeature("summarize", "targeted") && (
-                <button
-                  onClick={() => {
+                  } else {
+                    alert(`${getRequiredPlanName("summarize", "questionBased")} 플랜부터 사용 가능합니다`);
+                  }
+                }}
+                disabled={!canUseFeature("summarize", "questionBased")}
+                className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", canUseFeature("summarize", "questionBased") ? "hover:bg-purple-100" : "text-gray-400 cursor-not-allowed opacity-50", activeMode === "질문 기반 요약" && "bg-purple-100 font-semibold")}>
+                질문 기반 요약
+              </button>
+
+              {/* 타겟 요약*/}
+              <button
+                onClick={() => {
+                  if (canUseFeature("summarize", "targeted")) {
                     handleCustomClick();
                     setIsModeDropdownOpen(false);
-                  }}
-                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", "hover:bg-purple-100", activeMode === "타겟 요약" && "bg-purple-100 font-semibold")}>
-                  타겟 요약
-                </button>
-              )}
+                  } else {
+                    alert(`${getRequiredPlanName("summarize", "targeted")} 플랜부터 사용 가능합니다`);
+                  }
+                }}
+                disabled={!canUseFeature("summarize", "targeted")}
+                className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", canUseFeature("summarize", "targeted") ? "hover:bg-purple-100" : "text-gray-400 cursor-not-allowed opacity-50", activeMode === "타겟 요약" && "bg-purple-100 font-semibold")}>
+                타겟 요약
+              </button>
             </div>
           )}
         </div>
 
-        {/* 🔥 말풍선 아이콘 (질문 기반 요약 또는 타겟 요약일 때만 표시) */}
+        {/* 말풍선 아이콘 (질문 기반 요약 또는 타겟 요약일 때만 표시) */}
         {(activeMode === "질문 기반 요약" || activeMode === "타겟 요약") && (
           <div className="relative overflow-visible">
             <button
