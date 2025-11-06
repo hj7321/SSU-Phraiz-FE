@@ -81,7 +81,7 @@ export default function CitationGuide() {
     side: "top" as ArrowSide,
   });
 
-  // 🔧 모바일(≤500px) 3단계 전용: 화살표 X 위치(px). null이면 가운데 기본값 사용
+  // 모바일(≤500px) 3단계 전용: 화살표 X 위치(px). null이면 가운데 기본값 사용
   const [arrowX, setArrowX] = useState<number | null>(null);
 
   const tipRef = useRef<HTMLDivElement>(null);
@@ -157,11 +157,8 @@ export default function CitationGuide() {
     const ttr = tipRef.current.getBoundingClientRect();
     const gap = 12;
 
-    // ✅ 3단계 & 500px 이하에서는 말풍선을 '아래' 배치하고,
-    //    화살표가 버튼 중앙을 가리키도록 X 좌표를 계산
     const isMobileStep3 = idx === 2 && window.innerWidth <= 500;
 
-    // 배치 측면 결정
     let pos: ArrowSide = step.pos;
     if (isMobileStep3) pos = "bottom";
 
@@ -204,11 +201,9 @@ export default function CitationGuide() {
 
     setTip({ top, left, side });
 
-    // 🔽 화살표 X 보정: 툴팁의 왼쪽 기준으로 버튼 중앙까지의 거리
     if (isMobileStep3 && (side === "top" || side === "bottom")) {
       const targetCenter = highlight.left + highlight.width / 2;
-      let x = targetCenter - left; // 툴팁 내부 좌표
-      // 가장자리로 너무 붙지 않도록 소폭 여유
+      let x = targetCenter - left;
       const margin = 12;
       x = Math.max(margin, Math.min(x, ttr.width - margin));
       setArrowX(x);
@@ -280,13 +275,10 @@ export default function CitationGuide() {
                     "-left-2 top-1/2 -translate-y-1/2 border-t-0 border-r-0",
                   tip.side === "right" &&
                     "-right-2 top-1/2 -translate-y-1/2 border-b-0 border-l-0",
-                  // 기본(가운데) 배치: 모바일 3단계 보정이 없을 때만
                   arrowX == null &&
                     (tip.side === "top" || tip.side === "bottom") &&
                     "left-1/2 -translate-x-1/2"
-                  // 좌우는 기존대로 가운데 정렬
                 )}
-                // 모바일(≤500px) 3단계에서만 툴팁 내부 X 좌표로 정밀 배치
                 style={
                   arrowX != null &&
                   (tip.side === "top" || tip.side === "bottom")
@@ -305,14 +297,11 @@ export default function CitationGuide() {
 
               <div className="pr-6">
                 <h3 className="font-bold text-gray-900 mb-1 text-sm sm:text-base md:text-lg">
-                  {"title" in step ? (step as any).title : ""}
+                  {step.title}
                 </h3>
                 <p
                   className="text-gray-600 leading-relaxed text-[11.5px] sm:text-[13.5px] md:text-sm"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      "description" in step ? (step as any).description : "",
-                  }}
+                  dangerouslySetInnerHTML={{ __html: step.description }}
                 />
               </div>
 

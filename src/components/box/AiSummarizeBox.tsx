@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { toast } from "@/hooks/use-toast";
 import clsx from "clsx";
@@ -559,42 +559,39 @@ const AiSummarizeBox = () => {
     }
   }, [selectedHistory, updateSummarizeWork]);
 
-  // 컴포넌트 마운트 시 최신 히스토리 로드
-  useEffect(() => {
-    if (currentSummarizeHistoryId && isLogin) {
-      loadLatestHistory();
-    }
-  }, [currentSummarizeHistoryId, isLogin]);
-
-  // 최신 히스토리 내용 불러오기
-  const loadLatestHistory = async () => {
-    if (!currentSummarizeHistoryId) return;
+  const loadLatestHistory = useCallback(async () => {
+    if (!currentSummarizeHistoryId || !isLogin) return;
 
     try {
-      const latestContent = await readLatestHistory({
+      const latest = await readLatestHistory({
         service: "summary",
         historyId: currentSummarizeHistoryId,
       });
 
-      setInputText(latestContent.originalText);
-      setOutputText(latestContent.summarizedText || "");
-      setCurrentSequence(latestContent.sequenceNumber);
+      setInputText(latest.originalText);
+      setOutputText(latest.summarizedText ?? "");
+      setCurrentSequence(latest.sequenceNumber);
 
-      // sequence 동기화
-      if (latestContent.sequenceNumber !== currentSummarizeSequence) {
-        updateSummarizeWork(
-          latestContent.historyId,
-          latestContent.sequenceNumber
-        );
+      if (latest.sequenceNumber !== currentSummarizeSequence) {
+        updateSummarizeWork(latest.historyId, latest.sequenceNumber);
       }
 
       console.log(
-        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
+        `✅ 최신 히스토리 로드: historyId=${latest.historyId}, sequence=${latest.sequenceNumber}`
       );
-    } catch (error) {
-      console.error("히스토리 조회 실패:", error);
+    } catch (e) {
+      console.error("히스토리 조회 실패:", e);
     }
-  };
+  }, [
+    currentSummarizeHistoryId,
+    isLogin,
+    currentSummarizeSequence,
+    updateSummarizeWork,
+  ]);
+
+  useEffect(() => {
+    void loadLatestHistory();
+  }, [loadLatestHistory]);
 
   // ========== Handlers ==========
   const handleApiCall = async () => {
@@ -634,8 +631,8 @@ const AiSummarizeBox = () => {
     }
 
     // ✅ GTM 이벤트 푸시 (API 호출 직전)
-    (window as any).dataLayer = (window as any).dataLayer || [];
-    (window as any).dataLayer.push({
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
       event: "summary_start",
       feature: "summarization",
       summary_mode: activeMode, // 현재 선택된 모드
@@ -942,8 +939,8 @@ const AiSummarizeBox = () => {
                     selectedHistory?.summarizedText || outputText
                   );
                   // ✅ GTM 이벤트 푸시
-                  (window as any).dataLayer = (window as any).dataLayer || [];
-                  (window as any).dataLayer.push({
+                  window.dataLayer = window.dataLayer || [];
+                  window.dataLayer.push({
                     event: "copy_result",
                     feature: "copy",
                     service: "summary",

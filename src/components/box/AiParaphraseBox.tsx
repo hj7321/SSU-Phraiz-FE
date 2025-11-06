@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
@@ -339,41 +339,35 @@ const AiParaphraseBox = () => {
     }
   }, [selectedHistory, updateParaphraseWork]);
 
-  // 컴포넌트 마운트 시 최신 히스토리 로드
-  useEffect(() => {
-    if (currentParaphraseHistoryId && isLogin) {
-      loadLatestHistory();
-    }
-  }, [currentParaphraseHistoryId, isLogin]);
-
-  // 최신 히스토리 내용 불러오기
-  const loadLatestHistory = async () => {
-    if (!currentParaphraseHistoryId) return;
+  const loadLatestHistory = useCallback(async () => {
+    if (!currentParaphraseHistoryId || !isLogin) return;
 
     try {
-      const latestContent = await readLatestHistory({
+      const latest = await readLatestHistory({
         service: "paraphrase",
         historyId: currentParaphraseHistoryId,
       });
 
-      setInputText(latestContent.originalText);
-      setOutputText(latestContent.paraphrasedText || "");
-      setCurrentSequence(latestContent.sequenceNumber);
+      setInputText(latest.originalText);
+      setOutputText(latest.paraphrasedText || "");
+      setCurrentSequence(latest.sequenceNumber);
 
-      if (latestContent.sequenceNumber !== currentParaphraseSequence) {
-        updateParaphraseWork(
-          latestContent.historyId,
-          latestContent.sequenceNumber
-        );
+      if (latest.sequenceNumber !== currentParaphraseSequence) {
+        updateParaphraseWork(latest.historyId, latest.sequenceNumber);
       }
-
-      console.log(
-        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
-      );
-    } catch (error) {
-      console.error("히스토리 조회 실패:", error);
+    } catch (e) {
+      console.error("히스토리 조회 실패:", e);
     }
-  };
+  }, [
+    currentParaphraseHistoryId,
+    isLogin,
+    currentParaphraseSequence,
+    updateParaphraseWork,
+  ]);
+
+  useEffect(() => {
+    void loadLatestHistory();
+  }, [loadLatestHistory]);
 
   // ========== Handlers ==========
   const handleApiCall = async () => {

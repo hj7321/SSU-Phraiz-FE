@@ -112,20 +112,7 @@ const useHeroIntro = (
     }, containerRef);
 
     return () => ctx.revert();
-  }, [
-    containerRef,
-    h1Ref,
-    pRef,
-    iconRefs,
-    opts.start,
-    opts.titlesDuration,
-    opts.titleStagger,
-    opts.iconsDuration,
-    opts.iconsStagger,
-    opts.overlapSeconds,
-    opts.reducedMotionRespect,
-    opts.float,
-  ]);
+  }, [containerRef, h1Ref, pRef, iconRefs, opts]);
 };
 
 export default useHeroIntro;
