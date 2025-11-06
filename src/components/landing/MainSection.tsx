@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useLayoutEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import { useRef } from "react";
 import Icon1 from "/public/icons/icon1.svg";
 import Icon2 from "/public/icons/icon2.svg";
 import Icon3 from "/public/icons/icon3.svg";
@@ -12,62 +9,19 @@ import Icon4 from "/public/icons/icon4.svg";
 import Icon5 from "/public/icons/icon5.svg";
 import Icon6 from "/public/icons/icon6.svg";
 import Icon7 from "/public/icons/icon7.svg";
+import useHeroIntro from "@/hooks/useHeroIntro";
 
-const Main = () => {
+const MainSection = () => {
   const containerRef = useRef<HTMLElement>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
-  const h2Ref = useRef<HTMLHeadingElement>(null);
+  const pRef = useRef<HTMLParagraphElement>(null);
   const iconRefs = useRef<HTMLDivElement[]>([]);
 
-  useLayoutEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    if (!containerRef.current) return;
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top center",
-        },
-      });
-      tl.from([h1Ref.current, h2Ref.current], {
-        x: (i) => (i === 0 ? "-110vw" : "110vw"),
-        opacity: 0,
-        duration: 3.5,
-        ease: "power3.out",
-        stagger: 0.3,
-      });
-
-      tl.from(
-        iconRefs.current,
-        {
-          y: "80vh",
-          opacity: 0,
-          duration: 2,
-          ease: "power3.out",
-          stagger: 0.12,
-        },
-        "<+=3"
-      );
-
-      iconRefs.current.forEach((icon) => {
-        if (!icon) return;
-        const dx = gsap.utils.random(25, 45);
-        gsap.to(icon, {
-          x: dx,
-          duration: gsap.utils.random(3, 5),
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
-          delay: 10,
-          force3D: true,
-        });
-      });
-    }, containerRef);
-
-    // clean-up (메모리 누수 방지)
-    return () => ctx.revert();
-  }, []);
+  useHeroIntro(containerRef, h1Ref, pRef, iconRefs, {
+    start: "top center",
+    overlapSeconds: 3,
+    float: { enabled: true, delay: 10 },
+  });
 
   /* ───────── 아이콘 JSX 헬퍼 ───────── */
   const makeIcon = (
@@ -93,12 +47,12 @@ const Main = () => {
       ref={containerRef}
       className="relative h-screen overflow-hidden flex flex-col items-center justify-center gap-[50px] bg-gradient-to-b from-main to-main/20"
     >
-      <div className="font-nanum-extrabold text-white text-[30px] xs:text-[36px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9500]">
+      <div className="font-nanum-extrabold text-white text-[30px] xs:text-[34px] sm:text-[46px] md:text-[56px] lg:text-[72px] mt-[-50px] text-glow z-[9500]">
         <h1 ref={h1Ref} className="ml-[0px] xs:ml-[-80px]">
           누구나 전문가처럼 쓰는 시대,
         </h1>
         <p
-          ref={h2Ref}
+          ref={pRef}
           className="text-right mr-[0px] xs:mr-[-80px] mt-[0px] xs:mt-[-5px]"
         >
           Phraiz로.
@@ -180,4 +134,4 @@ const Main = () => {
   );
 };
 
-export default Main;
+export default MainSection;

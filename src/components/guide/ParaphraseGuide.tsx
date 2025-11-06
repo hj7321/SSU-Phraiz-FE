@@ -23,7 +23,7 @@ const tourSteps: TourStep[] = [
   },
   {
     target: "[data-tour='mode-buttons']",
-    title: "2단계: 스타일 선택",
+    title: "2단계: 변환 스타일 선택",
     description:
       "원하는 문장 스타일(모드)을 선택하세요.<br />'사용자 지정' 모드는 직접 텍스트를 입력해 원하는 스타일을<br />요청할 수 있어요.",
     position: "bottom",
@@ -108,7 +108,6 @@ export function ParaphraseGuide() {
       const tr = target.getBoundingClientRect();
       const tt = tooltipRef.current.getBoundingClientRect();
 
-      // ✅ sm 미만이고 4단계(인덱스 3)이면 왼쪽에 배치
       const isBelowMd = window.innerWidth < 768;
       const basePos: ArrowSide = step.position ?? "bottom";
       const pos: ArrowSide = currentStep === 3 && isBelowMd ? "left" : basePos;
@@ -197,7 +196,7 @@ export function ParaphraseGuide() {
             style={{ top: tooltipPos.top, left: tooltipPos.left }}
           >
             <div className="relative bg-white rounded-xl shadow-2xl border border-gray-200 p-3 sm:p-3 md:p-4">
-              {/* 화살표 */}
+              {/* 말풍선 화살표 */}
               <div
                 className={clsx(
                   "absolute w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 bg-white border rotate-45",
@@ -219,7 +218,6 @@ export function ParaphraseGuide() {
                 <X className="w-4 h-4 text-gray-500" />
               </button>
 
-              {/* 데스크톱(md) 사이즈를 예전처럼: 제목 lg, 본문 sm */}
               <div className="pr-6">
                 <h3
                   className="font-bold text-gray-900 mb-1
@@ -266,7 +264,6 @@ export function ParaphraseGuide() {
             </div>
           </div>
 
-          {/* 하이라이트: 화이트 아웃라인(보라 경계선 제거) */}
           <style jsx global>{`
             [data-tour-highlight="true"] {
               position: relative;

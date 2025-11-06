@@ -113,12 +113,14 @@ const ModeSelector = ({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       // 드롭다운 외부 클릭
-      if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
+      if (
+        modeDropdownRef.current &&
+        !modeDropdownRef.current.contains(event.target as Node)
+      ) {
         setIsModeDropdownOpen(false);
       }
 
       // 사용자 지정 팝업 외부 클릭
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
       if (
         popoverRef.current &&
         !popoverRef.current.contains(event.target as Node) &&
@@ -146,7 +148,12 @@ const ModeSelector = ({
       setIsPopoverOpen((prev) => !prev);
       setIsModeDropdownOpen(false);
     } else {
-      alert(`${getRequiredPlanName("paraphrasing", "custom")} 플랜부터 사용 가능합니다`);
+      alert(
+        `${getRequiredPlanName(
+          "paraphrasing",
+          "custom"
+        )} 플랜부터 사용 가능합니다`
+      );
     }
   };
 
@@ -162,7 +169,10 @@ const ModeSelector = ({
   return (
     <div className="w-full">
       {/* 데스크톱: 버튼들 */}
-      <div className="hidden md:flex w-full gap-2 md:gap-3" data-tour="mode-buttons">
+      <div
+        className="hidden md:flex w-full gap-2 md:gap-3"
+        data-tour="mode-buttons"
+      >
         {modes.map((mode) => (
           <button
             key={mode}
@@ -210,9 +220,21 @@ const ModeSelector = ({
                   )}
                 >
                   <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                    <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")} />
-                    <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
-                    <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                    <div
+                      className={clsx(
+                        "absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45",
+                        "left-[calc(100%-30px)] lg:left-1/2"
+                      )}
+                    />
+                    <p className="text-sm text-gray-600 mb-2">
+                      원하는 문장 스타일을 입력하세요. (50자 이내)
+                    </p>
+                    <textarea
+                      value={customStyle}
+                      onChange={(e) => setCustomStyle(e.target.value)}
+                      maxLength={50}
+                      className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
                   </div>
                 </div>
               )}
@@ -256,13 +278,29 @@ const ModeSelector = ({
       <div className="md:hidden flex items-center gap-1 overflow-visible">
         {/* 드롭다운 */}
         <div className="relative inline-block w-max" ref={modeDropdownRef}>
-          <button onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)} className={clsx("px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2", "bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300")} style={{ minWidth: "140px" }}>
+          <button
+            onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)}
+            className={clsx(
+              "px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2",
+              "bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300"
+            )}
+            style={{ minWidth: "140px" }}
+          >
             <span className="truncate">{activeMode}</span>
-            <ChevronDown size={16} className={clsx("transition-transform flex-shrink-0", isModeDropdownOpen && "rotate-180")} />
+            <ChevronDown
+              size={16}
+              className={clsx(
+                "transition-transform flex-shrink-0",
+                isModeDropdownOpen && "rotate-180"
+              )}
+            />
           </button>
 
           {isModeDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg z-50" style={{ width: "140px" }}>
+            <div
+              className="absolute top-full left-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg z-50"
+              style={{ width: "140px" }}
+            >
               {/* 기본 모드들 */}
               {modes.map((mode) => (
                 <button
@@ -271,7 +309,12 @@ const ModeSelector = ({
                     handleModeClick(mode);
                     setIsModeDropdownOpen(false);
                   }}
-                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors", "hover:bg-purple-100", activeMode === mode && "bg-purple-100 font-semibold")}>
+                  className={clsx(
+                    "block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors",
+                    "hover:bg-purple-100",
+                    activeMode === mode && "bg-purple-100 font-semibold"
+                  )}
+                >
                   {mode}
                 </button>
               ))}
@@ -283,11 +326,23 @@ const ModeSelector = ({
                     handleCustomClick();
                     setIsModeDropdownOpen(false);
                   } else {
-                    alert(`${getRequiredPlanName("paraphrasing", "custom")} 플랜부터 사용 가능합니다`);
+                    alert(
+                      `${getRequiredPlanName(
+                        "paraphrasing",
+                        "custom"
+                      )} 플랜부터 사용 가능합니다`
+                    );
                   }
                 }}
                 disabled={!canUseFeature("paraphrasing", "custom")}
-                className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", canUseFeature("paraphrasing", "custom") ? "hover:bg-purple-100" : "text-gray-400 cursor-not-allowed opacity-50", activeMode === "사용자 지정" && "bg-purple-100 font-semibold")}>
+                className={clsx(
+                  "block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200",
+                  canUseFeature("paraphrasing", "custom")
+                    ? "hover:bg-purple-100"
+                    : "text-gray-400 cursor-not-allowed opacity-50",
+                  activeMode === "사용자 지정" && "bg-purple-100 font-semibold"
+                )}
+              >
                 사용자 지정
               </button>
             </div>
@@ -297,17 +352,34 @@ const ModeSelector = ({
         {/* 말풍선 아이콘 (사용자 지정 모드일 때만 표시) */}
         {activeMode === "사용자 지정" && (
           <div className="relative overflow-visible">
-            <button ref={customButtonRef} onClick={() => setIsPopoverOpen(!isPopoverOpen)} className={clsx("p-1.5 rounded-lg transition-colors", "bg-purple-100 hover:bg-purple-200 text-purple-600")}>
+            <button
+              ref={customButtonRef}
+              onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+              className={clsx(
+                "p-1.5 rounded-lg transition-colors",
+                "bg-purple-100 hover:bg-purple-200 text-purple-600"
+              )}
+            >
               <MessageCircle size={16} />
             </button>
 
             {/* 사용자 지정 팝업 */}
             {isPopoverOpen && (
-              <div ref={popoverRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
+              <div
+                ref={popoverRef}
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible"
+              >
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                   <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45" />
-                  <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
-                  <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    원하는 문장 스타일을 입력하세요. (50자 이내)
+                  </p>
+                  <textarea
+                    value={customStyle}
+                    onChange={(e) => setCustomStyle(e.target.value)}
+                    maxLength={50}
+                    className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs"
+                  />
                 </div>
               </div>
             )}
@@ -317,7 +389,10 @@ const ModeSelector = ({
 
       {/* Tone Blend Slider */}
       <div className="mt-3" data-tour="slider">
-        <ToneBlendSlider value={creativityLevel} onChange={setCreativityLevel} />
+        <ToneBlendSlider
+          value={creativityLevel}
+          onChange={setCreativityLevel}
+        />
       </div>
     </div>
   );
@@ -402,12 +477,15 @@ const AiParaphraseBox = () => {
           creative: "창의적",
           fluency: "유창성",
           experimental: "문학적",
-          custom: "사용자 지정"
+          custom: "사용자 지정",
         };
         const koreanMode = modeMap[selectedHistory.mode] || "표준";
         setActiveMode(koreanMode);
 
-        if (selectedHistory.mode === "custom" && selectedHistory.userRequestMode) {
+        if (
+          selectedHistory.mode === "custom" &&
+          selectedHistory.userRequestMode
+        ) {
           setCustomStyle(selectedHistory.userRequestMode);
         }
 
@@ -459,7 +537,7 @@ const AiParaphraseBox = () => {
           creative: "창의적",
           fluency: "유창성",
           experimental: "문학적",
-          custom: "사용자 지정"
+          custom: "사용자 지정",
         };
         const koreanMode = modeMap[latestContent.mode] || "표준";
         setActiveMode(koreanMode);
@@ -483,7 +561,9 @@ const AiParaphraseBox = () => {
       // 히스토리 모드 활성화
       setIsHistoryMode(true);
 
-      console.log(`✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`);
+      console.log(
+        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
+      );
     } catch (error) {
       console.error("히스토리 조회 실패:", error);
     }
@@ -495,9 +575,10 @@ const AiParaphraseBox = () => {
     if (isHistoryMode) {
       toast({
         title: "히스토리 데이터입니다",
-        description: "새로운 변환을 원하시면 내용을 수정하거나 '새 작업'을 시작해주세요.",
+        description:
+          "새로운 변환을 원하시면 내용을 수정하거나 '새 작업'을 시작해주세요.",
         variant: "default",
-        duration: 3000
+        duration: 3000,
       });
       return;
     }
@@ -633,7 +714,7 @@ const AiParaphraseBox = () => {
           creative: "창의적",
           fluency: "유창성",
           experimental: "문학적",
-          custom: "사용자 지정"
+          custom: "사용자 지정",
         };
         setActiveMode(modeMap[content.mode] || "표준");
 
@@ -686,7 +767,7 @@ const AiParaphraseBox = () => {
           creative: "창의적",
           fluency: "유창성",
           experimental: "문학적",
-          custom: "사용자 지정"
+          custom: "사용자 지정",
         };
         setActiveMode(modeMap[content.mode] || "표준");
 
@@ -714,7 +795,8 @@ const AiParaphraseBox = () => {
 
   // 버튼 비활성화 조건
   const cannotParaphraseMore = !canParaphraseMore();
-  const isButtonDisabled = isLoading || !inputText.trim() || cannotParaphraseMore || isHistoryMode;
+  const isButtonDisabled =
+    isLoading || !inputText.trim() || cannotParaphraseMore || isHistoryMode;
 
   // ========== Render ==========
   return (
@@ -771,37 +853,77 @@ const AiParaphraseBox = () => {
         />{" "}
       </div>
 
-      <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
-        <div  data-tour="input-area" className={clsx("w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col",  "rounded-t-lg md:rounded-l-lg md:rounded-tr-none md:rounded-br-none",
-            "overflow-hidden")}>
+      <div
+        className={clsx(
+          "flex flex-col md:flex-row",
+          "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white"
+        )}
+      >
+        <div
+          data-tour="input-area"
+          className={clsx(
+            "relative w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col",
+            "rounded-t-lg md:rounded-l-lg md:rounded-tr-none md:rounded-br-none",
+            "overflow-hidden"
+          )}
+        >
           <div className="p-2 md:p-4 flex flex-col h-full">
-          <textarea
-            value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-              if (isHistoryMode) {
-                setIsHistoryMode(false);
-              }
-            }}
-            placeholder="내용을 입력하세요."
-            className="flex-1 w-full resize-none outline-none text-sm md:text-base"
-            disabled={isLoading}
-          />
-          <div className="flex justify-end items-center mt-2 md:mt-4">
-            <button data-tour="convert-button" onClick={handleApiCall} className={clsx("py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all", cannotParaphraseMore || isHistoryMode ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white")} disabled={isButtonDisabled} title={isHistoryMode ? "히스토리 데이터입니다. 내용을 수정하거나 새 작업을 시작하세요." : cannotParaphraseMore ? "이 작업에서 최대 10개까지 변환할 수 있습니다" : ""}>
-              {isHistoryMode ? "히스토리 보기 중" : cannotParaphraseMore ? "변환 제한 도달" : isLoading ? "변환 중..." : "변환하기"}
-            </button>
+            <textarea
+              value={inputText}
+              onChange={(e) => {
+                setInputText(e.target.value);
+                if (isHistoryMode) {
+                  setIsHistoryMode(false);
+                }
+              }}
+              placeholder="내용을 입력하세요."
+              className="flex-1 w-full resize-none outline-none text-sm md:text-base"
+              disabled={isLoading}
+            />
+            <div className="flex justify-end items-center mt-2 md:mt-4">
+              <button
+                data-tour="convert-button"
+                onClick={handleApiCall}
+                className={clsx(
+                  "py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all",
+                  cannotParaphraseMore || isHistoryMode
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-purple-600 hover:bg-purple-700 text-white"
+                )}
+                disabled={isButtonDisabled}
+                title={
+                  isHistoryMode
+                    ? "히스토리 데이터입니다. 내용을 수정하거나 새 작업을 시작하세요."
+                    : cannotParaphraseMore
+                    ? "이 작업에서 최대 10개까지 변환할 수 있습니다"
+                    : ""
+                }
+              >
+                {isHistoryMode
+                  ? "히스토리 보기 중"
+                  : cannotParaphraseMore
+                  ? "변환 제한 도달"
+                  : isLoading
+                  ? "변환 중..."
+                  : "변환하기"}
+              </button>
+            </div>
+
+            {/* 히스토리 모드 안내 추가 */}
+            {isHistoryMode && (
+              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                ℹ️ 히스토리 데이터입니다. 내용을 수정하면 새로 변환할 수
+                있습니다.
+              </div>
+            )}
+            {/* 10개 도달 경고 */}
+            {cannotParaphraseMore && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+                ⚠️ 이 작업에서 최대 변환 횟수에 도달했습니다. 사이드바에서 새
+                작업을 시작해주세요.
+              </div>
+            )}
           </div>
-
-          {/* 히스토리 모드 안내 추가 */}
-          {isHistoryMode && <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">ℹ️ 히스토리 데이터입니다. 내용을 수정하면 새로 변환할 수 있습니다.</div>}
-          {/* 10개 도달 경고 */}
-          {cannotParaphraseMore && <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">⚠️ 이 작업에서 최대 변환 횟수에 도달했습니다. 사이드바에서 새 작업을 시작해주세요.</div>
-          }</div>
-
-       />
-      </div>
-          
         </div>
 
         {/* 출력 패널 : 오른쪽 카드. 경계선 이중표시 방지용 -ml-px */}
