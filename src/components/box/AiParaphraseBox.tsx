@@ -166,6 +166,7 @@ const AiParaphraseBox = () => {
   const [creativityLevel, setCreativityLevel] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
   const [currentSequence, setCurrentSequence] = useState(1);
+  const [isHistoryMode, setIsHistoryMode] = useState(false);
 
   // ========== Hooks ==========
   useClearContent();
@@ -191,7 +192,9 @@ const AiParaphraseBox = () => {
     setOutputText("");
     setActiveMode("표준");
     setCustomStyle("");
+    setCreativityLevel(50);
     setIsLoading(false);
+    setIsHistoryMode(false);
     clearHistory();
     resetParaphraseWork();
   });
@@ -202,11 +205,36 @@ const AiParaphraseBox = () => {
       setOutputText(selectedHistory.paraphrasedText);
       setInputText(selectedHistory.originalText);
 
+      // 모드 정보 복원
+      if (selectedHistory.mode) {
+        const modeMap: Record<string, ParaphraseMode> = {
+          standard: "표준",
+          academic: "학술적",
+          creative: "창의적",
+          fluency: "유창성",
+          experimental: "문학적",
+          custom: "사용자 지정"
+        };
+        const koreanMode = modeMap[selectedHistory.mode] || "표준";
+        setActiveMode(koreanMode);
+
+        if (selectedHistory.mode === "custom" && selectedHistory.userRequestMode) {
+          setCustomStyle(selectedHistory.userRequestMode);
+        }
+
+        if (selectedHistory.scale !== undefined) {
+          setCreativityLevel(selectedHistory.scale);
+        }
+      }
+
       // 선택된 히스토리의 정보로 업데이트
       if (selectedHistory.historyId && selectedHistory.sequenceNumber) {
         updateParaphraseWork(selectedHistory.historyId, selectedHistory.sequenceNumber);
         setCurrentSequence(selectedHistory.sequenceNumber);
       }
+
+      // 히스토리 모드 활성화
+      setIsHistoryMode(true);
     }
   }, [selectedHistory, updateParaphraseWork]);
 
@@ -231,9 +259,34 @@ const AiParaphraseBox = () => {
       setOutputText(latestContent.paraphrasedText || "");
       setCurrentSequence(latestContent.sequenceNumber);
 
+      // 모드 정보 복원
+      if (latestContent.mode) {
+        const modeMap: Record<string, ParaphraseMode> = {
+          standard: "표준",
+          academic: "학술적",
+          creative: "창의적",
+          fluency: "유창성",
+          experimental: "문학적",
+          custom: "사용자 지정"
+        };
+        const koreanMode = modeMap[latestContent.mode] || "표준";
+        setActiveMode(koreanMode);
+
+        if (latestContent.mode === "custom" && latestContent.userRequestMode) {
+          setCustomStyle(latestContent.userRequestMode);
+        }
+
+        if (latestContent.scale !== undefined) {
+          setCreativityLevel(latestContent.scale);
+        }
+      }
+
       if (latestContent.sequenceNumber !== currentParaphraseSequence) {
         updateParaphraseWork(latestContent.historyId, latestContent.sequenceNumber);
       }
+
+      // 히스토리 모드 활성화
+      setIsHistoryMode(true);
 
       console.log(`✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`);
     } catch (error) {
@@ -243,6 +296,17 @@ const AiParaphraseBox = () => {
 
   // ========== Handlers ==========
   const handleApiCall = async () => {
+    // 히스토리 모드에서는 변환 불가
+    if (isHistoryMode) {
+      toast({
+        title: "히스토리 데이터입니다",
+        description: "새로운 변환을 원하시면 내용을 수정하거나 '새 작업'을 시작해주세요.",
+        variant: "default",
+        duration: 3000
+      });
+      return;
+    }
+
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
       router.push("/login");
@@ -357,6 +421,30 @@ const AiParaphraseBox = () => {
       setInputText(content.originalText);
       setOutputText(content.paraphrasedText || "");
       setCurrentSequence(currentSequence - 1);
+
+      // 모드 복원
+      if (content.mode) {
+        const modeMap: Record<string, ParaphraseMode> = {
+          standard: "표준",
+          academic: "학술적",
+          creative: "창의적",
+          fluency: "유창성",
+          experimental: "문학적",
+          custom: "사용자 지정"
+        };
+        setActiveMode(modeMap[content.mode] || "표준");
+
+        if (content.mode === "custom" && content.userRequestMode) {
+          setCustomStyle(content.userRequestMode);
+        }
+
+        if (content.scale !== undefined) {
+          setCreativityLevel(content.scale);
+        }
+      }
+
+      // 히스토리 모드 활성화
+      setIsHistoryMode(true);
     } catch (error) {
       console.error("이전 히스토리 조회 실패:", error);
       toast({
@@ -382,6 +470,30 @@ const AiParaphraseBox = () => {
       setInputText(content.originalText);
       setOutputText(content.paraphrasedText || "");
       setCurrentSequence(currentSequence + 1);
+
+      // 모드 복원
+      if (content.mode) {
+        const modeMap: Record<string, ParaphraseMode> = {
+          standard: "표준",
+          academic: "학술적",
+          creative: "창의적",
+          fluency: "유창성",
+          experimental: "문학적",
+          custom: "사용자 지정"
+        };
+        setActiveMode(modeMap[content.mode] || "표준");
+
+        if (content.mode === "custom" && content.userRequestMode) {
+          setCustomStyle(content.userRequestMode);
+        }
+
+        if (content.scale !== undefined) {
+          setCreativityLevel(content.scale);
+        }
+      }
+
+      // 히스토리 모드 활성화
+      setIsHistoryMode(true);
     } catch (error) {
       console.error("다음 히스토리 조회 실패:", error);
       toast({
@@ -395,7 +507,7 @@ const AiParaphraseBox = () => {
 
   // 버튼 비활성화 조건
   const cannotParaphraseMore = !canParaphraseMore();
-  const isButtonDisabled = isLoading || !inputText.trim() || cannotParaphraseMore;
+  const isButtonDisabled = isLoading || !inputText.trim() || cannotParaphraseMore || isHistoryMode;
 
   // ========== Render ==========
   return (
@@ -423,19 +535,41 @@ const AiParaphraseBox = () => {
       </header>
 
       <div className="px-[3px]">
-        <ModeSelector activeMode={activeMode} setActiveMode={setActiveMode} customStyle={customStyle} setCustomStyle={setCustomStyle} creativityLevel={creativityLevel} setCreativityLevel={setCreativityLevel} />
+        <ModeSelector
+          activeMode={activeMode}
+          setActiveMode={(mode) => {
+            setActiveMode(mode);
+            if (isHistoryMode) setIsHistoryMode(false);
+          }}
+          customStyle={customStyle}
+          setCustomStyle={setCustomStyle}
+          creativityLevel={creativityLevel}
+          setCreativityLevel={setCreativityLevel}
+        />{" "}
       </div>
 
       <div className={clsx("flex flex-col md:flex-row", "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white")}>
         <div className="w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col">
-          <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="내용을 입력하세요." className="flex-1 w-full resize-none outline-none text-sm md:text-base" disabled={isLoading}></textarea>
-
+          <textarea
+            value={inputText}
+            onChange={(e) => {
+              setInputText(e.target.value);
+              if (isHistoryMode) {
+                setIsHistoryMode(false);
+              }
+            }}
+            placeholder="내용을 입력하세요."
+            className="flex-1 w-full resize-none outline-none text-sm md:text-base"
+            disabled={isLoading}
+          />
           <div className="flex justify-end items-center mt-2 md:mt-4">
-            <button onClick={handleApiCall} className={clsx("py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all", cannotParaphraseMore ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white")} disabled={isButtonDisabled} title={cannotParaphraseMore ? "이 작업에서 최대 10개까지 변환할 수 있습니다" : ""}>
-              {cannotParaphraseMore ? "변환 제한 도달" : isLoading ? "변환 중..." : "변환하기"}
+            <button onClick={handleApiCall} className={clsx("py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all", cannotParaphraseMore || isHistoryMode ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white")} disabled={isButtonDisabled} title={isHistoryMode ? "히스토리 데이터입니다. 내용을 수정하거나 새 작업을 시작하세요." : cannotParaphraseMore ? "이 작업에서 최대 10개까지 변환할 수 있습니다" : ""}>
+              {isHistoryMode ? "히스토리 보기 중" : cannotParaphraseMore ? "변환 제한 도달" : isLoading ? "변환 중..." : "변환하기"}
             </button>
           </div>
 
+          {/* 히스토리 모드 안내 추가 */}
+          {isHistoryMode && <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">ℹ️ 히스토리 데이터입니다. 내용을 수정하면 새로 변환할 수 있습니다.</div>}
           {/* 10개 도달 경고 */}
           {cannotParaphraseMore && <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">⚠️ 이 작업에서 최대 변환 횟수에 도달했습니다. 사이드바에서 새 작업을 시작해주세요.</div>}
         </div>
