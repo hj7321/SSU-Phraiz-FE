@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { toast } from "@/hooks/use-toast";
 import clsx from "clsx";
@@ -333,9 +333,17 @@ const ModeSelector = ({
 
       {/* 모바일: 드롭다운 + 말풍선 옵션 */}
       <div className="md:hidden flex items-center gap-1 overflow-visible">
-        {/* 드롭다운 (이 버튼만 하이라이트 대상) */}
+        {/* 드롭다운 */}
         <div className="relative inline-block w-max" ref={modeDropdownRef}>
-          <button onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)} className={clsx("px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2", "bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300")} style={{ minWidth: "140px" }}>
+          <button
+            data-tour="mode-buttons"
+            onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)}
+            className={clsx(
+              "px-3 py-1.5 rounded-lg font-semibold text-xs text-left flex justify-between items-center gap-2",
+              "bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300"
+            )}
+            style={{ minWidth: "140px" }}
+          >
             <span className="truncate">{activeMode}</span>
             <ChevronDown
               size={16}
@@ -347,9 +355,11 @@ const ModeSelector = ({
           </button>
 
           {isModeDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg z-50" style={{ width: "140px" }}>
-              {" "}
-              {/* 드롭다운도 같은 너비 */}
+            <div
+              className="absolute top-full left-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg z-50"
+              style={{ width: "140px" }}
+            >
+              {/* 기본 모드들 */}
               {modes.map((mode) => (
                 <button
                   key={mode}
@@ -374,11 +384,24 @@ const ModeSelector = ({
                     handleQuestionClick();
                     setIsModeDropdownOpen(false);
                   } else {
-                    alert(`${getRequiredPlanName("summarize", "questionBased")} 플랜부터 사용 가능합니다`);
+                    alert(
+                      `${getRequiredPlanName(
+                        "summarize",
+                        "questionBased"
+                      )} 플랜부터 사용 가능합니다`
+                    );
                   }
                 }}
                 disabled={!canUseFeature("summarize", "questionBased")}
-                className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", canUseFeature("summarize", "questionBased") ? "hover:bg-purple-100" : "text-gray-400 cursor-not-allowed opacity-50", activeMode === "질문 기반 요약" && "bg-purple-100 font-semibold")}>
+                className={clsx(
+                  "block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200",
+                  canUseFeature("summarize", "questionBased")
+                    ? "hover:bg-purple-100"
+                    : "text-gray-400 cursor-not-allowed opacity-50",
+                  activeMode === "질문 기반 요약" &&
+                    "bg-purple-100 font-semibold"
+                )}
+              >
                 질문 기반 요약
               </button>
 
@@ -388,16 +411,31 @@ const ModeSelector = ({
                   if (canUseFeature("summarize", "targeted")) {
                     handleCustomClick();
                     setIsModeDropdownOpen(false);
-                  }}
-                  className={clsx("block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200", "hover:bg-purple-100", activeMode === "타겟 요약" && "bg-purple-100 font-semibold")}>
-                  타겟 요약
-                </button>
-              )}
+                  } else {
+                    alert(
+                      `${getRequiredPlanName(
+                        "summarize",
+                        "targeted"
+                      )} 플랜부터 사용 가능합니다`
+                    );
+                  }
+                }}
+                disabled={!canUseFeature("summarize", "targeted")}
+                className={clsx(
+                  "block w-full px-3 py-1.5 text-left text-xs whitespace-nowrap transition-colors border-t border-purple-200",
+                  canUseFeature("summarize", "targeted")
+                    ? "hover:bg-purple-100"
+                    : "text-gray-400 cursor-not-allowed opacity-50",
+                  activeMode === "타겟 요약" && "bg-purple-100 font-semibold"
+                )}
+              >
+                타겟 요약
+              </button>
             </div>
           )}
         </div>
 
-        {/* 🔥 말풍선 아이콘 (질문 기반 요약 또는 타겟 요약일 때만 표시) */}
+        {/* 말풍선 아이콘 (질문 기반 요약 또는 타겟 요약일 때만 표시) */}
         {(activeMode === "질문 기반 요약" || activeMode === "타겟 요약") && (
           <div className="relative overflow-visible">
             <button
@@ -424,7 +462,7 @@ const ModeSelector = ({
                 className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible"
               >
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                  <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45" />
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
                   <p className="text-sm text-gray-600 mb-2">
                     요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)
                   </p>
@@ -445,7 +483,7 @@ const ModeSelector = ({
                 className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible"
               >
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
-                  <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45" />
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
                   <p className="text-sm text-gray-600 mb-2">
                     요약 내용을 전달할 대상을 입력하세요. (20자 이내)
                   </p>
@@ -546,42 +584,51 @@ const AiSummarizeBox = () => {
     }
   }, [selectedHistory, updateSummarizeWork]);
 
-  const loadLatestHistory = useCallback(async () => {
-    if (!currentSummarizeHistoryId || !isLogin) return;
+  // 컴포넌트 마운트 시 최신 히스토리 로드
+  useEffect(() => {
+    if (currentSummarizeHistoryId && isLogin) {
+      loadLatestHistory();
+    }
+  }, [currentSummarizeHistoryId, isLogin]);
+
+  // 최신 히스토리 내용 불러오기
+  const loadLatestHistory = async () => {
+    if (!currentSummarizeHistoryId) return;
 
     try {
-      const latest = await readLatestHistory({
+      const latestContent = await readLatestHistory({
         service: "summary",
         historyId: currentSummarizeHistoryId,
       });
 
-      setInputText(latest.originalText);
-      setOutputText(latest.summarizedText ?? "");
-      setCurrentSequence(latest.sequenceNumber);
+      setInputText(latestContent.originalText);
+      setOutputText(latestContent.summarizedText || "");
+      setCurrentSequence(latestContent.sequenceNumber);
 
-      if (latest.sequenceNumber !== currentSummarizeSequence) {
-        updateSummarizeWork(latest.historyId, latest.sequenceNumber);
+      // sequence 동기화
+      if (latestContent.sequenceNumber !== currentSummarizeSequence) {
+        updateSummarizeWork(
+          latestContent.historyId,
+          latestContent.sequenceNumber
+        );
       }
 
       console.log(
-        `✅ 최신 히스토리 로드: historyId=${latest.historyId}, sequence=${latest.sequenceNumber}`
+        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
       );
-    } catch (e) {
-      console.error("히스토리 조회 실패:", e);
+    } catch (error) {
+      console.error("히스토리 조회 실패:", error);
     }
-  }, [
-    currentSummarizeHistoryId,
-    isLogin,
-    currentSummarizeSequence,
-    updateSummarizeWork,
-  ]);
-
-  useEffect(() => {
-    void loadLatestHistory();
-  }, [loadLatestHistory]);
+  };
 
   // ========== Handlers ==========
   const handleApiCall = async () => {
+    console.log("🔍 handleApiCall 시작");
+    console.log("📊 현재 Zustand 상태:", {
+      currentSummarizeHistoryId,
+      currentSummarizeSequence,
+    });
+
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
       router.push("/login");
@@ -644,6 +691,13 @@ const AiSummarizeBox = () => {
 
       if (uploadedFile) {
         const historyIdForFile = currentSummarizeHistoryId || undefined;
+        console.log("📤 API로 보낼 데이터 (파일):", {
+          file: uploadedFile,
+          mode: apiMode,
+          question: activeMode === "질문 기반 요약" ? questionText : undefined,
+          target: activeMode === "타겟 요약" ? targetAudience : undefined,
+          historyId: historyIdForFile,
+        });
         response = await requestSummarizeWithFile(
           uploadedFile,
           apiMode,
@@ -658,18 +712,29 @@ const AiSummarizeBox = () => {
           target: activeMode === "타겟 요약" ? targetAudience : undefined,
           historyId: currentSummarizeHistoryId,
         };
+        console.log("📤 API로 보낼 데이터:", requestData);
         response = await requestSummarize(apiMode, requestData);
       }
 
       // 응답 처리
       const { historyId, sequenceNumber, summarizedText, remainingToken } =
         response;
+      console.log("📥 API 응답:", { historyId, sequenceNumber });
 
       setOutputText(summarizedText);
       setCurrentSequence(sequenceNumber);
 
       // 현재 작업 정보 업데이트
+      console.log("🔄 updateSummarizeWork 호출 전:", {
+        historyId,
+        sequenceNumber,
+      });
       updateSummarizeWork(historyId, sequenceNumber);
+      console.log("🔄 updateSummarizeWork 호출 후");
+
+      console.log(
+        `✅ 요약 완료: historyId=${historyId}, sequence=${sequenceNumber}`
+      );
 
       // 토큰 처리
       if (remainingToken !== undefined) {

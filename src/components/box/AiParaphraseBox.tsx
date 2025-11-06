@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { Copy } from "lucide-react";
@@ -22,19 +22,10 @@ import {
 } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAiHistoryStore } from "@/stores/aiHistory.store";
-import { ChevronDown, MessageCircle } from "lucide-react";
 import { ParaphraseGuide } from "../guide/ParaphraseGuide";
+import { ChevronDown, MessageCircle } from "lucide-react";
 
 const HEADER_H = 72; // px
-
-// 모드 선택 버튼 타입 정의
-type ParaphraseMode =
-  | "표준"
-  | "학술적"
-  | "창의적"
-  | "유창성"
-  | "문학적"
-  | "사용자 지정";
 
 const ToneBlendSlider = ({
   value,
@@ -75,7 +66,17 @@ const ToneBlendSlider = ({
   );
 };
 
-// 모드 선택 버튼 UI 컴포넌트
+// ────────────────────────────────
+// Mode Selector
+// ────────────────────────────────
+type ParaphraseMode =
+  | "표준"
+  | "학술적"
+  | "창의적"
+  | "유창성"
+  | "문학적"
+  | "사용자 지정";
+
 const ModeSelector = ({
   activeMode,
   setActiveMode,
@@ -101,15 +102,11 @@ const ModeSelector = ({
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const customButtonRef = useRef<HTMLButtonElement>(null);
-
   // 드롭다운 상태 (모바일)
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
-
-  // 요금제 제한 hook 추가
   const { canUseFeature, getRequiredPlanName } = usePlanRestriction();
 
-  // 외부 클릭 감지
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       // 드롭다운 외부 클릭
@@ -120,7 +117,6 @@ const ModeSelector = ({
         setIsModeDropdownOpen(false);
       }
 
-      // 사용자 지정 팝업 외부 클릭
       if (
         popoverRef.current &&
         !popoverRef.current.contains(event.target as Node) &&
@@ -135,7 +131,6 @@ const ModeSelector = ({
   }, []);
 
   const handleModeClick = (mode: ParaphraseMode) => {
-    // 기본 모드들(표준, 학술적, 창의적, 유창성, 문학적)은 모든 사용자가 사용 가능
     setActiveMode(mode);
     setIsPopoverOpen(false);
     setIsModeDropdownOpen(false);
@@ -168,7 +163,6 @@ const ModeSelector = ({
 
   return (
     <div className="w-full">
-      {/* 데스크톱: 버튼들 */}
       <div
         className="hidden md:flex w-full gap-2 md:gap-3"
         data-tour="mode-buttons"
@@ -187,7 +181,6 @@ const ModeSelector = ({
           </button>
         ))}
 
-        {/* 사용자 지정 버튼 */}
         <div className="relative flex-1">
           {canUseFeature("paraphrasing", "custom") ? (
             <>
@@ -387,7 +380,6 @@ const ModeSelector = ({
         )}
       </div>
 
-      {/* Tone Blend Slider */}
       <div className="mt-3" data-tour="slider">
         <ToneBlendSlider
           value={creativityLevel}
@@ -399,12 +391,10 @@ const ModeSelector = ({
 };
 
 const AiParaphraseBox = () => {
-  // ========== Store & Router ==========
   const selectedHistory = useAiHistoryStore((state) => state.selectedAiHistory);
   const clearHistory = useAiHistoryStore((state) => state.clearAiHistory);
   const { toast } = useToast();
 
-  // 🔥 workHistory 사용 (localHistory 제거)
   const {
     currentParaphraseHistoryId,
     currentParaphraseSequence,
@@ -419,7 +409,6 @@ const AiParaphraseBox = () => {
   const { updateTokenUsage, showTokenAlert } = useTokenUsage();
   const queryClient = useQueryClient();
 
-  // ========== State ==========
   const [inputText, setInputText] = useState("");
   const [outputText, setOutputText] = useState("");
   const [activeMode, setActiveMode] = useState<ParaphraseMode>("표준");
@@ -427,11 +416,10 @@ const AiParaphraseBox = () => {
   const [creativityLevel, setCreativityLevel] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
   const [currentSequence, setCurrentSequence] = useState(1);
-  const [isHistoryMode, setIsHistoryMode] = useState(false);
 
-  // ========== Hooks ==========
   useClearContent();
 
+  // 헤더 높이 offset 반영
   useEffect(() => {
     let ticking = false;
     const syncOffset = () => {
@@ -456,9 +444,7 @@ const AiParaphraseBox = () => {
     setOutputText("");
     setActiveMode("표준");
     setCustomStyle("");
-    setCreativityLevel(50);
     setIsLoading(false);
-    setIsHistoryMode(false);
     clearHistory();
     resetParaphraseWork();
   });
@@ -469,32 +455,6 @@ const AiParaphraseBox = () => {
       setOutputText(selectedHistory.paraphrasedText);
       setInputText(selectedHistory.originalText);
 
-      // 모드 정보 복원
-      if (selectedHistory.mode) {
-        const modeMap: Record<string, ParaphraseMode> = {
-          standard: "표준",
-          academic: "학술적",
-          creative: "창의적",
-          fluency: "유창성",
-          experimental: "문학적",
-          custom: "사용자 지정",
-        };
-        const koreanMode = modeMap[selectedHistory.mode] || "표준";
-        setActiveMode(koreanMode);
-
-        if (
-          selectedHistory.mode === "custom" &&
-          selectedHistory.userRequestMode
-        ) {
-          setCustomStyle(selectedHistory.userRequestMode);
-        }
-
-        if (selectedHistory.scale !== undefined) {
-          setCreativityLevel(selectedHistory.scale);
-        }
-      }
-
-      // 선택된 히스토리의 정보로 업데이트
       if (selectedHistory.historyId && selectedHistory.sequenceNumber) {
         updateParaphraseWork(
           selectedHistory.historyId,
@@ -502,94 +462,54 @@ const AiParaphraseBox = () => {
         );
         setCurrentSequence(selectedHistory.sequenceNumber);
       }
-
-      // 히스토리 모드 활성화
-      setIsHistoryMode(true);
     }
   }, [selectedHistory, updateParaphraseWork]);
 
-  // 컴포넌트 마운트 시 최신 히스토리 로드
-  useEffect(() => {
-    if (currentParaphraseHistoryId && isLogin) {
-      loadLatestHistory();
-    }
-  }, [currentParaphraseHistoryId, isLogin]);
-
-  // 최신 히스토리 내용 불러오기
-  const loadLatestHistory = async () => {
-    if (!currentParaphraseHistoryId) return;
+  // ✅ 최신 히스토리 로드
+  const loadLatestHistory = useCallback(async () => {
+    if (!currentParaphraseHistoryId || !isLogin) return;
 
     try {
-      const latestContent = await readLatestHistory({
+      const latest = await readLatestHistory({
         service: "paraphrase",
         historyId: currentParaphraseHistoryId,
       });
 
-      setInputText(latestContent.originalText);
-      setOutputText(latestContent.paraphrasedText || "");
-      setCurrentSequence(latestContent.sequenceNumber);
+      setInputText(latest.originalText);
+      setOutputText(latest.paraphrasedText || "");
+      setCurrentSequence(latest.sequenceNumber);
 
-      // 모드 정보 복원
-      if (latestContent.mode) {
-        const modeMap: Record<string, ParaphraseMode> = {
-          standard: "표준",
-          academic: "학술적",
-          creative: "창의적",
-          fluency: "유창성",
-          experimental: "문학적",
-          custom: "사용자 지정",
-        };
-        const koreanMode = modeMap[latestContent.mode] || "표준";
-        setActiveMode(koreanMode);
-
-        if (latestContent.mode === "custom" && latestContent.userRequestMode) {
-          setCustomStyle(latestContent.userRequestMode);
-        }
-
-        if (latestContent.scale !== undefined) {
-          setCreativityLevel(latestContent.scale);
-        }
+      if (latest.sequenceNumber !== currentParaphraseSequence) {
+        updateParaphraseWork(latest.historyId, latest.sequenceNumber);
       }
-
-      if (latestContent.sequenceNumber !== currentParaphraseSequence) {
-        updateParaphraseWork(
-          latestContent.historyId,
-          latestContent.sequenceNumber
-        );
-      }
-
-      // 히스토리 모드 활성화
-      setIsHistoryMode(true);
 
       console.log(
-        `✅ 최신 히스토리 로드: historyId=${latestContent.historyId}, sequence=${latestContent.sequenceNumber}`
+        `✅ 최신 히스토리 로드: historyId=${latest.historyId}, sequence=${latest.sequenceNumber}`
       );
     } catch (error) {
       console.error("히스토리 조회 실패:", error);
     }
-  };
+  }, [
+    currentParaphraseHistoryId,
+    isLogin,
+    currentParaphraseSequence,
+    updateParaphraseWork,
+  ]);
 
-  // ========== Handlers ==========
+  useEffect(() => {
+    void loadLatestHistory();
+  }, [loadLatestHistory]);
+
+  // ────────────────────────────────
+  // API 호출 핸들러
+  // ────────────────────────────────
   const handleApiCall = async () => {
-    // 히스토리 모드에서는 변환 불가
-    if (isHistoryMode) {
-      toast({
-        title: "히스토리 데이터입니다",
-        description:
-          "새로운 변환을 원하시면 내용을 수정하거나 '새 작업'을 시작해주세요.",
-        variant: "default",
-        duration: 3000,
-      });
-      return;
-    }
-
     if (!isLogin) {
       alert("로그인 후에 이용해주세요.");
       router.push("/login");
       return;
     }
 
-    // 현재 historyId에서 10개 도달 확인
     if (!canParaphraseMore()) {
       toast({
         title: "변환 제한",
@@ -614,12 +534,12 @@ const AiParaphraseBox = () => {
       return;
     }
 
-    // ✅ GTM 이벤트 푸시 (API 호출 직전)
+    // GTM 이벤트 푸시
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
       event: "paraphrase_start",
       feature: "paraphrasing",
-      paraphrase_mode: activeMode, // 현재 선택된 모드
+      paraphrase_mode: activeMode,
     });
 
     setIsLoading(true);
@@ -634,39 +554,34 @@ const AiParaphraseBox = () => {
       문학적: "experimental",
       "사용자 지정": "custom",
     };
+
     const apiMode = modeMap[activeMode];
 
     const requestData = {
       text: inputText,
       userRequestMode: activeMode === "사용자 지정" ? customStyle : undefined,
       scale: creativityLevel,
-      historyId: currentParaphraseHistoryId, // 스토어의 historyId를 추가
+      historyId: currentParaphraseHistoryId,
     };
 
     try {
       const response = await requestParaphrase(apiMode, requestData);
-
-      // 응답 처리
       const { historyId, sequenceNumber, paraphrasedText, remainingToken } =
         response;
 
       setOutputText(paraphrasedText);
       setCurrentSequence(sequenceNumber);
-
-      // 현재 작업 정보 업데이트
       updateParaphraseWork(historyId, sequenceNumber);
 
       console.log(
         `✅ 변환 완료: historyId=${historyId}, sequence=${sequenceNumber}`
       );
 
-      // 토큰 처리
       if (remainingToken !== undefined) {
         updateTokenUsage(remainingToken);
         showTokenAlert(remainingToken, true);
       }
 
-      // 10개 도달 시 안내 메시지
       if (sequenceNumber >= 10) {
         toast({
           title: "변환 완료",
@@ -691,44 +606,20 @@ const AiParaphraseBox = () => {
     }
   };
 
-  // 이전 히스토리 보기
+  // ────────────────────────────────
+  // 이전/다음 히스토리 보기
+  // ────────────────────────────────
   const handlePrevSequence = async () => {
     if (currentSequence <= 1 || !currentParaphraseHistoryId) return;
-
     try {
       const content = await readLatestHistory({
         service: "paraphrase",
         historyId: currentParaphraseHistoryId,
         sequenceNumber: currentSequence - 1,
       });
-
       setInputText(content.originalText);
       setOutputText(content.paraphrasedText || "");
       setCurrentSequence(currentSequence - 1);
-
-      // 모드 복원
-      if (content.mode) {
-        const modeMap: Record<string, ParaphraseMode> = {
-          standard: "표준",
-          academic: "학술적",
-          creative: "창의적",
-          fluency: "유창성",
-          experimental: "문학적",
-          custom: "사용자 지정",
-        };
-        setActiveMode(modeMap[content.mode] || "표준");
-
-        if (content.mode === "custom" && content.userRequestMode) {
-          setCustomStyle(content.userRequestMode);
-        }
-
-        if (content.scale !== undefined) {
-          setCreativityLevel(content.scale);
-        }
-      }
-
-      // 히스토리 모드 활성화
-      setIsHistoryMode(true);
     } catch (error) {
       console.error("이전 히스토리 조회 실패:", error);
       toast({
@@ -740,48 +631,21 @@ const AiParaphraseBox = () => {
     }
   };
 
-  // 다음 히스토리 보기
   const handleNextSequence = async () => {
     if (
       currentSequence >= currentParaphraseSequence ||
       !currentParaphraseHistoryId
     )
       return;
-
     try {
       const content = await readLatestHistory({
         service: "paraphrase",
         historyId: currentParaphraseHistoryId,
         sequenceNumber: currentSequence + 1,
       });
-
       setInputText(content.originalText);
       setOutputText(content.paraphrasedText || "");
       setCurrentSequence(currentSequence + 1);
-
-      // 모드 복원
-      if (content.mode) {
-        const modeMap: Record<string, ParaphraseMode> = {
-          standard: "표준",
-          academic: "학술적",
-          creative: "창의적",
-          fluency: "유창성",
-          experimental: "문학적",
-          custom: "사용자 지정",
-        };
-        setActiveMode(modeMap[content.mode] || "표준");
-
-        if (content.mode === "custom" && content.userRequestMode) {
-          setCustomStyle(content.userRequestMode);
-        }
-
-        if (content.scale !== undefined) {
-          setCreativityLevel(content.scale);
-        }
-      }
-
-      // 히스토리 모드 활성화
-      setIsHistoryMode(true);
     } catch (error) {
       console.error("다음 히스토리 조회 실패:", error);
       toast({
@@ -793,12 +657,13 @@ const AiParaphraseBox = () => {
     }
   };
 
-  // 버튼 비활성화 조건
   const cannotParaphraseMore = !canParaphraseMore();
   const isButtonDisabled =
-    isLoading || !inputText.trim() || cannotParaphraseMore || isHistoryMode;
+    isLoading || !inputText.trim() || cannotParaphraseMore;
 
-  // ========== Render ==========
+  // ────────────────────────────────
+  // Render
+  // ────────────────────────────────
   return (
     <div className="w-full flex flex-col h-full p-2 md:p-4 gap-2 md:gap-4">
       <header className="flex items-center px-[3px] gap-2">
@@ -806,7 +671,6 @@ const AiParaphraseBox = () => {
           AI 문장 변환
         </h1>
 
-        {/* 오른쪽 끝으로 밀기 */}
         <div className="ml-auto flex items-center gap-2">
           {currentParaphraseHistoryId && currentParaphraseSequence > 1 && (
             <div className="flex items-center gap-1 bg-gray-50 px-2 py-1.5 rounded-lg border">
@@ -818,11 +682,9 @@ const AiParaphraseBox = () => {
               >
                 ←
               </button>
-
               <span className="text-sm font-mono px-2">
                 {currentSequence} / {currentParaphraseSequence}
               </span>
-
               <button
                 onClick={handleNextSequence}
                 disabled={currentSequence >= currentParaphraseSequence}
@@ -833,8 +695,6 @@ const AiParaphraseBox = () => {
               </button>
             </div>
           )}
-
-          {/* 👉 항상 맨 오른쪽 */}
           <ParaphraseGuide />
         </div>
       </header>
@@ -842,27 +702,21 @@ const AiParaphraseBox = () => {
       <div className="px-[3px]">
         <ModeSelector
           activeMode={activeMode}
-          setActiveMode={(mode) => {
-            setActiveMode(mode);
-            if (isHistoryMode) setIsHistoryMode(false);
-          }}
+          setActiveMode={setActiveMode}
           customStyle={customStyle}
           setCustomStyle={setCustomStyle}
           creativityLevel={creativityLevel}
           setCreativityLevel={setCreativityLevel}
-        />{" "}
+        />
       </div>
 
-      <div
-        className={clsx(
-          "flex flex-col md:flex-row",
-          "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white"
-        )}
-      >
+      <div className={clsx("flex flex-col md:flex-row", "flex-1")}>
+        {/* 입력 패널 */}
         <div
           data-tour="input-area"
           className={clsx(
-            "relative w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col",
+            "relative w-full h-1/2 md:h-full md:w-1/2",
+            "bg-white border shadow-lg",
             "rounded-t-lg md:rounded-l-lg md:rounded-tr-none md:rounded-br-none",
             "overflow-hidden"
           )}
@@ -870,53 +724,35 @@ const AiParaphraseBox = () => {
           <div className="p-2 md:p-4 flex flex-col h-full">
             <textarea
               value={inputText}
-              onChange={(e) => {
-                setInputText(e.target.value);
-                if (isHistoryMode) {
-                  setIsHistoryMode(false);
-                }
-              }}
+              onChange={(e) => setInputText(e.target.value)}
               placeholder="내용을 입력하세요."
               className="flex-1 w-full resize-none outline-none text-sm md:text-base"
               disabled={isLoading}
             />
             <div className="flex justify-end items-center mt-2 md:mt-4">
               <button
-                data-tour="convert-button"
                 onClick={handleApiCall}
+                data-tour="convert-button"
                 className={clsx(
                   "py-1.5 px-4 md:py-2 md:px-6 rounded-lg font-semibold text-xs md:text-base transition-all",
-                  cannotParaphraseMore || isHistoryMode
+                  cannotParaphraseMore
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-purple-600 hover:bg-purple-700 text-white"
                 )}
                 disabled={isButtonDisabled}
                 title={
-                  isHistoryMode
-                    ? "히스토리 데이터입니다. 내용을 수정하거나 새 작업을 시작하세요."
-                    : cannotParaphraseMore
+                  cannotParaphraseMore
                     ? "이 작업에서 최대 10개까지 변환할 수 있습니다"
                     : ""
                 }
               >
-                {isHistoryMode
-                  ? "히스토리 보기 중"
-                  : cannotParaphraseMore
+                {cannotParaphraseMore
                   ? "변환 제한 도달"
                   : isLoading
                   ? "변환 중..."
                   : "변환하기"}
               </button>
             </div>
-
-            {/* 히스토리 모드 안내 추가 */}
-            {isHistoryMode && (
-              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-                ℹ️ 히스토리 데이터입니다. 내용을 수정하면 새로 변환할 수
-                있습니다.
-              </div>
-            )}
-            {/* 10개 도달 경고 */}
             {cannotParaphraseMore && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
                 ⚠️ 이 작업에서 최대 변환 횟수에 도달했습니다. 사이드바에서 새
@@ -926,7 +762,7 @@ const AiParaphraseBox = () => {
           </div>
         </div>
 
-        {/* 출력 패널 : 오른쪽 카드. 경계선 이중표시 방지용 -ml-px */}
+        {/* 출력 패널 */}
         <div
           className={clsx(
             "relative w-full h-1/2 md:h-full md:w-1/2",
@@ -943,7 +779,6 @@ const AiParaphraseBox = () => {
                   outputText ||
                   "여기에 변환 결과가 표시됩니다."}
             </div>
-
             {(selectedHistory?.paraphrasedText || outputText) && (
               <button
                 onClick={() => {
