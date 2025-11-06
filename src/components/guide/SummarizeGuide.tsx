@@ -37,6 +37,7 @@ const tourSteps: TourStep[] = [
 ];
 
 const MD = 768;
+const XS = 500; // ✅ 500px 미만 규칙용
 const ARROW_SIZE = 12; // w-3/h-3 = 12px
 
 export function SummarizeGuide() {
@@ -45,7 +46,7 @@ export function SummarizeGuide() {
   const [tooltipPos, setTooltipPos] = useState({ top: 16, left: 16 });
   const [arrowSide, setArrowSide] = useState<ArrowSide>("top");
   const [arrowPos, setArrowPos] = useState<{ x?: number; y?: number }>({});
-  const [maxWidthPx, setMaxWidthPx] = useState<number>(360); // ✅ 반응형 maxWidth
+  const [maxWidthPx, setMaxWidthPx] = useState<number>(360);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const guide = useGuideProgress("summary");
@@ -90,17 +91,16 @@ export function SummarizeGuide() {
       return p;
     });
 
-  // ✅ 768~840px 구간만 말풍선 maxWidth를 더 줄여서 겹침 방지
   const computeMaxWidth = () => {
     const w = window.innerWidth;
-    if (w < 640) return Math.min(0.92 * w, 320); // xs
-    if (w < MD) return Math.min(0.92 * w, 360); // sm
-    if (w < 840) return 370; // 🔥 compact band (790px 근처)
-    if (w < 1024) return 420; // md~lg-
-    return 448; // >= lg (tailwind md:max-w-md ≈ 448px)
+    if (w < 640) return Math.min(0.92 * w, 320);
+    if (w < MD) return Math.min(0.92 * w, 360);
+    if (w < 840) return 370;
+    if (w < 1024) return 420;
+    return 448;
   };
 
-  // 실제 화면에서 "보이는" 타깃만 선택
+  // 실제 화면에서 보이는 타깃만
   const getVisibleTarget = (selector: string): HTMLElement | null => {
     const nodes = Array.from(
       document.querySelectorAll(selector)
@@ -120,12 +120,24 @@ export function SummarizeGuide() {
     return null;
   };
 
-  // 반응형 말풍선 위치 규칙
+  // ✅ 500px 미만이면 2·3단계를 'bottom'으로 강제
   const resolvePosition = (stepIndex: number, base: ArrowSide): ArrowSide => {
-    const belowMd = window.innerWidth < MD;
+    const w = window.innerWidth;
+    const belowXs = w < XS;
+    const belowMd = w < MD;
+
     if (stepIndex === 0) return belowMd ? "bottom" : "right"; // 1단계
-    if (stepIndex === 1) return belowMd ? "right" : base; // 2단계 모바일: 오른쪽
-    if (stepIndex === 2) return belowMd ? "left" : base; // 3단계 모바일: 왼쪽
+
+    if (stepIndex === 1) {
+      if (belowXs) return "bottom"; // 2단계
+      return belowMd ? "right" : base;
+    }
+
+    if (stepIndex === 2) {
+      if (belowXs) return "bottom"; // 3단계
+      return belowMd ? "left" : base;
+    }
+
     return base;
   };
 
@@ -153,13 +165,11 @@ export function SummarizeGuide() {
       const tr = target.getBoundingClientRect();
       const tt = tooltipRef.current.getBoundingClientRect();
 
-      // 1) 반응형 포지션 결정
       let pos: ArrowSide = resolvePosition(
         currentStep,
         step.position ?? "bottom"
       );
 
-      // 2) 말풍선 상자 위치 계산
       let top = 0,
         left = 0,
         side: ArrowSide = "top";
@@ -191,7 +201,6 @@ export function SummarizeGuide() {
 
       compute(pos);
 
-      // 3) 뷰포트 충돌 보정
       const pad = 12;
       const vW = window.innerWidth;
       const vH = window.innerHeight;
@@ -225,11 +234,9 @@ export function SummarizeGuide() {
         }
       }
 
-      // 최종 위치 클램프
       left = Math.min(Math.max(left, pad), vW - tt.width - pad);
       top = Math.min(Math.max(top, pad), vH - tt.height - pad);
 
-      // 4) 화살표 위치(px) 계산 — 타깃 중앙 + 선택적 bias
       const belowMd = window.innerWidth < MD;
       const centerX = tr.left + tr.width / 2;
       const centerY = tr.top + tr.height / 2;
@@ -261,7 +268,6 @@ export function SummarizeGuide() {
       setArrowPos({ x: ax, y: ay });
     };
 
-    // 최초 계산
     updateSizeHint();
     const r0 = requestAnimationFrame(() => {
       applyHighlight();
@@ -274,7 +280,6 @@ export function SummarizeGuide() {
     const onResize = () => {
       updateSizeHint();
       applyHighlight();
-      // 크기 바뀌면 한 프레임 뒤 재계산
       requestAnimationFrame(updatePosition);
     };
     const onScroll = () => updatePosition();
@@ -316,7 +321,6 @@ export function SummarizeGuide() {
             style={{
               top: tooltipPos.top,
               left: tooltipPos.left,
-              // ✅ 이 한 줄로 해당 구간에서만 폭이 더 줄어듦
               maxWidth: `${maxWidthPx}px`,
               width: `min(92vw, ${maxWidthPx}px)`,
             }}
