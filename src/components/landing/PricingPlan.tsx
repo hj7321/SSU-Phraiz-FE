@@ -113,7 +113,7 @@ const PricingPlan = () => {
               </div>
 
               <Link
-                href={isLogin ? "/pay" : "/login"}
+                href={isLogin ? "/payment/pay" : "/login"}
                 className={clsx(
                   "relative overflow-hidden text-center rounded-xl py-3.5 text-base font-bold transition-all duration-300",
                   "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white",
