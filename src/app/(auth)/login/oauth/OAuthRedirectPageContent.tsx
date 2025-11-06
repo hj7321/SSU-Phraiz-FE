@@ -13,7 +13,7 @@ const OAuthRedirectPageContent = () => {
 
   // URL 변화가 생겨도 code, error, error_description만 메모해 재계산 최소화
   const { code, oauthError, oauthErrorDesc } = useMemo(() => {
-    const code = searchParams.get("code");
+    const code = searchParams.get("tempToken") ?? searchParams.get("code");
     const error = searchParams.get("error");
     const errorDes = searchParams.get("error_description");
     return { code: code, oauthError: error, oauthErrorDesc: errorDes };
