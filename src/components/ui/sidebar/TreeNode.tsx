@@ -35,6 +35,7 @@ interface TreeNodeProps {
   onRequestMove?: () => void;
   compact?: boolean;
   depth?: number;
+  selectedId?: number | null;
 }
 
 const TreeNode = ({
@@ -42,6 +43,7 @@ const TreeNode = ({
   onRequestDelete,
   onRequestMove,
   depth = 0,
+  selectedId = null,
 }: TreeNodeProps) => {
   const isFolder = Array.isArray(node.children);
 
@@ -156,7 +158,6 @@ const TreeNode = ({
 
     if (data.kind === "cite") {
       setSelectedCiteHistory(data.data);
-      // ✅ GTM 이벤트
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "history_item_click",
@@ -168,7 +169,6 @@ const TreeNode = ({
       closeSidebarIfMobile();
     } else {
       setSelectedAiHistory(data.data);
-      // ✅ GTM 이벤트
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: "history_item_click",
@@ -242,6 +242,10 @@ const TreeNode = ({
     return () => clearTimeout(id);
   }, [isEditing]);
 
+  // ✅ 현재 행이 선택된 히스토리인가?
+  const isSelected =
+    !isFolder && selectedId !== null && Number(node.id) === selectedId;
+
   return (
     <li>
       {/* 행 전체 클릭 가능 */}
@@ -251,19 +255,36 @@ const TreeNode = ({
           "px-2 py-[6px] hover:bg-[#f6f3ff] hover:text-[#6c55f6]",
           openChild && isFolder
             ? "bg-[#f5f3ff]/70 text-[#6c55f6]"
+            : isSelected
+            ? "bg-[#EEE9FF] text-[#6c55f6] shadow-inner"
             : "text-gray-700",
           depth > 0 && "pl-4"
         )}
         onClick={handleClickLine}
         role="button"
         aria-expanded={isFolder ? openChild : undefined}
+        aria-selected={isSelected || undefined}
+        data-selected={isSelected ? "true" : "false"}
       >
+        {/* 좌측 선택 바 */}
+        <span
+          aria-hidden
+          className={clsx(
+            "absolute left-0 top-0 bottom-0 w-[3px] rounded-l-md transition-colors",
+            isSelected ? "bg-[#6c55f6]" : "bg-transparent"
+          )}
+        />
+
         {/* 왼쪽 아이콘 + 이름 */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {isFolder ? (
             <span className="text-[#a294f9]">{openChild ? "📂" : "📁"}</span>
           ) : (
-            <span className="text-gray-400">📄</span>
+            <span
+              className={clsx("text-gray-400", isSelected && "text-[#6c55f6]")}
+            >
+              📄
+            </span>
           )}
 
           {isEditing ? (
@@ -281,7 +302,13 @@ const TreeNode = ({
               className="flex-1 min-w-0 bg-transparent border-b border-[#a294f9]/40 focus:border-[#a294f9] outline-none text-sm py-[2px]"
             />
           ) : (
-            <span className="flex-1 truncate text-sm font-medium">
+            <span
+              className={clsx(
+                "flex-1 truncate text-sm font-medium",
+                isSelected && "font-semibold"
+              )}
+              title={node.name}
+            >
               {node.name}
               {isFolder && (
                 <span className="ml-1 text-[11px] text-gray-400 font-normal">
@@ -341,6 +368,7 @@ const TreeNode = ({
               onRequestMove={onRequestMove}
               compact
               depth={depth + 1}
+              selectedId={selectedId} // ✅ 하위에도 선택 id 전파
             />
           ))}
 

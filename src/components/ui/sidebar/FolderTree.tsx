@@ -18,12 +18,18 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
+// ✅ 선택 상태 읽기
+import { useAiHistoryStore } from "@/stores/aiHistory.store";
+import { useCiteHistoryStore } from "@/stores/citeHistory.store";
+import { useWorkHistory } from "@/stores/workHistory.store";
+
 const FolderTree = () => {
   const [deleteTarget, setDeleteTarget] = useState<{
     type: "folder" | "history";
     id: number;
   } | null>(null);
   const [moveTarget, setMoveTarget] = useState<number | null>(null);
+
   const pathname = usePathname();
   const matched = SERVICE_PATH.find((p) => pathname.includes(p.path));
   const service = matched ? matched.service : undefined;
@@ -35,6 +41,21 @@ const FolderTree = () => {
     useDeleteFolderAndHistory(service);
 
   const folders = folderInfiniteQuery.data ?? [];
+
+  const selectedAi = useAiHistoryStore((s) => s.selectedAiHistory);
+  const selectedCite = useCiteHistoryStore((s) => s.selectedCiteHistory);
+  const { currentParaphraseHistoryId, currentSummarizeHistoryId } =
+    useWorkHistory();
+
+  let selectedId: number | null = null;
+  if (service === "cite") {
+    selectedId = selectedCite?.id ?? null;
+  } else if (service === "paraphrase") {
+    selectedId = selectedAi?.historyId ?? currentParaphraseHistoryId ?? null;
+  } else if (service === "summary") {
+    selectedId = selectedAi?.historyId ?? currentSummarizeHistoryId ?? null;
+  }
+
   const Histories = historyInfiniteQuery.data ?? [];
 
   const onRequestDelete = (payload: {
@@ -67,6 +88,8 @@ const FolderTree = () => {
               onRequestDelete({ type: "folder", id: Number(f.id) })
             }
             onRequestMove={undefined}
+            // ✅ 선택 id 전달 (하위 히스토리에도 전파됨)
+            selectedId={selectedId}
           />
         ))}
       </ul>
@@ -81,6 +104,7 @@ const FolderTree = () => {
               onRequestDelete({ type: "history", id: Number(h.id) })
             }
             onRequestMove={() => onRequestMove(Number(h.id))}
+            selectedId={selectedId}
           />
         ))}
       </ul>

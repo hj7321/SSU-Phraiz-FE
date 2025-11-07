@@ -123,6 +123,28 @@ export function ParaphraseGuide() {
     return null;
   };
 
+  // 포커스된 타겟이 화면에 다 들어오도록 스크롤(가운데 정렬)
+  const ensureTargetInView = (selector: string) => {
+    const el = pickVisibleTarget(selector);
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const vH = window.innerHeight;
+    const padTop = 16; // 살짝 여백
+    const padBottom = 16;
+
+    const fullyAbove = rect.top < padTop;
+    const fullyBelow = rect.bottom > vH - padBottom;
+
+    if (fullyAbove || fullyBelow) {
+      const targetTop = window.scrollY + rect.top - (vH - rect.height) / 2;
+      window.scrollTo({
+        top: Math.max(targetTop, 0),
+        behavior: "smooth",
+      });
+    }
+  };
+
   // 배치 규칙
   const resolvePosition = (stepIndex: number, base: ArrowSide): ArrowSide => {
     const w = window.innerWidth;
@@ -267,17 +289,23 @@ export function ParaphraseGuide() {
 
     // 초기 하이라이트/포지셔닝
     updateSizeHint();
+
     const r0 = requestAnimationFrame(() => {
+      ensureTargetInView(step.target);
       applyHighlight();
       updatePosition();
     });
     const r1 = requestAnimationFrame(() =>
-      requestAnimationFrame(updatePosition)
+      requestAnimationFrame(() => {
+        ensureTargetInView(step.target);
+        updatePosition();
+      })
     );
 
     const onResize = () => {
       updateSizeHint();
       applyHighlight();
+      ensureTargetInView(step.target);
       requestAnimationFrame(updatePosition);
     };
     const onScroll = () => updatePosition();
