@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X, HelpCircle } from "lucide-react";
 import clsx from "clsx";
 import { useGuideProgress } from "@/hooks/useGuideProcess";
@@ -124,13 +124,13 @@ export function ParaphraseGuide() {
   };
 
   // 포커스된 타겟이 화면에 다 들어오도록 스크롤(가운데 정렬)
-  const ensureTargetInView = (selector: string) => {
+  const ensureTargetInView = useCallback((selector: string) => {
     const el = pickVisibleTarget(selector);
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
     const vH = window.innerHeight;
-    const padTop = 16; // 살짝 여백
+    const padTop = 16;
     const padBottom = 16;
 
     const fullyAbove = rect.top < padTop;
@@ -143,7 +143,7 @@ export function ParaphraseGuide() {
         behavior: "smooth",
       });
     }
-  };
+  }, []);
 
   // 배치 규칙
   const resolvePosition = (stepIndex: number, base: ArrowSide): ArrowSide => {
@@ -319,7 +319,7 @@ export function ParaphraseGuide() {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll);
     };
-  }, [isOpen, currentStep]);
+  }, [isOpen, currentStep, ensureTargetInView]);
 
   const step = tourSteps[currentStep];
 
