@@ -263,7 +263,6 @@ const TreeNode = ({
         onClick={handleClickLine}
         role="button"
         aria-expanded={isFolder ? openChild : undefined}
-        aria-selected={isSelected || undefined}
         data-selected={isSelected ? "true" : "false"}
       >
         {/* 좌측 선택 바 */}
