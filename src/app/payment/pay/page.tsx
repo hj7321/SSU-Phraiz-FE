@@ -234,7 +234,22 @@ function PayPageContent() {
                   </div>
                   <CardDescription className="text-sm">{plan.description}</CardDescription>
 
+                  {/* 베타버전 할인 가격 */}
                   <div className="mt-4">
+                    <div>
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <span className="text-lg text-red-500 line-through">₩{(plan.monthlyPrice * (billingCycle === "monthly" ? 1 : 12)).toLocaleString()}</span>
+                        <Badge className="bg-blue-100 text-blue-700 text-xs">🎉 베타 무료</Badge>
+                      </div>
+                      <div>
+                        <span className="text-3xl font-bold">₩0</span>
+                        <span className="text-gray-500">/{billingCycle === "monthly" ? "월" : "년"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 기존 가격 */}
+                  {/* <div className="mt-4">
                     {billingCycle === "monthly" ? (
                       <div>
                         <span className="text-3xl font-bold">₩{plan.monthlyPrice.toLocaleString()}</span>
@@ -255,7 +270,7 @@ function PayPageContent() {
                         <p className="text-xs text-green-600 mt-1">월 평균 ₩{Math.round(plan.yearlyPrice / 12).toLocaleString()}</p>
                       </div>
                     )}
-                  </div>
+                  </div> */}
                 </CardHeader>
 
                 <CardContent>
@@ -339,7 +354,24 @@ function PayPageContent() {
                 </div>
               </div>
 
+              {/* 베타 버전 할인 가격 */}
               <div className="flex justify-between">
+                <span>{billingCycle === "monthly" ? "월간 구독" : "연간 구독"}</span>
+                <span className="line-through text-red-500">₩{orderInfo.amount.toLocaleString()}</span>
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-between font-semibold text-lg items-center">
+                <span>총 결제 금액</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl text-blue-600">₩0</span>
+                  <span className="text-sm text-blue-500">🎉 베타 기간 무료</span>
+                </div>
+              </div>
+
+              {/* 기존 가격 */}
+              {/* <div className="flex justify-between">
                 <span>{billingCycle === "monthly" ? "월간 구독" : "연간 구독"}</span>
                 <span>₩{orderInfo.amount.toLocaleString()}</span>
               </div>
@@ -359,9 +391,12 @@ function PayPageContent() {
               <div className="flex justify-between font-semibold text-lg">
                 <span>총 결제 금액</span>
                 <span>₩{orderInfo.amount.toLocaleString()}</span>
-              </div>
+              </div> */}
 
-              {billingCycle === "yearly" && <p className="text-xs text-gray-500 text-center">월 평균 ₩{Math.round(orderInfo.amount / 12).toLocaleString()} • 7일 무료 체험</p>}
+              {/* 기존 가격 */}
+              {/* {billingCycle === "yearly" && <p className="text-xs text-gray-500 text-center">월 평균 ₩{Math.round(orderInfo.amount / 12).toLocaleString()} • 7일 무료 체험</p>} */}
+              {/* 베타 버전 할인 가격 */}
+              <p className="text-xs text-blue-600 text-center font-medium">✨ 베타 기간 동안 모든 플랜을 무료로 이용할 수 있습니다!</p>
             </CardContent>
           </Card>
 
