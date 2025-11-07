@@ -120,6 +120,22 @@ export function SummarizeGuide() {
     return null;
   };
 
+  //  포커스된 타깃이 화면 안에 다 보이도록 가운데로 스크롤
+  const ensureTargetInView = (selector: string) => {
+    const el = getVisibleTarget(selector);
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const pad = 16;
+
+    const needsScroll = rect.top < pad || rect.bottom > vh - pad;
+    if (needsScroll) {
+      const targetTop = window.scrollY + rect.top - (vh - rect.height) / 2;
+      window.scrollTo({ top: Math.max(targetTop, 0), behavior: "smooth" });
+    }
+  };
+
   // ✅ 500px 미만이면 2·3단계를 'bottom'으로 강제
   const resolvePosition = (stepIndex: number, base: ArrowSide): ArrowSide => {
     const w = window.innerWidth;
@@ -269,17 +285,23 @@ export function SummarizeGuide() {
     };
 
     updateSizeHint();
+
     const r0 = requestAnimationFrame(() => {
+      ensureTargetInView(step.target);
       applyHighlight();
       updatePosition();
     });
     const r1 = requestAnimationFrame(() =>
-      requestAnimationFrame(updatePosition)
+      requestAnimationFrame(() => {
+        ensureTargetInView(step.target);
+        updatePosition();
+      })
     );
 
     const onResize = () => {
       updateSizeHint();
       applyHighlight();
+      ensureTargetInView(step.target);
       requestAnimationFrame(updatePosition);
     };
     const onScroll = () => updatePosition();
