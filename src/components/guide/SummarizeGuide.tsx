@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X, HelpCircle } from "lucide-react";
 import clsx from "clsx";
 import { useGuideProgress } from "@/hooks/useGuideProcess";
@@ -121,7 +121,7 @@ export function SummarizeGuide() {
   };
 
   //  포커스된 타깃이 화면 안에 다 보이도록 가운데로 스크롤
-  const ensureTargetInView = (selector: string) => {
+  const ensureTargetInView = useCallback((selector: string) => {
     const el = getVisibleTarget(selector);
     if (!el) return;
 
@@ -134,7 +134,7 @@ export function SummarizeGuide() {
       const targetTop = window.scrollY + rect.top - (vh - rect.height) / 2;
       window.scrollTo({ top: Math.max(targetTop, 0), behavior: "smooth" });
     }
-  };
+  }, []);
 
   // ✅ 500px 미만이면 2·3단계를 'bottom'으로 강제
   const resolvePosition = (stepIndex: number, base: ArrowSide): ArrowSide => {
@@ -315,7 +315,7 @@ export function SummarizeGuide() {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onScroll);
     };
-  }, [isOpen, currentStep, isLast]);
+  }, [isOpen, currentStep, isLast, ensureTargetInView]);
 
   const step = tourSteps[currentStep];
 
