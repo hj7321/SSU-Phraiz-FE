@@ -22,6 +22,9 @@ import { useEffect, useState } from "react";
 import CreateFolderDialog from "../dialog/CreateFolderDialog";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSidebarBridge } from "@/stores/sidebarBridge.store";
+import { useWorkHistory } from "@/stores/workHistory.store";
+import { useAiHistoryStore } from "@/stores/aiHistory.store";
+import { useHistorySessionStore } from "@/stores/historySession.store";
 
 interface SideBarInnerProps {
   activeTab: TabKey | null;
@@ -84,7 +87,20 @@ const SideBarInner = ({ activeTab, setActiveTab }: SideBarInnerProps) => {
           event: "new_work_start",
           feature: "workspace",
         });
-        useCiteHistoryStore.getState().clearCiteHistory?.();
+        if (service === "cite") {
+          useCiteHistoryStore.getState().clearCiteHistory?.();
+          useHistorySessionStore.getState().resetSession("cite");
+          useWorkHistory.getState().resetCiteWork();
+        } else if (service === "summary") {
+          useAiHistoryStore.getState().clearAiHistory?.();
+          useHistorySessionStore.getState().resetSession("summary");
+          useWorkHistory.getState().resetSummarizeWork();
+        } else if (service === "paraphrase") {
+          useAiHistoryStore.getState().clearAiHistory?.();
+          useHistorySessionStore.getState().resetSession("paraphrase");
+          useWorkHistory.getState().resetParaphraseWork();
+        }
+
         useNewWorkStore.getState().trigger();
         closeIfMobile();
         break;

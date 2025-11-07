@@ -8,6 +8,8 @@ import MobileNavBar from "@/components/layout/MobileNavBar";
 import Analytics from "./Analytics";
 import { Suspense } from "react";
 import ResponsiveSidebarProvider from "@/components/ui/sidebar/ResponsiveSidebarProvider"; // ✅ 추가
+import TopButton from "@/components/layout/TopButton";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.phraiz.com"),
@@ -74,7 +76,11 @@ export default function RootLayout({
             <div className="hidden lg:block">
               <Header />
             </div>
+            <ScrollToTop />
             <main className="min-h-screen w-full">{children}</main>
+            <div className="hidden lg:block">
+              <TopButton />
+            </div>
           </ResponsiveSidebarProvider>
         </QueryProvider>
       </body>
