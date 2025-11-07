@@ -2,13 +2,20 @@
 
 import React, { useCallback } from "react";
 import { Copy, Link as LinkIcon } from "lucide-react";
-import { useCiteHistoryStore } from "@/stores/citeHistory.store";
 
-const CitationHistory = () => {
-  const selectedHistory = useCiteHistoryStore((s) => s.selectedCiteHistory);
+interface CitationHistoryProps {
+  style: string;
+  citationText: string;
+  url: string;
+}
 
+const CitationHistory = ({
+  style,
+  citationText,
+  url,
+}: CitationHistoryProps) => {
   const handleCopy = useCallback(() => {
-    const text = selectedHistory?.citationText ?? "";
+    const text = citationText ?? "";
     if (!text) return;
     navigator.clipboard.writeText(text);
 
@@ -19,9 +26,7 @@ const CitationHistory = () => {
       feature: "copy",
       service: "cite",
     });
-  }, [selectedHistory?.citationText]);
-
-  if (!selectedHistory) return null;
+  }, [citationText]);
 
   return (
     <div
@@ -35,7 +40,7 @@ const CitationHistory = () => {
         <div className="flex items-center gap-[10px]">
           <h3 className="font-semibold text-gray-700">생성된 인용문</h3>
           <span className="px-2.5 py-0.5 text-xs sm:text-sm font-semibold bg-indigo-100 text-indigo-600 rounded-lg">
-            {selectedHistory?.style?.toUpperCase() ?? "APA"}
+            {style.toUpperCase() ?? "APA"}
           </span>
         </div>
 
@@ -46,7 +51,7 @@ const CitationHistory = () => {
             break-words whitespace-pre-wrap
           "
         >
-          {selectedHistory?.citationText}
+          {citationText}
         </div>
 
         <button
@@ -73,7 +78,7 @@ const CitationHistory = () => {
         <div className="flex items-start gap-1 min-w-0">
           <LinkIcon className="h-4 w-4 text-gray-500 mt-[2px] shrink-0" />
           <a
-            href={selectedHistory?.url}
+            href={url}
             target="_blank"
             rel="noopener noreferrer"
             className="
@@ -81,7 +86,7 @@ const CitationHistory = () => {
               break-all min-w-0
             "
           >
-            {selectedHistory?.url}
+            {url}
           </a>
         </div>
       </div>
