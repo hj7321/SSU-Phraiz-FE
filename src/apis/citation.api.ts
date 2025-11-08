@@ -39,6 +39,7 @@ export const sendCitation = async ({
   citeId,
   citation,
   style,
+  url,
   folderId,
   historyId,
 }: SendCitationType): Promise<SuccessResponseData & HistoryAndFolderId> => {
@@ -50,6 +51,7 @@ export const sendCitation = async ({
         citeId,
         citation,
         style,
+        url,
         folderId,
         historyId,
       }

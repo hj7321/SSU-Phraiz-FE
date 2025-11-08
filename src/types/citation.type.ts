@@ -7,6 +7,7 @@ export type SendCitationType = {
   citeId: number;
   citation: string;
   style: string;
+  url: string;
   folderId?: null | number;
   historyId?: null | number;
 };
