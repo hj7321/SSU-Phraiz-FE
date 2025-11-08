@@ -33,12 +33,12 @@ const CreateNewCitationBox = () => {
   const isLogin = useAuthStore((s) => s.isLogin);
   const setNewCitation = useCitationStore((s) => s.setNewCitation);
   const clearHistory = useCiteHistoryStore((state) => state.clearCiteHistory);
-  const citeSessionId = useHistorySessionStore(
-    (s) => s.sessions.cite.currentSessionId
-  );
-  const canAppendHistory = useHistorySessionStore((s) => s.canAppendHistory);
-  const startNewSession = useHistorySessionStore((s) => s.startNewSession);
-  const appendOneHistory = useHistorySessionStore((s) => s.appendOneHistory);
+  // const citeSessionId = useHistorySessionStore(
+  //   (s) => s.sessions.cite.currentSessionId
+  // );
+  // const canAppendHistory = useHistorySessionStore((s) => s.canAppendHistory);
+  // const startNewSession = useHistorySessionStore((s) => s.startNewSession);
+  // const appendOneHistory = useHistorySessionStore((s) => s.appendOneHistory);
   const resetSession = useHistorySessionStore((s) => s.resetSession);
 
   const router = useRouter();
@@ -86,16 +86,16 @@ const CreateNewCitationBox = () => {
     }
     if (isSubmitDisabled || inFlightRef.current) return;
 
-    const hs = useHistorySessionStore.getState();
-    const sessionIdNow = hs.sessions.cite.currentSessionId;
-    const canAppendNow = hs.canAppendHistory("cite");
+    // const hs = useHistorySessionStore.getState();
+    // const sessionIdNow = hs.sessions.cite.currentSessionId;
+    // const canAppendNow = hs.canAppendHistory("cite");
 
-    if (sessionIdNow && !canAppendNow) {
-      alert(
-        "히스토리 내용은 10개까지만 저장됩니다.\n'새 작업'을 눌러 새로운 작업을 시작해 주세요."
-      );
-      return;
-    }
+    // if (sessionIdNow && !canAppendNow) {
+    //   alert(
+    //     "히스토리 내용은 10개까지만 저장됩니다.\n'새 작업'을 눌러 새로운 작업을 시작해 주세요."
+    //   );
+    //   return;
+    // }
 
     inFlightRef.current = true;
 
@@ -112,12 +112,14 @@ const CreateNewCitationBox = () => {
       setNewCitation(result);
 
       // 3) 인용문 전송
-      const response = await sendCitationAsync({
+      await sendCitationAsync({
         citeId: data.citeId,
         citation: result,
         style: selectedForm!,
+        url: urlValue,
         folderId: null,
-        historyId: sessionIdNow ?? null,
+        // historyId: sessionIdNow ?? null,
+        historyId: null,
       });
 
       // ✅ GTM 이벤트
@@ -129,12 +131,12 @@ const CreateNewCitationBox = () => {
       });
 
       // 세션 관리
-      const hid = Number(response.historyId);
-      if (!sessionIdNow) {
-        hs.startNewSession("cite", hid);
-      } else {
-        hs.appendOneHistory("cite");
-      }
+      // const hid = Number(response.historyId);
+      // if (!sessionIdNow) {
+      //   hs.startNewSession("cite", hid);
+      // } else {
+      //   hs.appendOneHistory("cite");
+      // }
 
       // 4) 사이드바 갱신
       startTransition(() => {
@@ -166,10 +168,10 @@ const CreateNewCitationBox = () => {
     sendCitationAsync,
     queryClient,
     startTransition,
-    appendOneHistory,
-    canAppendHistory,
-    citeSessionId,
-    startNewSession,
+    // appendOneHistory,
+    // canAppendHistory,
+    // citeSessionId,
+    // startNewSession,
   ]);
 
   return (
