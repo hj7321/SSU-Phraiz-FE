@@ -32,14 +32,18 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
 
   // 타겟 요약 팝업 상태
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const customButtonRef = useRef<HTMLButtonElement>(null);
+  const targetPopoverDesktopRef = useRef<HTMLDivElement>(null);
+  const targetPopoverMobileRef = useRef<HTMLDivElement>(null);
+  const targetButtonDesktopRef = useRef<HTMLButtonElement>(null);
+  const targetButtonMobileRef = useRef<HTMLButtonElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
 
   // 질문 기반 요약 팝업 상태
   const [isQuestionPopoverOpen, setIsQuestionPopoverOpen] = useState(false);
-  const questionPopoverRef = useRef<HTMLDivElement>(null);
-  const questionButtonRef = useRef<HTMLButtonElement>(null);
+  const popoverDesktopRef = useRef<HTMLDivElement>(null);
+  const popoverMobileRef = useRef<HTMLDivElement>(null);
+  const questionButtonDesktopRef = useRef<HTMLButtonElement>(null);
+  const questionButtonMobileRef = useRef<HTMLButtonElement>(null);
 
   // 요금제 제한 hook
   const { canUseFeature, getRequiredPlanName } = usePlanRestriction();
@@ -47,25 +51,36 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
   // 외부 클릭 감지
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // 질문 팝업 닫기
-      if (questionPopoverRef.current && !questionPopoverRef.current.contains(event.target as Node)) {
-        if (questionButtonRef.current && !questionButtonRef.current.contains(event.target as Node)) {
-          setIsQuestionPopoverOpen(false);
-        }
+      const target = event.target as Node;
+
+      // 모든 Popover 내부 클릭이면 어떤 경우에도 닫지 않음
+      const isInsideDesktopPopover = popoverDesktopRef.current?.contains(target) || targetPopoverDesktopRef.current?.contains(target);
+      const isInsideMobilePopover = popoverMobileRef.current?.contains(target) || targetPopoverMobileRef.current?.contains(target);
+
+      if (isInsideDesktopPopover || isInsideMobilePopover) {
+        return;
       }
 
-      // 타겟 팝업 닫기
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        if (customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
-          setIsPopoverOpen(false);
-        }
+      // 드롭다운 메뉴 내부 클릭이면 닫지 않음
+      const isInsideDropdown = modeDropdownRef.current?.contains(target);
+      if (isInsideDropdown) {
+        return;
       }
 
-      // 드롭다운 닫기
-      if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
-        setIsModeDropdownOpen(false);
+      // 각 트리거 버튼 클릭 시에는 각 버튼의 토글 로직이 처리하므로 여기서는 무시
+      const isQuestionButton = questionButtonDesktopRef.current?.contains(target) || questionButtonMobileRef.current?.contains(target);
+      const isTargetButton = targetButtonDesktopRef.current?.contains(target) || targetButtonMobileRef.current?.contains(target);
+
+      if (isQuestionButton || isTargetButton) {
+        return;
       }
+
+      // 위의 모든 조건에 해당하지 않는 외부 클릭이면 모두 닫기
+      setIsModeDropdownOpen(false);
+      setIsPopoverOpen(false);
+      setIsQuestionPopoverOpen(false);
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -119,15 +134,15 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
         <div className="relative flex-1">
           {canUseFeature("summarize", "questionBased") ? (
             <>
-              <button ref={questionButtonRef} onClick={handleQuestionClick} className={clsx("w-full", baseButtonClass, activeMode === "질문 기반 요약" ? activeClass : inactiveClass)}>
+              <button ref={questionButtonDesktopRef} onClick={handleQuestionClick} className={clsx("w-full", baseButtonClass, activeMode === "질문 기반 요약" ? activeClass : inactiveClass)}>
                 질문 기반 요약
               </button>
               {isQuestionPopoverOpen && (
-                <div ref={questionPopoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                <div ref={popoverDesktopRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
                   <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                     <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")} />
                     <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
-                    <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                    <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} maxLength={100} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
                   </div>
                 </div>
               )}
@@ -152,16 +167,16 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
         <div className="relative flex-1">
           {canUseFeature("summarize", "targeted") ? (
             <>
-              <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
+              <button ref={targetButtonDesktopRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "타겟 요약" ? activeClass : inactiveClass)}>
                 타겟 요약
                 <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[38px] h-[38px] top-[-16px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
               </button>
               {isPopoverOpen && (
-                <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                <div ref={targetPopoverDesktopRef} className={clsx("absolute top-full mt-4 z-[60] p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
                   <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                     <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")} />
                     <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
-                    <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                    <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} maxLength={20} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
                   </div>
                 </div>
               )}
@@ -245,7 +260,7 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
         {(activeMode === "질문 기반 요약" || activeMode === "타겟 요약") && (
           <div className="relative overflow-visible">
             <button
-              ref={customButtonRef}
+              ref={activeMode === "질문 기반 요약" ? questionButtonMobileRef : targetButtonMobileRef}
               onClick={() => {
                 if (activeMode === "질문 기반 요약") {
                   setIsQuestionPopoverOpen(!isQuestionPopoverOpen);
@@ -259,22 +274,22 @@ const ModeSelector = ({ activeMode, setActiveMode, targetAudience, setTargetAudi
 
             {/* 질문 기반 요약 팝업 */}
             {isQuestionPopoverOpen && activeMode === "질문 기반 요약" && (
-              <div ref={questionPopoverRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
+              <div ref={popoverMobileRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                   <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
                   <p className="text-sm text-gray-600 mb-2">요약할 때 답변받고 싶은 질문을 입력하세요. (100자 이내)</p>
-                  <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} maxLength={100} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
+                  <textarea value={questionText} onChange={(e) => setQuestionText(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} maxLength={100} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
                 </div>
               </div>
             )}
 
             {/* 타겟 요약 팝업 */}
             {isPopoverOpen && activeMode === "타겟 요약" && (
-              <div ref={popoverRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
+              <div ref={targetPopoverMobileRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                   <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45"></div>
                   <p className="text-sm text-gray-600 mb-2">요약 내용을 전달할 대상을 입력하세요. (20자 이내)</p>
-                  <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} maxLength={20} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
+                  <textarea value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} maxLength={20} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
                 </div>
               </div>
             )}

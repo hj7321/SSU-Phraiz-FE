@@ -54,8 +54,10 @@ const ToneBlendSlider = ({ value, onChange }: { value: number; onChange: (value:
 const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, creativityLevel, setCreativityLevel }: { activeMode: ParaphraseMode; setActiveMode: (mode: ParaphraseMode) => void; customStyle: string; setCustomStyle: (style: string) => void; creativityLevel: number; setCreativityLevel: (level: number) => void }) => {
   const modes: ParaphraseMode[] = ["표준", "학술적", "창의적", "유창성", "문학적"];
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const customButtonRef = useRef<HTMLButtonElement>(null);
+  const popoverDesktopRef = useRef<HTMLDivElement>(null);
+  const popoverMobileRef = useRef<HTMLDivElement>(null);
+  const customButtonDesktopRef = useRef<HTMLButtonElement>(null);
+  const customButtonMobileRef = useRef<HTMLButtonElement>(null);
 
   // 드롭다운 상태 (모바일)
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
@@ -67,16 +69,35 @@ const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, 
   // 외부 클릭 감지
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      // 드롭다운 외부 클릭
-      if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
-        setIsModeDropdownOpen(false);
+      const target = event.target as Node;
+
+      // 데스크톱 또는 모바일 popover 내부 클릭이면 닫지 않음
+      const isInsideDesktopPopover = popoverDesktopRef.current?.contains(target);
+      const isInsideMobilePopover = popoverMobileRef.current?.contains(target);
+
+      if (isInsideDesktopPopover || isInsideMobilePopover) {
+        return;
       }
 
-      // 사용자 지정 팝업 외부 클릭
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node) && customButtonRef.current && !customButtonRef.current.contains(event.target as Node)) {
-        setIsPopoverOpen(false);
+      // 드롭다운 메뉴 내부 클릭이면 닫지 않음
+      const isInsideDropdown = modeDropdownRef.current?.contains(target);
+      if (isInsideDropdown) {
+        return;
       }
+
+      // 각 트리거 버튼 클릭 시에는 각 버튼의 토글 로직이 처리하므로 여기서는 무시
+      const isCustomButtonDesktop = customButtonDesktopRef.current?.contains(target);
+      const isCustomButtonMobile = customButtonMobileRef.current?.contains(target);
+
+      if (isCustomButtonDesktop || isCustomButtonMobile) {
+        return;
+      }
+
+      // 외부 클릭이면 모두 닫기
+      setIsModeDropdownOpen(false);
+      setIsPopoverOpen(false);
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -118,16 +139,16 @@ const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, 
         <div className="relative flex-1">
           {canUseFeature("paraphrasing", "custom") ? (
             <>
-              <button ref={customButtonRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "사용자 지정" ? activeClass : inactiveClass)}>
+              <button ref={customButtonDesktopRef} onClick={handleCustomClick} className={clsx("w-full", baseButtonClass, "relative gap-2", activeMode === "사용자 지정" ? activeClass : inactiveClass)}>
                 사용자 지정
                 <Image src="/icons/프리미엄2.svg" alt="" width={0} height={0} className="absolute w-[30px] h-[30px] top-[-12px] right-[-5px] md:w-[45px] md:h-[45px] md:top-[-20px] md:right-[-6px]" />
               </button>
               {isPopoverOpen && (
-                <div ref={popoverRef} className={clsx("absolute top-full mt-4 z-50 p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
+                <div ref={popoverDesktopRef} className={clsx("absolute top-full mt-4 z-50 p-0.5", "w-[90vw] max-w-[320px] lg:w-80", "right-0 lg:left-1/2 lg:-translate-x-1/2 lg:right-auto")}>
                   <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                     <div className={clsx("absolute -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45", "left-[calc(100%-30px)] lg:left-1/2")} />
                     <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
-                    <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                    <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} maxLength={50} className="w-full h-32 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400" />
                   </div>
                 </div>
               )}
@@ -195,17 +216,17 @@ const ModeSelector = ({ activeMode, setActiveMode, customStyle, setCustomStyle, 
         {/* 말풍선 아이콘 (사용자 지정 모드일 때만 표시) */}
         {activeMode === "사용자 지정" && (
           <div className="relative overflow-visible">
-            <button ref={customButtonRef} onClick={() => setIsPopoverOpen(!isPopoverOpen)} className={clsx("p-1.5 rounded-lg transition-colors", "bg-purple-100 hover:bg-purple-200 text-purple-600")}>
+            <button ref={customButtonMobileRef} onClick={() => setIsPopoverOpen(!isPopoverOpen)} className={clsx("p-1.5 rounded-lg transition-colors", "bg-purple-100 hover:bg-purple-200 text-purple-600")}>
               <MessageCircle size={16} />
             </button>
 
             {/* 사용자 지정 팝업 */}
             {isPopoverOpen && (
-              <div ref={popoverRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
+              <div ref={popoverMobileRef} className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 p-0.5 w-72 overflow-visible">
                 <div className="relative bg-blue-50 rounded-lg shadow-2xl p-3">
                   <div className="absolute left-1/2 -translate-x-1/2 -top-[10px] w-4 h-4 bg-blue-50 border-l-2 border-t-2 rotate-45" />
                   <p className="text-sm text-gray-600 mb-2">원하는 문장 스타일을 입력하세요. (50자 이내)</p>
-                  <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} maxLength={50} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
+                  <textarea value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()} maxLength={50} className="w-full h-24 p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 text-xs" />
                 </div>
               </div>
             )}
