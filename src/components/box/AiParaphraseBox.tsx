@@ -874,16 +874,12 @@ const AiParaphraseBox = () => {
         />{" "}
       </div>
 
-      <div
-        className={clsx(
-          "flex flex-col md:flex-row",
-          "flex-1 rounded-lg shadow-lg overflow-hidden border bg-white"
-        )}
-      >
+      <div className={clsx("flex flex-col md:flex-row", "flex-1")}>
         <div
           data-tour="input-area"
           className={clsx(
-            "relative w-full h-1/2 md:h-full md:w-1/2 border-b md:border-b-0 md:border-r p-2 md:p-4 flex flex-col",
+            "relative w-full h-1/2 md:h-full md:w-1/2",
+            "bg-white border shadow-lg",
             "rounded-t-lg md:rounded-l-lg md:rounded-tr-none md:rounded-br-none",
             "overflow-hidden"
           )}
