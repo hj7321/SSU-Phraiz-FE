@@ -214,6 +214,7 @@ function PayPageContent() {
           {Object.values(SERVICE_PLANS).map((plan) => {
             const isSelected = selectedPlanId === plan.id;
             const { discountPercent } = calculateSavings(plan); // savings 제거, discountPercent만 사용
+            console.log(discountPercent);
             const isPopular = plan.id === "standard";
 
             return (
